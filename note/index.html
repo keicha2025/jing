@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Note Manager</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" href="./note.png">
+    <link rel="apple-touch-icon" href="./note.png">
+    <meta name="theme-color" content="#FDFCFB">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff-match-patch/20121119/diff_match_patch.js"></script>
+    <script src="config.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg: { main: '#FDFCFB' },
+                        primary: '#4A4A4A',
+                        secondary: '#9CA3AF',
+                        accent: '#E5E5E5'
+                    },
+                    fontFamily: {
+                        sans: ['Helvetica Neue', 'Arial', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FDFCFB;
+            color: #4A4A4A;
+        }
+
+        .btn-muji {
+            @apply border border-gray-300 rounded px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-200 outline-none focus:ring-1 focus:ring-gray-400;
+        }
+
+        .input-muji {
+            @apply w-full bg-white border border-gray-200 rounded px-3 py-2 text-primary focus:outline-none focus:border-gray-400 transition;
+        }
+
+        /* Loader */
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #4A4A4A;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Diff Styles */
+        del {
+            @apply bg-red-100 text-red-800 decoration-red-800 font-bold no-underline px-1 rounded;
+        }
+
+        ins {
+            @apply bg-green-100 text-green-800 decoration-green-800 font-bold no-underline px-1 rounded;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col font-sans">
+
+    <!-- Navbar -->
+    <nav
+        class="w-full px-6 py-4 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-10 border-b border-gray-100">
+        <h1 class="text-xl font-medium tracking-wide text-primary">Notes</h1>
+        <div>
+            <button id="logoutBtn" class="text-sm text-secondary hover:text-primary hidden">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="flex-grow w-full max-w-2xl mx-auto p-6 md:p-8 relative">
+
+        <!-- Login View -->
+        <div id="loginView" class="hidden flex flex-col items-center justify-center pt-20">
+            <div class="w-full max-w-sm space-y-6">
+                <div class="text-center space-y-2">
+                    <p class="text-secondary text-sm">Welcome Back</p>
+                </div>
+                <div class="space-y-4">
+                    <input type="password" id="passwordInput" placeholder="Password"
+                        class="input-muji text-center tracking-widest" />
+                    <button onclick="performLogin()"
+                        class="w-full btn-muji bg-primary text-white hover:bg-gray-700">Login</button>
+                    <p id="loginError" class="text-center text-red-500 text-xs h-4"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes View -->
+        <div id="notesView" class="hidden space-y-6">
+
+            <!-- Add Note Bar -->
+            <div
+                class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 transition-all focus-within:ring-1 focus-within:ring-gray-200">
+                <textarea id="newNoteContent" rows="2" placeholder="Write a note..."
+                    class="w-full resize-none outline-none text-primary placeholder-gray-300 bg-transparent"></textarea>
+                <div class="flex justify-between items-center mt-2 border-t border-gray-50 pt-2">
+                    <input id="newNoteTags" type="text" placeholder="Tags (comma separated)"
+                        class="text-xs w-1/2 outline-none text-secondary placeholder-gray-200">
+                    <button onclick="addNote()" class="btn-muji text-xs px-3 py-1 bg-white">Add</button>
+                </div>
+            </div>
+
+            <!-- List -->
+            <div id="notesList" class="space-y-3 pb-20">
+                <!-- Notes will be injected here -->
+            </div>
+
+            <div id="loadingIndicator" class="hidden flex justify-center py-4">
+                <div class="loader"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="fixed inset-0 bg-white/90 z-50 hidden flex flex-col p-6 overflow-hidden">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg text-secondary">Editing</h2>
+            <div class="space-x-2">
+                <button onclick="closeEditModal()" class="text-secondary hover:text-primary px-3">Cancel</button>
+                <button onclick="checkDiffAndSave()" class="btn-muji bg-primary text-white">Save</button>
+            </div>
+        </div>
+        <div class="flex-grow flex flex-col space-y-4 max-w-2xl mx-auto w-full">
+            <textarea id="editContent"
+                class="flex-grow w-full resize-none outline-none text-lg text-primary bg-transparent leading-relaxed p-4 border border-gray-100 rounded-lg focus:border-gray-200"></textarea>
+            <input id="editTags" type="text" class="input-muji text-sm" placeholder="Tags">
+            <!-- Hidden UUID -->
+            <input type="hidden" id="editUuid">
+        </div>
+    </div>
+
+    <!-- Diff Confirmation Modal -->
+    <div id="diffModal"
+        class="fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="font-medium text-primary">Confirm Changes</h3>
+                <button onclick="closeDiffModal()" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+
+            <div class="p-6 overflow-y-auto text-sm leading-relaxed space-y-4">
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="space-y-1">
+                        <span class="text-xs text-secondary uppercase tracking-wider">Review Changes</span>
+                        <div id="diffOutput" class="bg-gray-50 p-4 rounded text-gray-600 whitespace-pre-wrap"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-gray-50 flex justify-end space-x-3">
+                <button onclick="closeDiffModal()" class="btn-muji bg-white">Back</button>
+                <button onclick="confirmSave()" class="btn-muji bg-primary text-white">Confirm Update</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State ---
+        let state = {
+            token: localStorage.getItem('device_token') || null,
+            notes: [],
+            isSyncing: false
+        };
+
+        // Helper to check config
+        function checkConfig() {
+            if (!GAS_API_URL || GAS_API_URL.includes("YOUR_DEPLOYMENT_ID")) {
+                alert("Please configure the GAS_API_URL in config.js");
+                return false;
+            }
+            return true;
+        }
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            if (state.token) {
+                checkAuth();
+            } else {
+                showView('loginView');
+            }
+
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+        });
+
+        // --- Views ---
+        function showView(viewId) {
+            ['loginView', 'notesView'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById(viewId).classList.remove('hidden');
+
+            if (viewId === 'notesView') {
+                document.getElementById('logoutBtn').classList.remove('hidden');
+                fetchNotes();
+            } else {
+                document.getElementById('logoutBtn').classList.add('hidden');
+            }
+        }
+
+        // --- Auth Logic ---
+        async function performLogin() {
+            const pwd = document.getElementById('passwordInput').value;
+            if (!pwd) return;
+
+            setLoading(true, 'loginView');
+            const result = await apiCall('login', { password: pwd });
+
+            if (result.success) {
+                state.token = result.token;
+                localStorage.setItem('device_token', state.token);
+                showView('notesView');
+            } else {
+                document.getElementById('loginError').innerText = result.message || "Login failed";
+            }
+            setLoading(false, 'loginView');
+        }
+
+        function checkAuth() {
+            showView('notesView'); // Optimistic show
+        }
+
+        function logout() {
+            localStorage.removeItem('device_token');
+            state.token = null;
+            location.reload();
+        }
+
+        async function apiCall(action, payload = {}) {
+            payload.action = action;
+            payload.token = state.token;
+
+            if (!checkConfig()) return { success: false, error: "Configuration Missing" };
+
+            try {
+                // Use default Content-Type (text/plain) to avoid CORS preflight
+                const response = await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                return await response.json();
+            } catch (e) {
+                console.error(e);
+                // Handle redirect typical of GAS (though fetch usually follows it)
+                return { success: false, error: e.message };
+            }
+        }
+
+        // Helper for GAS HTML Template injection
+        // If the file is just .html and not .html initialized by template, the scriptlet won't run.
+        // But `createHtmlOutputFromFile` doesn't evaluate scriptlets. `createTemplateFromFile` does.
+        // I should update Code.gs to use `createTemplateFromFile`.
+
+        async function fetchNotes() {
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            const res = await apiCall('get_notes');
+            document.getElementById('loadingIndicator').classList.add('hidden');
+
+            if (res.success) {
+                state.notes = res.notes;
+                renderNotes();
+            } else if (res.error === "Unauthorized") {
+                logout();
+            }
+        }
+
+        async function addNote() {
+            const content = document.getElementById('newNoteContent').value;
+            const tagsInput = document.getElementById('newNoteTags').value;
+
+            if (!content.trim()) return;
+
+            const tags = tagsInput.split(',').map(t => t.trim()).filter(t => t);
+
+            // Optimistic UI could be here, but let's wait for server for ID
+            const res = await apiCall('add_note', { content, tags });
+
+            if (res.success) {
+                document.getElementById('newNoteContent').value = '';
+                document.getElementById('newNoteTags').value = '';
+                state.notes.push(res.note);
+                // Sort by order
+                state.notes.sort((a, b) => a.order - b.order);
+                renderNotes();
+            }
+        }
+
+        // --- Reordering Logic ---
+        async function moveNote(index, direction) {
+            if (state.isSyncing) return;
+
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= state.notes.length) return;
+
+            // Swap in local state
+            const temp = state.notes[index];
+            state.notes[index] = state.notes[newIndex];
+            state.notes[newIndex] = temp;
+
+            // Update order values locally for consistency
+            // (Optional, but good for stability if we rely on order prop)
+            const tempOrder = state.notes[index].order;
+            state.notes[index].order = state.notes[newIndex].order;
+            state.notes[newIndex].order = tempOrder;
+
+            renderNotes(); // Instant feedback
+
+            // Debounced Sync
+            syncOrder();
+        }
+
+        let syncTimer = null;
+        function syncOrder() {
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(async () => {
+                state.isSyncing = true;
+                const orderedUuids = state.notes.map(n => n.uuid);
+                await apiCall('reorder_notes', { ordered_uuids: orderedUuids });
+                state.isSyncing = false;
+            }, 1000);
+        }
+
+        // --- Rendering ---
+        function renderNotes() {
+            const container = document.getElementById('notesList');
+            container.innerHTML = '';
+
+            state.notes.forEach((note, index) => {
+                const div = document.createElement('div');
+                div.className = "group bg-white rounded-lg p-5 border border-transparent hover:border-gray-200 hover:shadow-sm transition-all relative";
+
+                const tagsHtml = JSON.parse(note.tags || '[]').map(t =>
+                    `<span class="text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded-full mr-1">#${t}</span>`
+                ).join('');
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex flex-col space-y-1 w-full mr-4">
+                            <div class="text-sm font-light text-primary whitespace-pre-wrap">${escapeHtml(note.content)}</div>
+                            <div class="mt-2 text-xs text-gray-400 font-mono tracking-tight">${new Date(note.updated_at).toLocaleDateString()}</div>
+                        </div>
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col space-y-1">
+                             <button onclick="moveNote(${index}, -1)" class="p-1 hover:bg-gray-100 rounded text-gray-400">▲</button>
+                             <button onclick="moveNote(${index}, 1)" class="p-1 hover:bg-gray-100 rounded text-gray-400">▼</button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mt-3">
+                        <div class="flex items-center">${tagsHtml}</div>
+                        <div class="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="copyToClipboard('${escapeHtml(note.content)}')" class="text-xs text-secondary hover:text-primary border border-transparent hover:border-gray-200 px-2 py-1 rounded">Copy</button>
+                            <button onclick="openEdit('${note.uuid}')" class="text-xs text-secondary hover:text-primary border border-transparent hover:border-gray-200 px-2 py-1 rounded">Edit</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Toast or small feedback could go here
+            });
+        }
+
+        // --- Edit & Diff ---
+        let currentEditNote = null;
+
+        function openEdit(uuid) {
+            const note = state.notes.find(n => n.uuid === uuid);
+            if (!note) return;
+            currentEditNote = { ...note }; // Clone
+
+            document.getElementById('editUuid').value = uuid;
+            document.getElementById('editContent').value = note.content;
+            document.getElementById('editTags').value = JSON.parse(note.tags || '[]').join(', ');
+
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+            currentEditNote = null;
+        }
+
+        function checkDiffAndSave() {
+            const newContent = document.getElementById('editContent').value;
+            const oldContent = currentEditNote.content;
+
+            // If no changes in content (ignore tags for diff view for now, usually content is main)
+            if (newContent === oldContent) {
+                confirmSave(); // Just save (tags might have changed)
+                return;
+            }
+
+            // Compute Diff
+            const dmp = new diff_match_patch();
+            const diffs = dmp.diff_main(oldContent, newContent);
+            dmp.diff_cleanupSemantic(diffs);
+            const html = dmp.diff_prettyHtml(diffs);
+
+            document.getElementById('diffOutput').innerHTML = html;
+            document.getElementById('diffModal').classList.remove('hidden');
+        }
+
+        function closeDiffModal() {
+            document.getElementById('diffModal').classList.add('hidden');
+        }
+
+        async function confirmSave() {
+            const uuid = document.getElementById('editUuid').value;
+            const content = document.getElementById('editContent').value;
+            const tags = document.getElementById('editTags').value.split(',').map(t => t.trim()).filter(t => t);
+
+            const res = await apiCall('update_note', { uuid, content, tags });
+
+            if (res.success) {
+                closeDiffModal();
+                closeEditModal();
+                fetchNotes(); // Refresh to ensure strict sync
+            }
+        }
+
+        function setLoading(isLoading, viewId) {
+            const btn = document.querySelector(`#${viewId} button`);
+            if (btn) btn.disabled = isLoading;
+        }
+
+    </script>
+</body>
+
+</html>
