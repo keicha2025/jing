@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>冬之南國，緩慢的四日</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+JP:wght@400;600&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Google Material Symbols -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+
+    <style>
+        :root {
+            /* MUJI Palette */
+            --bg-color: #F4F4F0;       /* 整體背景：米白 */
+            --card-bg: #FFFFFF;        /* 卡片背景：純白 */
+            --text-primary: #2D2D2D;   /* 深灰黑 */
+            --text-secondary: #666666; /* 中灰 */
+            --accent-color: #8E403A;   /* 赭紅（重點色） */
+            --nav-bg: rgba(255, 255, 255, 0.95);
+            --border-color: #E5E5E5;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Noto Sans TC', 'Noto Sans JP', sans-serif;
+            line-height: 1.75;
+            font-weight: 300;
+            padding-bottom: 80px; /* 預留底部導覽列空間 */
+        }
+
+        /* Typography */
+        h1, h2, h3, .serif {
+            font-family: 'Noto Serif TC', 'Noto Serif JP', serif;
+            letter-spacing: 0.05em;
+            color: var(--text-primary);
+        }
+
+        .jp-text {
+            font-family: 'Noto Serif JP', serif;
+            font-size: 0.8em;
+            display: block;
+            margin-top: 4px;
+            color: var(--text-secondary);
+            font-weight: 400;
+            opacity: 0.8;
+        }
+
+        p {
+            margin-bottom: 0;
+            color: var(--text-secondary);
+            text-align: justify;
+            font-size: 0.95rem;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Hero Section */
+        header.hero {
+            padding: 80px 20px 60px;
+            text-align: center;
+            background-color: var(--bg-color);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        header.hero h1 {
+            font-size: 2rem;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+
+        header.hero .intro-text {
+            font-size: 0.9rem;
+            max-width: 320px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        header.hero .intro-text::before {
+            content: '';
+            display: block;
+            width: 30px;
+            height: 1px;
+            background: var(--text-secondary);
+            margin: 0 auto 20px;
+        }
+
+        /* Info Grid */
+        .info-bar {
+            background-color: var(--card-bg);
+            padding: 30px 20px;
+            margin: 20px 0 30px;
+            border-radius: 2px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .info-icon {
+            color: var(--accent-color);
+            background: rgba(142, 64, 58, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .info-content h4 {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+            font-weight: 400;
+        }
+        
+        /* Hotel Link Styles */
+        .hotel-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: opacity 0.3s;
+        }
+        .hotel-link:hover {
+            opacity: 0.6;
+        }
+        .hotel-en {
+            font-size: 0.8rem;
+            color: #888;
+            display: block;
+            margin-top: 2px;
+            font-weight: 400;
+        }
+        .hotel-addr {
+            font-size: 0.75rem;
+            color: #aaa;
+            display: block;
+            margin-top: 2px;
+            line-height: 1.3;
+        }
+        
+        .info-content p {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* --- Flight Card Styles --- */
+        .flight-section {
+            margin-bottom: 50px;
+        }
+
+        .flight-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .flight-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--accent-color);
+            opacity: 0.7;
+        }
+
+        .flight-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .flight-no {
+            font-weight: 700;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+        }
+
+        /* Removed Status Badges Styles */
+
+        .flight-body {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .flight-port {
+            flex: 1;
+        }
+
+        .port-time {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .port-name {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .port-terminal {
+            font-size: 0.75rem;
+            background-color: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+        }
+
+        .flight-duration {
+            flex: 0 0 80px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            position: relative;
+            top: -5px;
+        }
+
+        .flight-arrow {
+            display: block;
+            font-size: 1.2rem;
+            color: #ddd;
+            margin-bottom: -5px;
+        }
+
+        .flight-footer {
+            background-color: #FAFAFA;
+            margin: 0 -20px -20px -20px;
+            padding: 10px 20px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .baggage-tag {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* Updated Baggage Grey Style */
+        .baggage-grey {
+            color: #999;
+        }
+
+
+        /* Day Section */
+        .day-section {
+            padding-top: 60px;
+            margin-bottom: 40px;
+        }
+
+        .day-header {
+            margin-bottom: 30px;
+            padding-left: 15px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .day-header h2 {
+            font-size: 1.6rem;
+            line-height: 1.2;
+        }
+
+        .day-theme {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            display: block;
+        }
+
+        /* Spot Card */
+        .spot-card {
+            background-color: var(--card-bg);
+            padding: 24px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+
+        .spot-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+
+        .spot-icon {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+        }
+
+        .spot-title {
+            font-size: 1.15rem;
+            font-weight: 500;
+        }
+
+        .spot-time {
+            font-size: 0.85rem;
+            color: #888;
+            margin-left: auto;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+
+        /* Curator Note */
+        .curator-note {
+            background-color: #E8E8E6;
+            padding: 40px 20px;
+            margin-top: 60px;
+            border-radius: 8px;
+        }
+
+        .note-title {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+            color: #444;
+        }
+
+        .note-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .note-item {
+            background: rgba(255,255,255,0.5);
+            padding: 15px;
+            border-radius: 6px;
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--nav-bg);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 15px;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+
+        .nav-item {
+            text-decoration: none;
+            color: var(--text-secondary);
+            text-align: center;
+            font-size: 0.7rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-item.active {
+            color: var(--accent-color);
+        }
+
+        .nav-item span.material-symbols-outlined {
+            font-size: 1.4rem;
+        }
+        
+        .nav-text {
+            font-weight: 500;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 20px 100px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Hero -->
+    <header class="hero" id="top">
+        <div class="container">
+            <h1>冬之南國<br>緩慢的四日<span class="jp-text">冬の南国、緩やかな四日間</span></h1>
+<p class="intro-text">不是為了遠方，而是「為了自己」。<br>在浪聲裡，把生活調成慢速播放。</p>
+        </div>
+    </header>
+
+    <!-- Info Bar -->
+    <div class="container">
+        <div class="info-bar">
+            <div class="info-item">
+                <div class="info-icon"><span class="material-symbols-outlined">calendar_month</span></div>
+                <div class="info-content">
+                    <h4>日程 / 日程</h4>
+                    <p>01.18 (日) — 01.21 (三)</p>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-icon"><span class="material-symbols-outlined">bed</span></div>
+                <div class="info-content">
+                    <h4>住宿 / 宿泊</h4>
+                    <a href="https://maps.app.goo.gl/q5WWAmRNWWD8vyyt6" target="_blank" class="hotel-link">
+                        <p style="margin-bottom:0;">那霸東急 REI Hotel</p>
+                        <span class="hotel-en">Naha Tokyu REI Hotel</span>
+                        <span class="hotel-addr">116-37 Asahimachi, Naha, Okinawa 900-0029</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flight Details Section -->
+    <section class="container flight-section">
+        <h3 class="serif" style="margin-bottom: 20px; font-size: 1.2rem;">航班詳情 <span class="jp-text" style="display:inline;">フライト情報</span></h3>
+        
+        <!-- Outbound Flight VZ568 -->
+        <div class="flight-card">
+            <div class="flight-header">
+                <div>
+                    <span class="flight-no">VZ 568</span>
+                    <span style="font-size:0.8rem; margin-left:10px; color:#666;">1月18日 (日)</span>
+                </div>
+                <!-- Status Removed -->
+            </div>
+            <div class="flight-body">
+                <div class="flight-port" style="text-align: left;">
+                    <div class="port-time">14:45</div>
+                    <div class="port-name">台北 <span class="port-terminal">T1</span></div>
+                </div>
+                <div class="flight-duration">
+                    <span class="flight-arrow">------</span>
+                    1h 25m
+                </div>
+                <div class="flight-port" style="text-align: right;">
+                    <div class="port-time">17:10</div>
+                    <div class="port-name">那覇 <span class="port-terminal">I</span></div>
+                </div>
+            </div>
+            <div class="flight-footer">
+                <div class="baggage-tag">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">luggage</span>
+                    隨身 7kg (56*36*23cm)
+                </div>
+                <div class="baggage-tag baggage-grey">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">block</span>
+                    無託運
+                </div>
+            </div>
+        </div>
+
+        <!-- Inbound Flight VZ569 -->
+        <div class="flight-card">
+            <div class="flight-header">
+                <div>
+                    <span class="flight-no">VZ 569</span>
+                    <span style="font-size:0.8rem; margin-left:10px; color:#666;">1月21日 (三)</span>
+                </div>
+                <!-- Status Removed -->
+            </div>
+            <div class="flight-body">
+                <div class="flight-port" style="text-align: left;">
+                    <div class="port-time">18:10</div>
+                    <div class="port-name">那覇 <span class="port-terminal">I</span></div>
+                </div>
+                <div class="flight-duration">
+                    <span class="flight-arrow">------</span>
+                    1h 40m
+                </div>
+                <div class="flight-port" style="text-align: right;">
+                    <div class="port-time">18:50</div>
+                    <div class="port-name">台北 <span class="port-terminal">T1</span></div>
+                </div>
+            </div>
+            <div class="flight-footer">
+                <div class="baggage-tag">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">luggage</span>
+                    隨身 7kg
+                </div>
+                <div class="baggage-tag baggage-grey">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">block</span>
+                    無託運
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Day 1 -->
+    <section id="day1" class="container day-section">
+        <div class="day-header">
+            <h2>Day 1<span class="jp-text">那覇到着、南国の夜</span></h2>
+            <span class="day-theme">抵達那霸，初探南國夜晚的微風</span>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">flight_land</span>
+                <h3 class="spot-title">抵達那霸空港</h3>
+                <span class="spot-time">17:05</span>
+            </div>
+            <p>下午五點，飛機降落在被海洋包圍的跑道上。冬天的沖繩氣溫舒適宜人。出關後，搭乘單軌電車前往「旭橋站」。</p>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">hotel</span>
+                <h3 class="spot-title">那霸東急 REI 飯店</h3>
+                <span class="spot-time">18:20</span>
+            </div>
+            <p>今晚的落腳處與車站步行即達。大廳位於高樓層，視野開闊。</p>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">directions_walk</span>
+                <h3 class="spot-title">國際通夜間散策</h3>
+                <span class="spot-time">19:00</span>
+          </div>
+            <p>夜幕下的國際通依舊熱鬧明亮。  不用設定目的地，隨意走進一家居酒屋，或是慢慢逛逛小店。  第一晚，只要讓身體慢慢習慣這裡的空氣就好</p>
+        </div>
+    </section>
+
+    <!-- Day 2 -->
+    <section id="day2" class="container day-section">
+        <div class="day-header">
+            <h2>Day 2<span class="jp-text">中部、ショッピング</span></h2>
+            <span class="day-theme">壽司、美國村、PARCO 購物馬拉松</span>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">set_meal</span>
+                <h3 class="spot-title">グルメ回転寿司市場 美浜店</h3>
+                <span class="spot-time">11:00</span>
+            </div>
+            <p>睡飽後從那霸出發。趁著剛開店前往美浜店排隊，大吃一頓新鮮的沖繩海鮮壽司，為今天儲存戰鬥力。</p>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">coffee</span>
+                <h3 class="spot-title">美國村與海景咖啡</h3>
+                <span class="spot-time">12:30</span>
+            </div>
+            <p>在 Depot Island 散步、拍照。找一家濱海的咖啡廳，買杯咖啡看海。因為沒有時間壓力，若喜歡這裡的氣氛，多待一會也無妨。</p>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">shopping_bag</span>
+                <h3 class="spot-title">PARCO CITY 購物與夕陽</h3>
+                <span class="spot-time">15:00</span>
+            </div>
+            <p>沖繩最好逛的商場。晚餐建議直接在「餐廳街」用餐，挑選一家海景座位的餐廳（如敘敘苑燒肉、各式日料），看著夕陽享用晚餐。</p>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">directions_car</span>
+                <h3 class="spot-title">返回那霸</h3>
+                <span class="spot-time">After 20:00</span>
+            </div>
+            <p>避開 18:00 的下班尖峰，建議逛到八點後再開車回飯店，此時路況最為順暢。</p>
+        </div>
+    </section>
+
+    <!-- Day 3 -->
+    <section id="day3" class="container day-section">
+        <div class="day-header">
+            <h2>Day 3<span class="jp-text">南部絶景、コストコ</span></h2>
+            <span class="day-theme">絕景兜風、聖地與 Costco </span>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">landscape</span>
+                <h3 class="spot-title">Nirai Kanai 橋與齋場御嶽</h3>
+                <span class="spot-time">10:50</span>
+            </div>
+            <p>導航設定「ニライカナイ橋」，享受海天一色中的絕美兜風。隨後前往世界遺產「齋場御嶽」，感受琉球王國最高的聖地能量。</p>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">lunch_dining</span>
+                <h3 class="spot-title">奧武島天婦羅</h3>
+                <span class="spot-time">12:45</span>
+            </div>
+            <p>開車過橋即達的貓咪之島。吃份現炸天婦羅或沖繩麵，簡單解決午餐，將時間留給下午。</p>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">waves</span>
+                <h3 class="spot-title">玉泉洞（沖繩世界）</h3>
+                <span class="spot-time">14:15</span>
+            </div>
+            <p>探索壯觀的鐘乳石洞。請注意時間，最晚 16:00 需離開此處，前往旁邊的 Costco。</p>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">shopping_cart</span>
+                <h3 class="spot-title">Costco 南城倉庫店</h3>
+                <span class="spot-time">16:15</span>
+            </div>
+            <p>就在玉泉洞附近。逛逛賣場，買點晚餐或伴手禮。<strong>注意：</strong>因即將還車，請勿購買無法現吃的冷凍冷藏品。建議 17:45 前離開返回那霸。</p>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">no_crash</span>
+                <h3 class="spot-title">加油與還車</h3>
+                <span class="spot-time">19:00</span>
+            </div>
+            <p>預留市區塞車緩衝時間，順利加油並歸還車輛，結束自駕行程。</p>
+        </div>
+    </section>
+
+    <!-- Day 4 -->
+    <section id="day4" class="container day-section">
+        <div class="day-header">
+            <h2>Day 4<span class="jp-text">旅の終わり、祈り</span></h2>
+            <span class="day-theme">最後的能量補給・機場返程</span>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">temple_buddhist</span>
+                <h3 class="spot-title">波上宮</h3>
+                <span class="spot-time">10:00</span>
+            </div>
+            <p>矗立在懸崖上的紅瓦神社，是那霸最著名的地標。在此參拜，祈求旅途平安與未來順利，並俯瞰波之上海灘的清澈藍色。</p>
+        </div>
+
+        <div class="spot-card">
+            <div class="spot-header">
+                <span class="material-symbols-outlined spot-icon">storefront</span>
+                <h3 class="spot-title">壺屋通與牧志市場</h3>
+                <span class="spot-time">12:00</span>
+            </div>
+            <p>最後的散步時光。若想購物，可於國際通後巷尋找質感選物；若想再看一次海，可搭接駁車前往「瀨長島」享用下午茶。15:30 準備前往機場。</p>
+        </div>
+    </section>
+
+    <!-- Curator Note -->
+    <div class="container">
+        <div class="curator-note">
+            <h3 class="note-title">顧問小提醒 <span class="jp-text" style="display:inline;">旅のヒント</span></h3>
+            
+            <div class="note-grid">
+                <div class="note-item">
+                    <span class="material-symbols-outlined" style="color:#555">tips_and_updates</span>
+                    <div>
+                        <strong>Day 3 時間控管</strong><br>
+                        <span style="font-size:0.9rem; color:#666">Costco 回那霸雖然距離近，但傍晚市區易塞車，請務必於 17:45 前離開南城。</span>
+                    </div>
+                </div>
+                
+                <div class="note-item">
+                    <span class="material-symbols-outlined" style="color:#555">shopping_bag</span>
+                    <div>
+                        <strong>購物注意</strong><br>
+                        <span style="font-size:0.9rem; color:#666">還車前請檢查是否有遺漏物品，Costco 購買的生鮮需考量保存問題。</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>祝 旅途愉快。<br><span class="jp-text">良い旅を。</span></p>
+    </footer>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#top" class="nav-item">
+            <span class="material-symbols-outlined">home</span>
+            <span class="nav-text">Intro</span>
+        </a>
+        <a href="#day1" class="nav-item">
+            <span class="material-symbols-outlined">looks_one</span>
+            <span class="nav-text">Day 1</span>
+        </a>
+        <a href="#day2" class="nav-item">
+            <span class="material-symbols-outlined">looks_two</span>
+            <span class="nav-text">Day 2</span>
+        </a>
+        <a href="#day3" class="nav-item">
+            <span class="material-symbols-outlined">looks_3</span>
+            <span class="nav-text">Day 3</span>
+        </a>
+        <a href="#day4" class="nav-item">
+            <span class="material-symbols-outlined">looks_4</span>
+            <span class="nav-text">Day 4</span>
+        </a>
+    </nav>
+
+    <script>
+        // Simple script to handle active state in navigation
+        const navItems = document.querySelectorAll('.nav-item');
+        
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+
+</body>
+</html>

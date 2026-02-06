@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建議售價計算器 - 簡約版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f4f1ee; /* MUJI 背景色 */
+            color: #333;
+        }
+
+        .muji-card {
+            background-color: #ffffff;
+            border: 1px solid #e0dbd5;
+            border-radius: 4px;
+        }
+
+        .muji-input {
+            border: 1px solid #ccc;
+            border-radius: 2px;
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .muji-input:focus {
+            border-color: #7f7f7f;
+        }
+
+        .price-display {
+            font-size: 3.5rem;
+            font-weight: 500;
+            color: #555;
+            line-height: 1.2;
+        }
+
+        .sub-result {
+            color: #888;
+            font-size: 0.95rem;
+        }
+
+        .edit-icon {
+            cursor: pointer;
+            color: #999;
+            transition: color 0.2s;
+        }
+
+        .edit-icon:hover {
+            color: #555;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        .hidden-element {
+            display: none;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-md muji-card p-8 shadow-sm">
+        <h1 class="text-xl font-medium mb-8 text-center tracking-widest text-gray-600">定價計算工具</h1>
+
+        <!-- 輸入區域 -->
+        <div class="space-y-6">
+            <div>
+                <label class="block mb-2 text-sm text-gray-500">欲到手價格 (NT$)</label>
+                <input type="number" id="targetPrice" placeholder="請輸入金額" class="muji-input" oninput="calculate()">
+            </div>
+
+            <!-- 手續費區塊 -->
+            <div class="relative">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-sm text-gray-500">平台手續費</label>
+                    <button onclick="toggleFeeEdit()" class="edit-icon" title="修改手續費">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                    </button>
+                </div>
+                
+                <!-- 顯示狀態 -->
+                <div id="feeDisplay" class="text-gray-700 font-medium py-2 px-1">
+                    <span id="currentFeeText">15</span>%
+                </div>
+                
+                <!-- 編輯狀態 (隱藏) -->
+                <div id="feeEditWrapper" class="hidden-element">
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="feeRate" value="15" class="muji-input" oninput="calculate()">
+                        <button onclick="toggleFeeEdit()" class="text-xs text-gray-400 whitespace-nowrap px-2">完成</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 結果顯示區域 -->
+        <div class="mt-12 pt-8 border-t border-gray-100 text-center">
+            <div class="text-xs tracking-widest text-gray-400 mb-2 font-medium uppercase">Suggested Price</div>
+            <div id="suggestedPrice" class="price-display mb-4">--</div>
+            
+            <div class="space-y-1 mt-4">
+                <div class="sub-result">
+                    <span>原始計算結果 (進位)：</span>
+                    <span id="rawPriceCeil">--</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-10 text-center text-xs text-gray-400">
+            計算規則：計算後無條件進位，建議售價尾數必為 0 或 5。
+        </div>
+    </div>
+
+    <script>
+        function toggleFeeEdit() {
+            const display = document.getElementById('feeDisplay');
+            const edit = document.getElementById('feeEditWrapper');
+            
+            if (display.classList.contains('hidden-element')) {
+                display.classList.remove('hidden-element');
+                edit.classList.add('hidden-element');
+                // 更新顯示文字
+                document.getElementById('currentFeeText').innerText = document.getElementById('feeRate').value;
+            } else {
+                display.classList.add('hidden-element');
+                edit.classList.remove('hidden-element');
+                document.getElementById('feeRate').focus();
+            }
+        }
+
+        function calculate() {
+            const targetPrice = parseFloat(document.getElementById('targetPrice').value);
+            const feeRateInput = parseFloat(document.getElementById('feeRate').value);
+            
+            const suggestedEl = document.getElementById('suggestedPrice');
+            const rawCeilEl = document.getElementById('rawPriceCeil');
+            
+            // 更新即時文字 (如果是編輯中)
+            document.getElementById('currentFeeText').innerText = isNaN(feeRateInput) ? 0 : feeRateInput;
+
+            if (isNaN(targetPrice) || targetPrice <= 0 || isNaN(feeRateInput)) {
+                suggestedEl.innerText = "--";
+                rawCeilEl.innerText = "--";
+                return;
+            }
+
+            // 1. 計算原始價格
+            const feeMultiplier = (100 - feeRateInput) / 100;
+            const rawPrice = targetPrice / feeMultiplier;
+
+            // 2. 無條件進位到整數 (這是你要直接顯示的「原始結果」)
+            const ceilPrice = Math.ceil(rawPrice);
+
+            // 3. 建議價格：個位數為 0 或 5，且必須大於等於 ceilPrice
+            const suggestedPrice = Math.ceil(ceilPrice / 5) * 5;
+
+            // 顯示結果
+            suggestedEl.innerText = suggestedPrice.toLocaleString();
+            rawCeilEl.innerText = ceilPrice.toLocaleString();
+        }
+    </script>
+</body>
+</html>

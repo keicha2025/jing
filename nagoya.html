@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>關西・名古屋 7日漫遊</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Muji Color Palette */
+            --bg-color: #F7F7F2;      /* Rice Paper */
+            --card-bg: #FFFFFF;       /* White */
+            --text-main: #444444;     /* Charcoal */
+            --text-sub: #7a7a7a;      /* Light Grey */
+            --accent: #7F0019;        /* Muji Red (Sparse use) */
+            --line-color: #D3D3D3;    /* Light Border */
+            --craft-color: #A69478;   /* Cardboard/Craft */
+            --shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Noto Sans TC', sans-serif;
+            margin: 0;
+            padding: 0;
+            font-weight: 300;
+            line-height: 1.6;
+            padding-bottom: 60px; /* Space for footer */
+        }
+
+        /* Container for Mobile First */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--bg-color);
+            padding: 30px 20px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--line-color);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 500;
+            margin: 0 0 5px 0;
+            letter-spacing: 0.05em;
+        }
+
+        .date-range {
+            font-size: 14px;
+            color: var(--craft-color);
+            font-family: monospace;
+        }
+
+        /* Sticky Nav */
+        .sticky-nav {
+            position: sticky;
+            top: 0;
+            background: rgba(247, 247, 242, 0.95);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            border-bottom: 1px solid var(--line-color);
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 10px 0;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .sticky-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-links {
+            display: flex;
+            padding: 0 20px;
+            gap: 15px;
+        }
+
+        .nav-item {
+            display: inline-block;
+            padding: 6px 14px;
+            border: 1px solid var(--line-color);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-sub);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            background: var(--card-bg);
+        }
+
+        .nav-item.active {
+            background-color: var(--text-main);
+            color: #fff;
+            border-color: var(--text-main);
+        }
+
+        /* Section Styling */
+        section {
+            padding: 30px 0;
+            border-bottom: 1px dashed var(--line-color);
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--craft-color);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background-color: var(--accent);
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        /* Accommodation Card */
+        .hotel-card {
+            background: var(--card-bg);
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow);
+            border: 1px solid transparent;
+        }
+
+        .hotel-city {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .hotel-tag {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background-color: #eee;
+            color: #666;
+        }
+        .hotel-tag.booked {
+            background-color: #E8F0FE;
+            color: #1A73E8;
+        }
+
+        .hotel-info {
+            font-size: 14px;
+            color: var(--text-sub);
+            margin-top: 8px;
+        }
+        .hotel-price {
+            font-family: monospace;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        /* Itinerary Timeline */
+        .day-block {
+            margin-bottom: 40px;
+            scroll-margin-top: 80px; /* For sticky nav offset */
+        }
+
+        .day-header {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 15px;
+        }
+
+        .day-num {
+            font-size: 28px;
+            font-weight: 300;
+            color: var(--text-main);
+            margin-right: 10px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .day-date {
+            font-size: 13px;
+            color: var(--craft-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .day-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            padding-left: 2px;
+        }
+
+        /* Content Layout - Simplified without images */
+        .day-content {
+            background: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            padding-top: 5px; /* Slight padding since image is gone */
+        }
+
+        .timeline-list {
+            list-style: none;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .timeline-item::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--craft-color);
+            font-size: 18px;
+            line-height: 1.4;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, transparent 0%, transparent 100%);
+            border-bottom: 1px solid var(--craft-color);
+            padding-bottom: 1px;
+            font-weight: 400;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-sub);
+            font-size: 12px;
+            letter-spacing: 0.1em;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <p class="date-range">2025.03.19 - 03.25</p>
+        <h1>關西・名古屋 7Days</h1>
+    </header>
+
+    <nav class="sticky-nav">
+        <div class="nav-links">
+            <a href="#accommodation" class="nav-item">住宿</a>
+            <a href="#day1" class="nav-item">D1 大阪</a>
+            <a href="#day2" class="nav-item">D2 梅田</a>
+            <a href="#day3" class="nav-item">D3 奈良</a>
+            <a href="#day4" class="nav-item">D4 移動</a>
+            <a href="#day5" class="nav-item">D5 伊勢</a>
+            <a href="#day6" class="nav-item">D6 犬山</a>
+            <a href="#day7" class="nav-item">D7 歸途</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- 住宿資訊 -->
+        <section id="accommodation">
+            <h2>住宿資訊</h2>
+            
+            <div class="hotel-card">
+                <div class="hotel-city">
+                    大阪 (淀屋橋)
+                    <span class="hotel-tag booked">已預定</span>
+                </div>
+                <div class="hotel-info">
+                    <strong>ホテル京阪 淀屋橋</strong><br>
+                    Hotel Keihan Yodoyabashi<br>
+                    3/19 - 3/22 (3晚)<br>
+                </div>
+            </div>
+
+            <div class="hotel-card">
+                <div class="hotel-city">
+                    名古屋 (站前)
+                    <span class="hotel-tag booked">已預定</span>
+                </div>
+                <div class="hotel-info">
+                    <strong>ヴィアイン名古屋駅前椿町</strong><br>
+                    Via Inn Nagoya Station Tsubakicho<br>
+                    3/22 - 3/25 (3晚)<br>
+                    預算: $2,800/晚 (兩人)
+                </div>
+            </div>
+        </section>
+
+        <!-- 行程內容 -->
+        <section style="border: none;">
+            
+            <!-- Day 1 -->
+            <article class="day-block" id="day1">
+                <div class="day-header">
+                    <span class="day-num">01</span>
+                    <span class="day-date">3/19 THU</span>
+                </div>
+                <div class="day-title">抵達與經典滋味</div>
+                
+                <div class="day-content">
+                    <ul class="timeline-list">
+                        <li class="timeline-item">13:00 抵達關西機場</li>
+                        <li class="timeline-item">前往飯店辦理入住 (淀屋橋)</li>
+                        <li class="timeline-item"><span class="highlight">Gusto 難波一番大樓店</span> (2F)</li>
+                        <li class="timeline-item">必吃：玉米披薩 (Mayo Corn Pizza)</li>
+                        <li class="timeline-item">晚上道頓堀散步</li>
+                    </ul>
+                </div>
+            </article>
+
+            <!-- Day 2 -->
+            <article class="day-block" id="day2">
+                <div class="day-header">
+                    <span class="day-num">02</span>
+                    <span class="day-date">3/20 FRI</span>
+                </div>
+                <div class="day-title">城市南北漫遊</div>
+                
+                <div class="day-content">
+                    <ul class="timeline-list">
+                        <li class="timeline-item">上午：梅田 (Grand Front / 藍天大廈)</li>
+                        <li class="timeline-item">下午：難波、心齋橋、美國村</li>
+                        <li class="timeline-item">晚餐：大阪燒或串炸</li>
+                    </ul>
+                </div>
+            </article>
+
+            <!-- Day 3 -->
+            <article class="day-block" id="day3">
+                <div class="day-header">
+                    <span class="day-num">03</span>
+                    <span class="day-date">3/21 SAT</span>
+                </div>
+                <div class="day-title">奈良一日遊</div>
+                
+                <div class="day-content">
+                    <ul class="timeline-list">
+                        <li class="timeline-item">搭乘近鐵前往奈良</li>
+                        <li class="timeline-item"><span class="highlight">奈良公園</span> 與鹿共處</li>
+                        <li class="timeline-item">參拜東大寺大佛殿</li>
+                        <li class="timeline-item">傍晚返回大阪</li>
+                    </ul>
+                </div>
+            </article>
+
+            <!-- Day 4 -->
+            <article class="day-block" id="day4">
+                <div class="day-header">
+                    <span class="day-num">04</span>
+                    <span class="day-date">3/22 SUN</span>
+                </div>
+                <div class="day-title">京都散策與移動</div>
+                
+                <div class="day-content">
+                    <ul class="timeline-list">
+                        <li class="timeline-item">上午：京都錦市場 (玉子燒、甜甜圈)</li>
+                        <li class="timeline-item">下午：河原町逛街 + AEON Mall</li>
+                        <li class="timeline-item"><span class="highlight">傍晚移動至名古屋</span></li>
+                        <li class="timeline-item">入住 Via Inn 名古屋駅前椿町</li>
+                    </ul>
+                </div>
+            </article>
+
+            <!-- Day 5 -->
+            <article class="day-block" id="day5">
+                <div class="day-header">
+                    <span class="day-num">05</span>
+                    <span class="day-date">3/23 MON</span>
+                </div>
+                <div class="day-title">伊勢神宮一日遊</div>
+                
+                <div class="day-content">
+                    <ul class="timeline-list">
+                        <li class="timeline-item">搭乘近鐵特急 (約1.5小時)</li>
+                        <li class="timeline-item"><span class="highlight">伊勢神宮</span> (外宮 & 內宮)</li>
+                        <li class="timeline-item">午餐：托福橫丁 (おかげ横丁) 吃赤福、伊勢烏龍麵</li>
+                        <li class="timeline-item">感受日本心靈故鄉的寧靜</li>
+                    </ul>
+                </div>
+            </article>
+
+            <!-- Day 6 -->
+            <article class="day-block" id="day6">
+                <div class="day-header">
+                    <span class="day-num">06</span>
+                    <span class="day-date">3/24 TUE</span>
+                </div>
+                <div class="day-title">犬山城下町散策</div>
+                
+                <div class="day-content">
+                    <ul class="timeline-list">
+                        <li class="timeline-item">搭乘名鐵前往犬山 (約30分)</li>
+                        <li class="timeline-item"><span class="highlight">國寶犬山城</span> 登天守閣眺望</li>
+                        <li class="timeline-item">三光稻荷神社 (粉紅愛心繪馬)</li>
+                        <li class="timeline-item">城下町邊走邊吃 (醬油糰子、五平餅)</li>
+                    </ul>
+                </div>
+            </article>
+
+            <!-- Day 7 -->
+            <article class="day-block" id="day7">
+                <div class="day-header">
+                    <span class="day-num">07</span>
+                    <span class="day-date">3/25 WED</span>
+                </div>
+                <div class="day-title">歸途</div>
+                
+                <div class="day-content">
+                    <ul class="timeline-list">
+                        <li class="timeline-item">09:00 前往中部國際機場</li>
+                        <li class="timeline-item">Flight of Dreams / 觀景台</li>
+                        <li class="timeline-item">13:30 飛機起飛返家</li>
+                    </ul>
+                </div>
+            </article>
+
+        </section>
+    </div>
+
+    <footer>
+        <p>MUJI STYLE TRAVEL</p>
+        <p>HAVE A NICE TRIP</p>
+    </footer>
+
+    <script>
+        // Simple script to highlight active nav item on scroll
+        const sections = document.querySelectorAll('article, section#accommodation');
+        const navLi = document.querySelectorAll('.nav-item');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= (sectionTop - 120)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLi.forEach(a => {
+                a.classList.remove('active');
+                if (a.getAttribute('href').includes(current)) {
+                    a.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+/* Winter in the South - Design Tokens */
+:root {
+    /* MUJI Palette */
+    --bg-color: #F4F4F0;       /* 整體背景：米白 */
+    --card-bg: #FFFFFF;        /* 卡片背景：純白 */
+    --text-primary: #2D2D2D;   /* 深灰黑 */
+    --text-secondary: #666666; /* 中灰 */
+    --accent-color: #8E403A;   /* 赭紅（重點色） */
+    --nav-bg: rgba(255, 255, 255, 0.95);
+    --border-color: #E5E5E5;
+    
+    /* Font Families */
+    --font-heading: 'Noto Serif TC', 'Noto Serif JP', serif;
+    --font-body: 'Noto Sans TC', 'Noto Sans JP', sans-serif;
+}

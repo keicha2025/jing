@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>極簡播放器</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div class="container">
+        <input type="file" id="fileInput" accept="video/*" hidden>
+        <button id="selectBtn" class="select-btn">選擇影片檔案</button>
+        
+        <div class="video-player" id="playerContainer" style="display: none;">
+            <video id="mainVideo" playsinline></video>
+            <div class="controls-overlay" id="overlay">
+                <div class="feedback" id="feedback"></div>
+                <div class="progress-area">
+                    <div class="progress-bar-container" id="progressContainer">
+                        <div class="progress-filled" id="progressFilled"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>

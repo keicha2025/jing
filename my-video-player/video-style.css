@@ -1,0 +1,66 @@
+:root { --accent: #fff; }
+body, html { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; font-family: sans-serif; }
+
+.upload-ui { display: flex; height: 100vh; justify-content: center; align-items: center; }
+.upload-ui button { padding: 15px 30px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; }
+
+/* 初始小視窗樣式 */
+.mini-mode .player-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 200px;
+    aspect-ratio: 16/9;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    z-index: 100;
+}
+
+/* 全螢幕樣式 */
+.fullscreen-mode .player-container {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    border-radius: 0;
+}
+
+video { width: 100%; height: 100%; background: #000; object-fit: contain; }
+
+.overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
+
+.center-btn {
+    width: 60px; height: 60px; background: rgba(255,255,255,0.2);
+    border-radius: 50%; display: flex; justify-content: center; align-items: center;
+    color: white; font-size: 24px; backdrop-filter: blur(5px);
+}
+
+.bottom-controls { position: absolute; bottom: 30px; width: 90%; }
+.progress-bar-container { width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; }
+.progress-filled { height: 100%; background: var(--accent); width: 0%; border-radius: 2px; }
+
+/* 無痕保護遮罩 */
+.privacy-mask {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: #000; color: white; display: none;
+    justify-content: center; align-items: center; z-index: 1000;
+}
+
+.feedback { position: absolute; top: 20%; color: white; font-size: 18px; opacity: 0; transition: 0.3s; }
+/* 讓進度條的感應區域變大，即使視覺上很細也很好按 */
+.progress-area {
+    padding: 20px 0;
+    cursor: pointer;
+}
+
+/* 啟動拖動時的視覺反饋 */
+.progress-bar-container.active {
+    height: 10px;
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.progress-bar-container.active .progress-filled {
+    background: #007AFF; /* 拖動時變色，代表已進入調整模式 */
+}
