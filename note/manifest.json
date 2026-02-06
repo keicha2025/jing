@@ -7,7 +7,7 @@
     "theme_color": "#FDFCFB",
     "icons": [
         {
-            "src": "./note.png",
+            "src": "./note_appicon.png",
             "sizes": "1024x1024",
             "type": "image/png"
         }

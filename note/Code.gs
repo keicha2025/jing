@@ -22,14 +22,11 @@ function doPost(e) {
 
   try {
     // 1. CORS Hack: Parse text/plain body as JSON
-    // When using fetch with 'application/json', browser sends OPTIONS preflight which GAS fails on.
-    // We send as default (text/plain), so e.postData.contents contains the stringified JSON.
     let params;
     try {
       params = JSON.parse(e.postData.contents);
     } catch (parseError) {
-      // Fallback if needed, or error out
-      params = e.parameter; // For simple form posts
+      params = e.parameter;
     }
     
     const action = params.action;
@@ -54,11 +51,14 @@ function doPost(e) {
       case 'reorder_notes':
         result = handleReorderNotes(params);
         break;
+      case 'delete_note':
+        result = handleDeleteNote(params);
+        break;
       default:
         throw new Error("Invalid Action");
     }
 
-    // 2. CORS Response: Must use setMimeType(JSON)
+    // 2. CORS Response
     return ContentService.createTextOutput(JSON.stringify(result))
       .setMimeType(ContentService.MimeType.JSON);
 
@@ -77,11 +77,14 @@ function doPost(e) {
 function handleLogin(params) {
   const masterPwd = SCRIPT_PROP.getProperty("MASTER_PWD");
   if (String(params.password) !== String(masterPwd)) {
-    return { success: false, message: "Incorrect Password" };
+    return { success: false, message: "密碼錯誤" };
   }
 
   const token = Utilities.getUuid();
   const tokenSheet = SS.getSheetByName("_Meta_Tokens");
+  // Simple check if sheet exists, if not run initSheet logic briefly or fail gracefully
+  if(!tokenSheet) return { success: false, error: "System not initialized. Run setup.gs" };
+  
   tokenSheet.appendRow([token, new Date(), new Date()]);
 
   return { success: true, token: token };
@@ -97,11 +100,11 @@ function handleAuthCheck(params) {
 function validateToken(token) {
   if (!token) return false;
   const tokenSheet = SS.getSheetByName("_Meta_Tokens");
+  if(!tokenSheet) return false;
+  
   const data = tokenSheet.getDataRange().getValues();
-  // Simple scan - for production with huge user base, use ID search logic
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] === token) {
-      // Update last used time
       tokenSheet.getRange(i + 1, 3).setValue(new Date());
       return true;
     }
@@ -115,21 +118,43 @@ function handleGetNotes(params) {
   if (!validateToken(params.token)) return { success: false, error: "Unauthorized" };
 
   const sheet = SS.getSheetByName("Notes");
+  if(!sheet) return { success: true, notes: [] };
+
   const data = sheet.getDataRange().getValues();
-  // Headers: uuid, order, content, tags, updated_at
+  // Headers: uuid, order, title, content, tags, updated_at
+  // (Assuming migration ran or new sheet created)
   
+  // Dynamic column check:
+  // If only 5 cols, it's old schema. If 6, new.
+  // Ideally setup.gs migration handles this, but let's be safe.
+  const hasTitle = (data[0] && data[0][2] === 'title');
+
   const notes = [];
   for (let i = 1; i < data.length; i++) {
-    notes.push({
-      uuid: data[i][0],
-      order: Number(data[i][1]),
-      content: data[i][2],
-      tags: data[i][3],
-      updated_at: data[i][4]
-    });
+    let note = {};
+    if (hasTitle) {
+      note = {
+        uuid: data[i][0],
+        order: Number(data[i][1]),
+        title: data[i][2],
+        content: data[i][3],
+        tags: data[i][4],
+        updated_at: data[i][5]
+      };
+    } else {
+      // Legacy mapping fallback
+      note = {
+        uuid: data[i][0],
+        order: Number(data[i][1]),
+        title: "",
+        content: data[i][2],
+        tags: data[i][3],
+        updated_at: data[i][4]
+      };
+    }
+    notes.push(note);
   }
 
-  // Sort by order
   notes.sort((a, b) => a.order - b.order);
 
   return { success: true, notes: notes };
@@ -142,10 +167,9 @@ function handleAddNote(params) {
   const uuid = Utilities.getUuid();
   const lastRow = sheet.getLastRow();
   
-  // New order = max order + 1
-  // If empty (only header), order start at 1
   let newOrder = 1;
   if (lastRow > 1) {
+    // Order col is always index 2 (column B)
     const orders = sheet.getRange(2, 2, lastRow - 1, 1).getValues().flat();
     const maxOrder = Math.max(...orders);
     newOrder = maxOrder + 1;
@@ -153,10 +177,11 @@ function handleAddNote(params) {
 
   const tags = JSON.stringify(params.tags || []);
   const now = new Date();
+  
+  // uuid, order, title, content, tags, updated_at
+  sheet.appendRow([uuid, newOrder, params.title || "", params.content, tags, now]);
 
-  sheet.appendRow([uuid, newOrder, params.content, tags, now]);
-
-  return { success: true, note: { uuid, order: newOrder, content: params.content, tags: params.tags, updated_at: now } };
+  return { success: true, note: { uuid, order: newOrder, title: params.title || "", content: params.content, tags: params.tags, updated_at: now } };
 }
 
 function handleUpdateNote(params) {
@@ -164,47 +189,46 @@ function handleUpdateNote(params) {
 
   const sheet = SS.getSheetByName("Notes");
   const data = sheet.getDataRange().getValues();
-  const rowIndex = data.findIndex(row => row[0] === params.uuid); // 0-indexed in array
+  const rowIndex = data.findIndex(row => row[0] === params.uuid);
 
   if (rowIndex === -1) return { success: false, error: "Note not found" };
 
-  const rowNum = rowIndex + 1; // 1-indexed for Sheet
+  const rowNum = rowIndex + 1;
   const now = new Date();
   
-  // uuid, order, content, tags, updated_at
-  // We only update content, tags, updated_at
-  sheet.getRange(rowNum, 3).setValue(params.content);
-  sheet.getRange(rowNum, 4).setValue(JSON.stringify(params.tags || []));
-  sheet.getRange(rowNum, 5).setValue(now);
+  // uuid(1), order(2), title(3), content(4), tags(5), updated_at(6)
+  sheet.getRange(rowNum, 3).setValue(params.title || "");
+  sheet.getRange(rowNum, 4).setValue(params.content);
+  sheet.getRange(rowNum, 5).setValue(JSON.stringify(params.tags || []));
+  sheet.getRange(rowNum, 6).setValue(now);
 
   return { success: true, updated_at: now };
+}
+
+function handleDeleteNote(params) {
+  if (!validateToken(params.token)) return { success: false, error: "Unauthorized" };
+
+  const sheet = SS.getSheetByName("Notes");
+  const data = sheet.getDataRange().getValues();
+  const rowIndex = data.findIndex(row => row[0] === params.uuid);
+
+  if (rowIndex === -1) return { success: false, error: "Note not found" };
+
+  // Delete row (rowIndex + 1)
+  sheet.deleteRow(rowIndex + 1);
+
+  return { success: true };
 }
 
 function handleReorderNotes(params) {
   if (!validateToken(params.token)) return { success: false, error: "Unauthorized" };
   
-  const orderedUuids = params.ordered_uuids; // Array of UUIDs in new order
+  const orderedUuids = params.ordered_uuids;
   if (!orderedUuids || orderedUuids.length === 0) return { success: false };
 
   const sheet = SS.getSheetByName("Notes");
   const data = sheet.getDataRange().getValues();
   
-  // Map UUID to Row Index
-  const uuidMap = {};
-  for (let i = 1; i < data.length; i++) {
-    uuidMap[data[i][0]] = i + 1;
-  }
-
-  // Update orders
-  // To avoid writing cell by cell, we can read all orders, update array, write back
-  // But here we need to update potentially sporadic rows. 
-  // Optimization: Read all data, update order column in memory, write back entire order column.
-  
-  const updates = [];
-  // data[i][0] is UUID, [i][1] is order.
-  // We want to rewrite the order column (Column B).
-  
-  // Create a map for O(1) lookup of new order
   const newOrderMap = {};
   orderedUuids.forEach((uuid, index) => {
     newOrderMap[uuid] = index + 1;
@@ -216,7 +240,6 @@ function handleReorderNotes(params) {
     if (newOrderMap[uuid]) {
       orders.push([newOrderMap[uuid]]);
     } else {
-      // Keep existing order if not in list (shouldn't happen ideally)
       orders.push([data[i][1]]);
     }
   }
