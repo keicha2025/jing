@@ -467,8 +467,8 @@
                         <div class="flex items-start gap-4">
                             <p class="text-base text-gray-400 leading-relaxed select-text cursor-auto flex-grow">${escapeHtml(note.content)}</p>
                             <div class="flex items-center gap-1 shrink-0">
-                                <button onclick="copyToClipboard('${escapeHtml(String(note.content || '').replace(/'/g, "\\'"))}')" class="w-9 h-9 flex items-center justify-center rounded-full text-secondary bg-gray-50 hover:bg-accent tap-feedback">
-                                    <span class="material-symbols-rounded text-[18px]">content_copy</span>
+                                <button id="copy-btn-${note.uuid}" onclick="copyToClipboard('${escapeHtml(String(note.content || '').replace(/'/g, "\\'"))}', '${note.uuid}')" class="w-9 h-9 flex items-center justify-center rounded-full text-secondary bg-gray-50 hover:bg-accent tap-feedback">
+                                    <span class="material-symbols-rounded text-[18px] transition-all duration-200">content_copy</span>
                                 </button>
                                 <button onclick="toggleEditMode('${note.uuid}', true)" class="w-9 h-9 flex items-center justify-center rounded-full text-secondary bg-gray-50 hover:bg-accent tap-feedback">
                                     <span class="material-symbols-rounded text-[18px]">edit</span>
@@ -718,9 +718,22 @@
         }
 
         // --- 工具 ---
-        function copyToClipboard(text) {
+        function copyToClipboard(text, uuid) {
             navigator.clipboard.writeText(text).then(() => {
-                showToast("內容已複製", "content_copy");
+                // Micro-interaction: Change icon from copy to check
+                const btn = document.getElementById(`copy-btn-${uuid}`);
+                if (!btn) return;
+
+                const icon = btn.querySelector('.material-symbols-rounded');
+                if (!icon) return;
+
+                // Change to check icon
+                icon.textContent = 'check';
+
+                // Revert back after 1.5s
+                setTimeout(() => {
+                    icon.textContent = 'content_copy';
+                }, 1500);
             });
         }
 
