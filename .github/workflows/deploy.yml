@@ -41,17 +41,20 @@ jobs:
         run: npm install
         working-directory: preview
       - name: Build
-        run: npm run build
+        run: |
+          npm run build
+          # Create a subdirectory called 'preview' inside dist and move contents into it
+          # to match the desired URL structure https://.../jing/preview/
+          mkdir -p dist_final/preview
+          cp -r dist/* dist_final/preview/
         working-directory: preview
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload the entire dist directory, but we want it to be under /preview in the final URL
-          # Note: If base is /jing/preview/, Vite builds with that path. 
-          # We upload the dist folder which will be served at the root of the domain.
-          path: './preview/dist'
+          # Upload from dist_final so that the preview folder exists at the root
+          path: './preview/dist_final'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
