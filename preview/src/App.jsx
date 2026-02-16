@@ -250,7 +250,10 @@ const App = () => {
                     <Trash2 size={18} />
                     <span className="text-[10px] font-bold uppercase tracking-widest hidden sm:inline">清除快取</span>
                 </button>
-                <span className="font-bold text-base tracking-tight opacity-70">Personal Audio Player</span>
+                <div className="flex flex-col">
+                    <span className="font-bold text-base tracking-tight opacity-70 leading-none">Personal Audio Player</span>
+                    <span className="text-[8px] font-bold opacity-30 mt-1 uppercase tracking-[0.2em]">Version 1.1.0</span>
+                </div>
                 <div className="flex items-center gap-2">
                     <button onClick={() => setShowPlaylist(true)} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition-all">
                         <List size={20} />
