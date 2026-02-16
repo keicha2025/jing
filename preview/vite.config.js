@@ -7,7 +7,7 @@ export default defineConfig({
         react(),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+            includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'favicon.svg'],
             manifest: {
                 name: 'Personal Audio Player',
                 short_name: 'AudioPlayer',
@@ -18,15 +18,26 @@ export default defineConfig({
                 background_color: '#171717',
                 icons: [
                     {
-                        src: 'https://raw.githubusercontent.com/keicha2025/jing/refs/heads/main/preview/appicon.png',
+                        src: 'pwa-192x192.png',
+                        sizes: '192x192',
+                        type: 'image/png'
+                    },
+                    {
+                        src: 'pwa-512x512.png',
+                        sizes: '512x512',
+                        type: 'image/png'
+                    },
+                    {
+                        src: 'pwa-512x512.png',
                         sizes: '512x512',
                         type: 'image/png',
                         purpose: 'any maskable'
                     },
                     {
-                        src: 'https://raw.githubusercontent.com/keicha2025/jing/refs/heads/main/preview/appicon.png',
-                        sizes: '192x192',
-                        type: 'image/png'
+                        src: 'favicon.svg',
+                        sizes: 'any',
+                        type: 'image/svg+xml',
+                        purpose: 'any'
                     }
                 ]
             }
