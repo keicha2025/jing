@@ -237,7 +237,7 @@ const App = () => {
     const currentTrack = currentTrackIndex !== null ? files[currentTrackIndex] : null;
 
     return (
-        <div className="min-h-screen bg-neutral-900 text-white font-sans selection:bg-indigo-500 overflow-hidden flex flex-col">
+        <div className="min-h-screen bg-neutral-900 text-white font-sans selection:bg-indigo-500 overflow-y-auto flex flex-col relative">
             {/* Dynamic Background Gradients */}
             <div className="fixed inset-0 z-0 opacity-20 pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600 rounded-full blur-[120px] animate-pulse"></div>
