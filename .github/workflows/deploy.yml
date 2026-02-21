@@ -54,6 +54,7 @@ jobs:
           # Copy static projects and root html files
           cp -r note dist_final/ || true
           cp -r travel-planner dist_final/ || true
+          cp -r nightwhisper dist_final/ || true
           cp *.html dist_final/ || true
           
           # Ensure an index.html exists at the very root
