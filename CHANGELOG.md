@@ -21,3 +21,15 @@
 優化行動裝直橫向顯示體驗，解鎖橫向模式下的垂直捲動功能，確保在螢幕高度不足時仍能操作完整介面。
 
 建立基於 Vite 的 React 音檔播放器，並實作高效大按鈕佈局。新增 3 秒快進快退、多段變速功能，並針對行動裝置優化版面結構。新增 IndexedDB 持久化儲存功能，讓音檔在重新整理後依然存在，並提供清除快取按鈕。配置 GitHub Actions 實現自動化 CI/CD 部署。新增版本標記 v1.1.0 並觸發自動化建置。應用完美的正方形圖示（包含 SVG, ICO, PNG），修復 PWA 在 Chrome 上的圖示加載問題。
+
+## [2026-02-21]
+### Added
+- Created `index.html` at the repository root as a project index homepage.
+- Scanned all subdirectories and standalone HTML files to discover 9 web projects.
+- Each project card includes title, description, relative link, and a Lucide icon.
+- Built-in search/filter functionality for quick project lookup.
+- Uses Tailwind CSS CDN, Lucide icons, and Inter + Noto Sans TC fonts.
+
+**Affected files:** `index.html`
+
+在倉庫根目錄建立專案索引首頁，自動掃描並列出 9 個子專案入口（DeepNight、note、音檔播放器、V-Player、Travel Planner、名古屋行程、沖繩兩版行程、售價計算器），含搜尋篩選功能。
