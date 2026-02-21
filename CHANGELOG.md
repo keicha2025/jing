@@ -37,6 +37,7 @@
 ## [2026-02-21] NightWhisper Rename
 ### Changed
 - Renamed "DeepNight 睡眠追蹤" to "NightWhisper 夜語" and "DeepNight" to "NightWhisper" across the PWA Application (HTML, JS, CSS, JSON, Manifest, Worker).
-- Updated the main index homepage to reflect the new "NightWhisper 夜語" naming.
+- Performed a manual directory rename from `deepnight/` to `nightwhisper/` and generated requested PWA icons from `appicon.png`.
+- Updated the main index homepage to reflect the new "NightWhisper 夜語" naming and paths.
 
-全面將睡眠追蹤 PWA 應用程式由「DeepNight 睡眠追蹤」正式更名為「NightWhisper 夜語」，並同步更新了根目錄首頁中的專案索引名稱。
+全面將睡眠追蹤 PWA 應用程式由「DeepNight 睡眠追蹤」正式更名為「NightWhisper 夜語」，包含重新命名專案目錄、基於 `appicon.png` 產生 PWA 圖示，並同步更新了根目錄首頁的專案連結。
