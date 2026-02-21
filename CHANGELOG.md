@@ -41,3 +41,12 @@
 - Updated the main index homepage to reflect the new "NightWhisper 夜語" naming and paths.
 
 全面將睡眠追蹤 PWA 應用程式由「DeepNight 睡眠追蹤」正式更名為「NightWhisper 夜語」，包含重新命名專案目錄、基於 `appicon.png` 產生 PWA 圖示，並同步更新了根目錄首頁的專案連結。
+
+## [2026-02-21] NightWhisper Enhancements
+### Added
+- Added a new download button to each session in the history list.
+- Implemented logic to retrieve all IndexedDB audio blob segments for a session, concatenate them into a single `audio/webm` file, and trigger a native download to the user's device storage.
+### Changed
+- Changed PWA `short_name` to "夜語" so that it displays cleanly on mobile home screens without English prefix.
+
+進一步優化 PWA 安裝體驗，將桌面圖示名稱縮短為全中文的「夜語」。並在歷史紀錄列表新增實用的「下載按鈕」，利用 Blob 合併技術將瀏覽器內部 IndexedDB 錄製好的分段音檔打包成完整的 `.webm` 檔案，讓使用者能直接將錄音檔下載並永久保存至手機或電腦的原生空間中。

@@ -449,9 +449,47 @@
                     <p class="text-[10px] text-zinc-500 mt-0.5">時長: ${durStr}</p>
                 </div>
             </div>
-            <button class="p-2 text-zinc-500 active:text-violet-400 transition-colors session-delete-btn" data-session-id="${session.id}" data-session-date="${dateStr} ${timeStr}">
-                <span class="material-symbols-outlined">delete</span>
-            </button>`;
+            <div class="flex items-center gap-1">
+                <button class="p-2 text-zinc-500 active:text-blue-400 transition-colors session-download-btn" data-session-id="${session.id}" data-session-date="${dateStr} ${timeStr}">
+                    <span class="material-symbols-outlined">download</span>
+                </button>
+                <button class="p-2 text-zinc-500 active:text-violet-400 transition-colors session-delete-btn" data-session-id="${session.id}" data-session-date="${dateStr} ${timeStr}">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+            </div>`;
+
+        // 下載音檔
+        card.querySelector('.session-download-btn')?.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const btn = e.currentTarget;
+            const sid = btn.dataset.sessionId;
+            const sDate = btn.dataset.sessionDate;
+
+            const recordings = await storage.getRecordingsBySession(sid);
+            if (!recordings || recordings.length === 0) {
+                alert('這個紀錄沒有音檔。');
+                return;
+            }
+
+            // 按 index 排序確保順序正確
+            recordings.sort((a, b) => a.segmentIndex - b.segmentIndex);
+
+            const combinedBlob = new Blob(recordings.map(r => r.blob), { type: 'audio/webm' });
+            const url = URL.createObjectURL(combinedBlob);
+
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            const safeName = sDate.replace(/[^\w]/g, '_');
+            a.download = `nightwhisper_${safeName}.webm`;
+            document.body.appendChild(a);
+            a.click();
+
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 1000);
+        });
 
         // 個別刪除
         card.querySelector('.session-delete-btn')?.addEventListener('click', async (e) => {
