@@ -3,21 +3,21 @@
 // 離線快取策略 (Cache First)
 // ============================================
 
-const CACHE_NAME = 'nightwhisper-v1';
+const CACHE_NAME = 'nightwhisper-v2';
 const ASSETS = [
-    '/',
-    '/index.html',
-    '/css/design-tokens.css',
-    '/css/style.css',
-    '/js/app.js',
-    '/js/recorder.js',
-    '/js/analyzer.js',
-    '/js/storage.js',
-    '/js/waveform.js',
-    '/js/ui.js',
-    '/manifest.json',
-    '/icons/icon-192.png',
-    '/icons/icon-512.png',
+    './',
+    './index.html',
+    './css/design-tokens.css',
+    './css/style.css',
+    './js/app.js',
+    './js/recorder.js',
+    './js/analyzer.js',
+    './js/storage.js',
+    './js/waveform.js',
+    './js/ui.js',
+    './manifest.json',
+    './icons/icon-192.png',
+    './icons/icon-512.png',
 ];
 
 // 安裝：預快取所有靜態資源
@@ -67,7 +67,7 @@ self.addEventListener('fetch', (event) => {
                 return response;
             }).catch(() => {
                 // 離線 fallback — 回傳主頁面
-                return caches.match('/index.html');
+                return caches.match('./index.html');
             });
         })
     );
