@@ -31,30 +31,42 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: preview/package-lock.json
-      - name: Install dependencies
-        run: npm install
-        working-directory: preview
-      - name: Build
+      - name: Build Projects
         run: |
+          mkdir -p dist_final
+          
+          # Build 'preview'
+          cd preview
+          npm install
           npm run build
-          # Create a subdirectory called 'preview' inside dist and move contents into it
-          # to match the desired URL structure https://.../jing/preview/
-          mkdir -p dist_final/preview
-          cp -r dist/* dist_final/preview/
-        working-directory: preview
+          mkdir -p ../dist_final/preview
+          cp -r dist/* ../dist_final/preview/
+          cd ..
+          
+          # Build 'v-player-preview'
+          cd v-player-preview
+          npm install
+          npm run build
+          mkdir -p ../dist_final/v-player-preview
+          cp -r dist/* ../dist_final/v-player-preview/
+          cd ..
+          
+          # Copy static projects and root html files
+          cp -r note dist_final/ || true
+          cp -r travel-planner dist_final/ || true
+          cp *.html dist_final/ || true
+          
+          # Ensure an index.html exists at the very root
+          if [ ! -f dist_final/index.html ]; then
+             echo "<html><body><h1>Jing's Projects</h1><ul><li><a href='v-player-preview/'>V-Player</a></li><li><a href='preview/'>Audio Player</a></li><li><a href='note/'>Note</a></li></ul></body></html>" > dist_final/index.html
+          fi
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload from dist_final so that the preview folder exists at the root
-          path: './preview/dist_final'
+          path: './dist_final'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
