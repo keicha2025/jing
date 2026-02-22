@@ -157,10 +157,20 @@ class NightWhisperRecorder {
 
         this.currentChunks = [];
 
-        // 使用 webm/opus 格式（瀏覽器支援度最高）
-        const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-            ? 'audio/webm;codecs=opus'
-            : 'audio/webm';
+        // 優先順序：audio/mp4 (M4A) > audio/webm (Opus)
+        const types = [
+            'audio/mp4;codecs=aac',
+            'audio/mp4',
+            'audio/webm;codecs=opus',
+            'audio/webm'
+        ];
+        let mimeType = 'audio/webm';
+        for (const t of types) {
+            if (MediaRecorder.isTypeSupported(t)) {
+                mimeType = t;
+                break;
+            }
+        }
 
         this.mediaRecorder = new MediaRecorder(this.mediaStream, {
             mimeType,
@@ -178,29 +188,24 @@ class NightWhisperRecorder {
             if (this.onError) this.onError('recording_error', event.error?.message);
         };
 
-        // 每 10 秒產出一次 chunk（更頻繁的防崩潰儲存）
-        this.mediaRecorder.start(10000);
+        // 改為持續錄音，不中斷 MediaRecorder，但定期存檔
+        // MediaRecorder.start(timeslice) 會定期觸發 ondataavailable
+        this.mediaRecorder.start(10000); // 每 10 秒拿一次資料
 
-        // 設定分段計時器
-        this.segmentTimer = setTimeout(() => {
-            this._rotateSegment();
+        // 每 5 分鐘「模擬」分段存檔 (實際上只是把目前累積的 chunks 存進去)
+        this.segmentTimer = setInterval(() => {
+            this._saveAndKeepRecording();
         }, this.SEGMENT_DURATION);
     }
 
-    async _rotateSegment() {
-        if (!this.isRecording) return;
+    async _saveAndKeepRecording() {
+        if (!this.isRecording || this.currentChunks.length === 0) return;
 
-        // 停止當前段
-        return new Promise((resolve) => {
-            this.mediaRecorder.onstop = async () => {
-                await this._saveCurrentSegment();
-                this.segmentIndex++;
-                // 開始新的段
-                this._startSegment();
-                resolve();
-            };
-            this.mediaRecorder.stop();
-        });
+        // 取得目前的資料並清空緩衝，但不停止錄音機
+        // 注意：WebM/MP4 的 chunks 直接串連通常只需要一個 Header
+        // 這裡我們直接存入。因為不 stop()，所以 header 只會在 segmentIndex 0 出現
+        await this._saveCurrentSegment();
+        this.segmentIndex++;
     }
 
     async _saveCurrentSegment() {
