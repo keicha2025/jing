@@ -56,6 +56,8 @@
         fileInput: document.getElementById('input-audio-upload'),
         skipSlider: document.getElementById('skip-slider'),
         skipValue: document.getElementById('skip-value'),
+        transcodeStatus: document.getElementById('transcode-status'),
+        transcodePercent: document.getElementById('transcode-percent'),
     };
 
     // ── 狀態 ──
@@ -501,26 +503,150 @@
             // 按 index 排序確保順序正確
             recordings.sort((a, b) => a.segmentIndex - b.segmentIndex);
 
-            // 取得實際錄製時的 MIME 類型
             const firstSegment = recordings[0];
             const actualMimeType = firstSegment.mimeType || 'audio/webm';
-            const combinedBlob = new Blob(recordings.map(r => r.blob), { type: actualMimeType });
-            const url = URL.createObjectURL(combinedBlob);
+            const safeName = sDate.replace(/[^\w]/g, '_');
 
+            // 如果本來就是 mp4 (Safari)，直接下載
+            if (actualMimeType.includes('mp4') || actualMimeType.includes('aac')) {
+                const combinedBlob = new Blob(recordings.map(r => r.blob), { type: actualMimeType });
+                triggerDownload(combinedBlob, `nightwhisper_${safeName}.m4a`);
+                return;
+            }
+
+            // 如果是 Chrome (WebM)，執行轉碼
+            if ('AudioEncoder' in window && window.Mp4Muxer) {
+                try {
+                    showTranscodeUI(true);
+                    const m4aBlob = await transcodeToM4A(recordings, (p) => {
+                        if (els.transcodePercent) els.transcodePercent.innerText = `${Math.round(p * 100)}%`;
+                    });
+                    triggerDownload(m4aBlob, `nightwhisper_${safeName}.m4a`);
+                } catch (err) {
+                    console.error('Transcode failed:', err);
+                    alert('轉碼失敗，改為下載原始格式(.webm)');
+                    const webmBlob = new Blob(recordings.map(r => r.blob), { type: actualMimeType });
+                    triggerDownload(webmBlob, `nightwhisper_${safeName}.webm`);
+                } finally {
+                    showTranscodeUI(false);
+                }
+            } else {
+                // 不支援 WebCodecs，維持原始下載
+                const webmBlob = new Blob(recordings.map(r => r.blob), { type: actualMimeType });
+                triggerDownload(webmBlob, `nightwhisper_${safeName}.webm`);
+            }
+        });
+
+        function triggerDownload(blob, filename) {
+            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
-            const safeName = sDate.replace(/[^\w]/g, '_');
-            const ext = actualMimeType.includes('mp4') || actualMimeType.includes('aac') ? 'm4a' : 'webm';
-            a.download = `nightwhisper_${safeName}.${ext}`;
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
-
             setTimeout(() => {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             }, 1000);
-        });
+        }
+
+        function showTranscodeUI(show) {
+            if (els.transcodeStatus) {
+                if (show) els.transcodeStatus.classList.remove('hidden');
+                else els.transcodeStatus.classList.add('hidden');
+            }
+        }
+
+        /**
+         * 核心轉碼：WebM (Opus) -> M4A (AAC)
+         */
+        async function transcodeToM4A(recordings, onProgress) {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            // 1. 合併並解碼所有片段
+            const blobs = recordings.map(r => r.blob);
+            const arrayBuffers = await Promise.all(blobs.map(b => b.arrayBuffer()));
+            const audioBuffers = await Promise.all(arrayBuffers.map(ab => audioCtx.decodeAudioData(ab)));
+
+            // 串連 AudioBuffers
+            const totalLength = audioBuffers.reduce((sum, b) => sum + b.length, 0);
+            const fullBuffer = audioCtx.createBuffer(1, totalLength, audioBuffers[0].sampleRate);
+            let offset = 0;
+            for (const b of audioBuffers) {
+                fullBuffer.copyToChannel(b.getChannelData(0), 0, offset);
+                offset += b.length;
+            }
+
+            // 2. 初始化 Mp4Muxer
+            const muxer = new window.Mp4Muxer.Muxer({
+                target: new window.Mp4Muxer.ArrayBufferTarget(),
+                container: 'mp4',
+                video: null,
+                audio: {
+                    codec: 'aac',
+                    sampleRate: fullBuffer.sampleRate,
+                    numberOfChannels: 1
+                },
+                fastStart: 'in-memory'
+            });
+
+            // 3. 初始化 AudioEncoder (WebCodecs)
+            let encodedDone;
+            const encodedPromise = new Promise(resolve => encodedDone = resolve);
+
+            const encoder = new AudioEncoder({
+                output: (chunk, metadata) => {
+                    muxer.addAudioChunk(chunk, metadata);
+                },
+                error: (e) => console.error(e)
+            });
+
+            const config = {
+                codec: 'mp4a.40.2', // AAC-LC
+                sampleRate: fullBuffer.sampleRate,
+                numberOfChannels: 1,
+                bitrate: 128000
+            };
+            encoder.configure(config);
+
+            // 4. 送入數據進編碼器
+            const rawData = fullBuffer.getChannelData(0);
+            const frameSize = 1024; // AAC 常用幀大小
+            for (let i = 0; i < rawData.length; i += frameSize) {
+                const chunk = rawData.slice(i, i + frameSize);
+                if (chunk.length < 1) break;
+
+                // 必須填充到 frameSize 或是處理最後一幀
+                const data = new Float32Array(frameSize);
+                data.set(chunk);
+
+                const audioData = new AudioData({
+                    format: 'f32',
+                    sampleRate: fullBuffer.sampleRate,
+                    numberOfFrames: chunk.length,
+                    numberOfChannels: 1,
+                    timestamp: (i / fullBuffer.sampleRate) * 1000000,
+                    data: data
+                });
+
+                encoder.encode(audioData);
+                audioData.close();
+
+                if (i % (frameSize * 100) === 0) {
+                    onProgress(i / rawData.length);
+                    // 釋放線程
+                    await new Promise(r => setTimeout(r, 0));
+                }
+            }
+
+            await encoder.flush();
+            encoder.close();
+            muxer.finalize();
+
+            const { buffer } = muxer.target;
+            return new Blob([buffer], { type: 'audio/mp4' });
+        }
 
         // 個別刪除
         card.querySelector('.session-delete-btn')?.addEventListener('click', async (e) => {

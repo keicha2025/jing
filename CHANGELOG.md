@@ -60,3 +60,12 @@
 - Integration of `OfflineAudioContext` simulation for processing uploaded files without a real-time microphone stream.
 
 新增「音檔上傳與離線辨識」功能，支援讀取現有錄音檔並進行後端分析。同步加入「忽略開頭時間」設定，讓使用者能自由剔除入睡前的空白時段。分析報告現在會根據起始時間自動回推具體的時鐘時間（例如凌晨幾點幾分），讓打呼或夢話的發生時間點一目了然。
+## [2026-02-22] NightWhisper M4A & Recording Stability
+### Added
+- **In-Browser M4A Transcoding**: Implemented high-performance transcoding using `WebCodecs API` and `mp4-muxer`. When downloading on Chrome, the app now decodes WebM and re-encodes to native M4A (AAC) directly in the browser.
+- **M4A Upload Support**: The upload analyzer now explicitly supports `.m4a` files.
+### Changed
+- **Continuous Recording Architecture**: Refactored the recorder to maintain a single continuous session instead of restarting segments. This fixes playability and seek bar issues in concatenated files.
+- **Dynamic Format Detection**: The download button now automatically detects the recorded format and provides the correct MIME type and file extension.
+
+針對 Chrome 瀏覽器新增「純前端 M4A 轉碼」功能，利用 WebCodecs API 實現高效能轉碼，讓下載的錄音檔在各平台（尤其是 iPhone）都能完美播放。同時重構錄音架構為「持續不間斷錄製」，徹底解決先前分段合併導致檔案毀損或無法拉動進度條的問題。現在上傳辨識也已全面支援 M4A 格式。

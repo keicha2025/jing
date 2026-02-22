@@ -275,6 +275,14 @@
                         2.0x 快速播放
                     </button>
                 </div>
+
+                <!-- 轉碼進度提示 (隱藏) -->
+                <div id="transcode-status"
+                    class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-violet-600 text-white px-6 py-3 rounded-full shadow-2xl z-[100] flex items-center gap-3">
+                    <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span class="text-sm font-medium">正在轉碼為 M4A...</span>
+                    <span id="transcode-percent" class="text-xs opacity-70">0%</span>
+                </div>
             </div>
         </div>
 
@@ -427,6 +435,10 @@
     </div>
 
     <!-- JS Modules -->
+    <script type="module">
+        import * as Mp4Muxer from 'https://cdn.jsdelivr.net/npm/mp4-muxer@1.1.0/build/mp4-muxer.mjs';
+        window.Mp4Muxer = Mp4Muxer;
+    </script>
     <script src="js/storage.js"></script>
     <script src="js/recorder.js"></script>
     <script src="js/analyzer.js"></script>
