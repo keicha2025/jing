@@ -501,14 +501,17 @@
             // 按 index 排序確保順序正確
             recordings.sort((a, b) => a.segmentIndex - b.segmentIndex);
 
-            const combinedBlob = new Blob(recordings.map(r => r.blob), { type: 'audio/webm' });
+            // 優先嘗試使用 audio/mp4 (m4a) 或 audio/webm
+            const mimeType = MediaRecorder.isTypeSupported('audio/mp4;codecs=aac') ? 'audio/mp4' : 'audio/webm';
+            const combinedBlob = new Blob(recordings.map(r => r.blob), { type: mimeType });
             const url = URL.createObjectURL(combinedBlob);
 
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
             const safeName = sDate.replace(/[^\w]/g, '_');
-            a.download = `nightwhisper_${safeName}.webm`;
+            const ext = mimeType.includes('mp4') ? 'm4a' : 'webm';
+            a.download = `nightwhisper_${safeName}.${ext}`;
             document.body.appendChild(a);
             a.click();
 
