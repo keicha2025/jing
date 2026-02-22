@@ -114,34 +114,51 @@
                         </div>
                     </div>
 
-                    <!-- 智慧過濾 -->
-                    <div
-                        class="bg-white/5 backdrop-blur-md rounded-3xl p-5 border border-white/10 flex items-center justify-between">
+                    <!-- 忽略開頭時間 -->
+                    <div class="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10">
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-violet-400">hourglass_empty</span>
+                                <span class="text-white font-medium">忽略開頭時間</span>
+                            </div>
+                            <span class="text-violet-400 font-bold text-xl">
+                                <span id="skip-value">0</span>
+                                <span id="skip-unit" class="text-xs font-normal ml-1">分鐘</span>
+                            </span>
+                        </div>
+                        <input type="range" id="skip-slider" min="0" max="180" step="10" value="0">
+                        <div class="flex justify-between mt-2 text-[10px] text-zinc-500 font-medium">
+                            <span>0</span>
+                            <span>90m</span>
+                            <span>180m (3h)</span>
+                        </div>
+                    </div>
+
+                    <!-- 上傳音檔卡片 -->
+                    <div id="card-upload"
+                        class="bg-white/5 backdrop-blur-md rounded-3xl p-5 border border-white/10 flex items-center justify-between active:bg-white/10 cursor-pointer transition-colors">
                         <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined text-violet-400">filter_alt</span>
+                            <span class="material-symbols-outlined text-violet-400">upload_file</span>
                             <div>
-                                <p class="text-white font-medium">智慧過濾背景音</p>
-                                <p class="text-zinc-500 text-xs">自動過濾播客或風扇聲</p>
+                                <p class="text-white font-medium">從現有音檔辨識</p>
+                                <p class="text-zinc-500 text-xs">上傳已錄製的音檔進行後門分析</p>
                             </div>
                         </div>
-                        <button id="filter-toggle-btn"
-                            class="w-12 h-6 rounded-full transition-colors relative bg-violet-600" data-active="true">
-                            <div id="filter-toggle-dot"
-                                class="absolute top-1 w-4 h-4 bg-white rounded-full transition-all left-7"></div>
-                        </button>
+                        <span class="material-symbols-outlined text-zinc-400">chevron_right</span>
                     </div>
+                    <input type="file" id="input-audio-upload" accept="audio/*" class="hidden">
 
                     <!-- 離線保證 -->
                     <div
-                        class="bg-white/5 backdrop-blur-md rounded-3xl p-5 border border-white/10 flex items-center justify-between">
+                        class="bg-white/5 backdrop-blur-md rounded-3xl p-5 border border-white/10 flex items-center justify-between opacity-60">
                         <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined text-violet-400">cloud_off</span>
+                            <span class="material-symbols-outlined text-zinc-400">cloud_off</span>
                             <div>
-                                <p class="text-white font-medium">本機端安全儲存</p>
-                                <p class="text-zinc-500 text-xs">斷網亦可運作，防崩潰</p>
+                                <p class="text-zinc-400 font-medium">本機端安全儲存</p>
+                                <p class="text-zinc-500 text-xs">資料不離手，完全隱私</p>
                             </div>
                         </div>
-                        <span class="material-symbols-outlined text-green-500 text-xl">check_circle</span>
+                        <span class="material-symbols-outlined text-green-900 text-xl">check_circle</span>
                     </div>
                 </div>
             </div>

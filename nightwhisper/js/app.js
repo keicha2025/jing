@@ -52,6 +52,10 @@
         sensitivityValue: document.getElementById('sensitivity-value'),
         storageUsage: document.getElementById('storage-usage'),
         btnClearData: document.getElementById('btn-clear-data'),
+        cardUpload: document.getElementById('card-upload'),
+        fileInput: document.getElementById('input-audio-upload'),
+        skipSlider: document.getElementById('skip-slider'),
+        skipValue: document.getElementById('skip-value'),
     };
 
     // ── 狀態 ──
@@ -67,6 +71,14 @@
     ui.initPlayer();
     const getDelayMinutes = ui.initDelaySlider('delay-slider', 'delay-value');
     const getFilterEnabled = ui.initFilterToggle('filter-toggle-btn', 'filter-toggle-dot');
+
+    // 初始化忽略時間 Slider
+    const getSkipMinutes = () => parseInt(els.skipSlider?.value || 0);
+    if (els.skipSlider) {
+        els.skipSlider.addEventListener('input', (e) => {
+            if (els.skipValue) els.skipValue.innerText = e.target.value;
+        });
+    }
 
     // 電池狀態
     if (navigator.getBattery) {
@@ -238,6 +250,8 @@
             return;
         }
 
+        const skipMinutes = getSkipMinutes();
+
         analyzer.onCalibrationComplete = () => {
             els.monitoringStatus.innerText = '麥克風運作中（背景降噪開啟）';
             if (els.calibrationOverlay) els.calibrationOverlay.classList.add('hidden');
@@ -246,11 +260,24 @@
         analyzer.onEvent = (event) => showLiveEvent(event);
         analyzer.onLevelUpdate = () => { };
 
-        analyzer.start(
-            recorder.getAnalyserNode(),
-            recorder.getAudioContext(),
-            currentSessionId
-        );
+        // 如果有設定忽略開頭，延遲啟動 analyzer (但 recorder 照常錄，保留原始錄音)
+        if (skipMinutes > 0) {
+            setTimeout(() => {
+                if (isMonitoring) {
+                    analyzer.start(
+                        recorder.getAnalyserNode(),
+                        recorder.getAudioContext(),
+                        currentSessionId
+                    );
+                }
+            }, skipMinutes * 60 * 1000);
+        } else {
+            analyzer.start(
+                recorder.getAnalyserNode(),
+                recorder.getAudioContext(),
+                currentSessionId
+            );
+        }
     }
 
     // ── 停止監測 ──
@@ -549,6 +576,77 @@
             }
         });
     }
+
+    // ── 上傳音檔 ──
+    els.cardUpload?.addEventListener('click', () => els.fileInput?.click());
+    els.fileInput?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const skipMinutes = getSkipMinutes();
+        await ui.showModal({
+            title: '開始分析音檔',
+            message: `即將分析「${file.name}」\n設定：忽略前 ${skipMinutes} 分鐘。`,
+            icon: 'analytics',
+            confirmText: '開始',
+        });
+
+        // 切換到 Tracking 畫面顯示進度
+        switchView('tracking');
+        els.monitoringStatus.innerText = '正在讀取音檔...';
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+            currentSessionId = 'up_' + Date.now().toString(36);
+            const startTime = Date.now(); // 預設使用當前時間作為起始點
+
+            await storage.createSession({
+                id: currentSessionId,
+                startTime: startTime,
+                endTime: startTime + (audioBuffer.duration * 1000),
+                status: 'completed',
+                type: 'upload',
+                fileName: file.name
+            });
+
+            // 如果是上傳，我們把整個音檔存入 recordings 作為一個大段落（或可選不存，只存分析結果）
+            // 這裡為了讓播放功能正常，我們存入一筆
+            await storage.saveRecording({
+                sessionId: currentSessionId,
+                segmentIndex: 0,
+                blob: file,
+                mimeType: file.type,
+                size: file.size,
+                duration: audioBuffer.duration * 1000
+            });
+
+            els.monitoringStatus.innerText = '分析進行中...';
+            await analyzer.analyzeBuffer(audioBuffer, currentSessionId, {
+                skipMinutes: skipMinutes,
+                startTimestamp: startTime,
+                onProgress: (p) => {
+                    els.monitoringStatus.innerText = `分析進度: ${Math.round(p * 100)}%`;
+                }
+            });
+
+            await ui.showModal({
+                title: '分析完成',
+                message: '音檔分析已結束。',
+                icon: 'check_circle',
+                confirmText: '查看報告',
+            });
+
+            isMonitoring = false;
+            switchView('analysis');
+        } catch (err) {
+            console.error('Upload failed:', err);
+            alert('音檔解碼或分析失敗：' + err.message);
+            switchView('setup');
+        }
+    });
 
     // ── 事件綁定 ──
     els.btnStart?.addEventListener('click', startMonitoring);

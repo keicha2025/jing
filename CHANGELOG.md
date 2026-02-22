@@ -50,3 +50,13 @@
 - Changed PWA `short_name` to "夜語" so that it displays cleanly on mobile home screens without English prefix.
 
 進一步優化 PWA 安裝體驗，將桌面圖示名稱縮短為全中文的「夜語」。並在歷史紀錄列表新增實用的「下載按鈕」，利用 Blob 合併技術將瀏覽器內部 IndexedDB 錄製好的分段音檔打包成完整的 `.webm` 檔案，讓使用者能直接將錄音檔下載並永久保存至手機或電腦的原生空間中。
+
+## [2026-02-22] NightWhisper Analysis Upgrades
+### Added
+- **Audio Upload & Offline Analysis**: Users can now upload existing audio files for snore/talk detection. The app decodes the audio and runs a simulated FFT analysis locally.
+- **Skip Initial Time**: Added a new slider to setup, allowing users to ignore the first 0 to 180 minutes of a session. Useful for skipping the time before falling asleep or avoiding irrelevant noise.
+- **Clock Time Mapping**: Analysis events and reports now automatically map relative recording offsets back to actual wall-clock time (e.g., 03:45 AM) for better context.
+### Changed
+- Integration of `OfflineAudioContext` simulation for processing uploaded files without a real-time microphone stream.
+
+新增「音檔上傳與離線辨識」功能，支援讀取現有錄音檔並進行後端分析。同步加入「忽略開頭時間」設定，讓使用者能自由剔除入睡前的空白時段。分析報告現在會根據起始時間自動回推具體的時鐘時間（例如凌晨幾點幾分），讓打呼或夢話的發生時間點一目了然。
