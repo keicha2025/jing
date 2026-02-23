@@ -6,7 +6,8 @@ import {
 import { PDFDocument } from 'pdf-lib';
 
 const App = () => {
-    const [selectedEngine, setSelectedEngine] = useState('nodejs');
+    const [selectedEngine, setSelectedEngine] = useState('python');
+    const [quality, setQuality] = useState('high');
     const [isDragging, setIsDragging] = useState(false);
     const [file, setFile] = useState(null);
     const [isDarkMode, setIsDarkMode] = useState(true);
@@ -325,8 +326,8 @@ const App = () => {
                                         key={q}
                                         onClick={() => setQuality(q)}
                                         className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${quality === q
-                                                ? (isDarkMode ? 'bg-white text-black shadow-lg' : 'bg-zinc-900 text-white shadow-lg')
-                                                : (isDarkMode ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-zinc-900')
+                                            ? (isDarkMode ? 'bg-white text-black shadow-lg' : 'bg-zinc-900 text-white shadow-lg')
+                                            : (isDarkMode ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-zinc-900')
                                             }`}
                                     >
                                         {q === 'low' ? 'Standard' : q === 'medium' ? 'High' : 'Ultra'}
