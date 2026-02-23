@@ -89,8 +89,8 @@ const App = () => {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                // Use the environment variable if available, otherwise fallback to localhost
-                const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                // Use the environment variable if available, otherwise fallback to the live production URL
+                const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pdf-flattener-1082284355568.us-central1.run.app';
 
                 let endpoint = '';
                 if (selectedEngine === 'python') {
@@ -145,7 +145,7 @@ const App = () => {
             </div>
 
             {/* Navigation */}
-            <nav className="relative z-20 flex justify-between items-center px-8 py-10 max-w-7xl mx-auto">
+            <nav className="relative z-20 flex justify-between items-center px-6 md:px-8 py-6 md:py-10 max-w-7xl mx-auto">
                 <div className="flex items-center space-x-3">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-500 ${isDarkMode ? 'bg-white' : 'bg-zinc-900'
                         }`}>
@@ -176,20 +176,20 @@ const App = () => {
             </nav>
 
             {/* Hero Section */}
-            <main className="relative z-10 max-w-7xl mx-auto px-8 pt-6 pb-20">
-                <div className="grid lg:grid-cols-12 gap-20 items-start">
+            <main className="relative z-10 max-w-7xl mx-auto px-6 md:px-8 pt-6 pb-20">
+                <div className="grid lg:grid-cols-12 gap-10 lg:gap-20 items-start">
 
                     {/* Left Side: Upload & Info */}
                     <div className="lg:col-span-7">
                         <div className="inline-block px-3 py-1 mb-6 rounded-full border border-indigo-500/20 text-[10px] font-bold tracking-widest text-indigo-500 uppercase">
                             V2.4 Stable Build
                         </div>
-                        <h1 className="text-7xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-10">
+                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.9] mb-8 md:mb-10">
                             Flatten <br />
                             <span className={`transition-colors duration-500 ${isDarkMode ? 'text-zinc-600' : 'text-zinc-300'}`}>Every Layer.</span>
                         </h1>
 
-                        <p className={`text-xl max-w-lg mb-14 leading-relaxed font-light ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                        <p className={`text-lg md:text-xl max-w-lg mb-10 md:mb-14 leading-relaxed font-light ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                             極簡、精確、不可逆。為現代數位流程重新定義 PDF 扁平化體驗。
                         </p>
 
@@ -212,7 +212,7 @@ const App = () => {
                             <div className={`absolute -inset-1 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-[2rem] blur transition-opacity duration-1000 ${isDragging ? 'opacity-40' : 'opacity-0 group-hover:opacity-10'
                                 }`} />
 
-                            <div className={`relative aspect-[16/9] lg:h-96 backdrop-blur-3xl border rounded-[2rem] flex flex-col items-center justify-center p-12 overflow-hidden transition-all duration-500 ${isDarkMode
+                            <div className={`relative aspect-video lg:aspect-[16/9] lg:h-96 backdrop-blur-3xl border rounded-[2rem] flex flex-col items-center justify-center p-6 md:p-12 overflow-hidden transition-all duration-500 ${isDarkMode
                                 ? 'bg-zinc-900/40 border-white/10'
                                 : 'bg-white/80 border-black/5 shadow-2xl shadow-black/[0.03]'
                                 }`}>
@@ -260,7 +260,7 @@ const App = () => {
                                 <div
                                     key={engine.id}
                                     onClick={() => setSelectedEngine(engine.id)}
-                                    className={`group relative p-8 rounded-3xl border transition-all duration-500 cursor-pointer overflow-hidden ${selectedEngine === engine.id
+                                    className={`group relative p-6 md:p-8 rounded-3xl border transition-all duration-500 cursor-pointer overflow-hidden ${selectedEngine === engine.id
                                         ? (isDarkMode ? 'bg-white border-white scale-[1.02]' : 'bg-zinc-900 border-zinc-900 scale-[1.02] shadow-2xl shadow-black/20')
                                         : (isDarkMode ? 'bg-zinc-900/30 border-white/5 hover:border-white/20' : 'bg-white border-black/5 hover:border-black/10')
                                         }`}
