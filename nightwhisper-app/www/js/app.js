@@ -745,12 +745,14 @@
         if (!file) return;
 
         const skipMinutes = getSkipMinutes();
-        await ui.showModal({
+        const confirmed = await showModal({
             title: '開始分析音檔',
             message: `即將分析「${file.name}」\n設定：忽略前 ${skipMinutes} 分鐘。`,
             icon: 'analytics',
             confirmText: '開始',
         });
+
+        if (!confirmed) return;
 
         // 切換到 Tracking 畫面顯示進度
         switchView('tracking');
@@ -793,7 +795,7 @@
                 }
             });
 
-            await ui.showModal({
+            await showModal({
                 title: '分析完成',
                 message: '音檔分析已結束。',
                 icon: 'check_circle',
