@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import {
     Upload, FileText, Cpu, Zap, Layers, ChevronRight,
-    Check, Settings2, Info, Sun, Moon, ArrowRight, Loader2
+    Check, Settings2, Info, Sun, Moon, ArrowRight, Loader2,
+    LogIn, LogOut, User
 } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
+import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } from './lib/firebase';
+
+const WHITELIST = ['wj209ing@gmail.com'];
 
 const App = () => {
     const [selectedEngine, setSelectedEngine] = useState('python');
@@ -12,6 +16,27 @@ const App = () => {
     const [file, setFile] = useState(null);
     const [isDarkMode, setIsDarkMode] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [user, setUser] = useState(null);
+
+    React.useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const isWhitelisted = user && WHITELIST.includes(user.email);
+
+    const handleLogin = async () => {
+        try {
+            await signInWithPopup(auth, googleProvider);
+        } catch (error) {
+            console.error("Login failed:", error);
+            alert("登入失敗: " + error.message);
+        }
+    };
+
+    const handleLogout = () => signOut(auth);
 
     const engines = [
         {
@@ -72,6 +97,13 @@ const App = () => {
 
     const executeFlattening = async () => {
         if (!file) return;
+
+        // Whitelist check for Python and Ghostscript
+        if (selectedEngine !== 'nodejs' && !isWhitelisted) {
+            alert('此引擎僅限白名單使用者使用。請先登入或連繫管理員。');
+            return;
+        }
+
         setIsProcessing(true);
 
         try {
@@ -154,10 +186,35 @@ const App = () => {
                     <span className="text-xl font-black tracking-tighter italic">FLATMODERN</span>
                 </div>
 
-                <div className="flex items-center">
+                <div className="flex items-center space-x-4">
+                    {user ? (
+                        <div className="flex items-center space-x-3">
+                            <div className="flex flex-col items-end hidden sm:flex">
+                                <span className="text-[9px] font-bold opacity-50 uppercase tracking-widest">{user.displayName}</span>
+                                {isWhitelisted && <span className="text-[8px] font-bold text-indigo-500 uppercase tracking-tighter">Pro Access</span>}
+                            </div>
+                            <button
+                                onClick={handleLogout}
+                                className={`p-2.5 rounded-full border transition-all duration-500 ${isDarkMode ? 'border-white/10 hover:bg-white/10' : 'border-black/5 hover:bg-black/5'}`}
+                                title="登出"
+                            >
+                                <LogOut size={16} />
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleLogin}
+                            className={`flex items-center space-x-2 px-5 py-2 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all ${isDarkMode ? 'border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'
+                                }`}
+                        >
+                            <User size={14} />
+                            <span>Login</span>
+                        </button>
+                    )}
+
                     <button
                         onClick={toggleTheme}
-                        className={`p-2 rounded-full border transition-all duration-500 ${isDarkMode ? 'border-white/10 hover:bg-white/10' : 'border-black/5 hover:bg-black/5'
+                        className={`p-2.5 rounded-full border transition-all duration-500 ${isDarkMode ? 'border-white/10 hover:bg-white/10' : 'border-black/5 hover:bg-black/5'
                             }`}
                     >
                         {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}

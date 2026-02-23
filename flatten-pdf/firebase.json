@@ -1,0 +1,17 @@
+{
+    "hosting": {
+        "site": "jing-lab",
+        "public": "dist_release",
+        "ignore": [
+            "firebase.json",
+            "**/.*",
+            "**/node_modules/**"
+        ],
+        "rewrites": [
+            {
+                "source": "/pdf-tool/**",
+                "destination": "/pdf-tool/index.html"
+            }
+        ]
+    }
+}
