@@ -43,7 +43,7 @@ const App = () => {
             id: 'python',
             name: 'Python Engine',
             subtitle: 'Flexible & Intelligent',
-            description: '使用 PyMuPDF 技術，提供最佳的向量路徑保留，適合需要搜尋文字的文檔。',
+            description: '使用 PyMuPDF 技術，提供最佳的向量路徑保留。' + (!isWhitelisted ? ' (需 Pro 權限)' : ''),
             icon: <Layers className="w-5 h-5" />,
             tag: '推薦使用'
         },
@@ -51,7 +51,7 @@ const App = () => {
             id: 'ghostscript',
             name: 'Ghostscript',
             subtitle: 'Industrial Precision',
-            description: '工業級點陣化技術，徹底移除所有交互層，保證在所有裝置顯示一致。',
+            description: '工業級點陣化技術，徹底移除所有交互層。' + (!isWhitelisted ? ' (需 Pro 權限)' : ''),
             icon: <Cpu className="w-5 h-5" />,
             tag: '強力扁平化'
         },
@@ -121,8 +121,8 @@ const App = () => {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                // Use the precise Cloud Run URL discovered via gcloud describe
-                const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pdf-flattener-hh37ednm6q-uc.a.run.app';
+                // Use the precise Cloud Run URL verified via gcloud
+                const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pdf-flattener-1082284355568.us-central1.run.app';
 
                 let endpoint = '';
                 if (selectedEngine === 'python') {
