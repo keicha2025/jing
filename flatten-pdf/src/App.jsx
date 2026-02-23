@@ -10,7 +10,7 @@ import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } fr
 const WHITELIST = ['wj209ing@gmail.com'];
 
 const App = () => {
-    const [selectedEngine, setSelectedEngine] = useState('python');
+    const [selectedEngine, setSelectedEngine] = useState('ghostscript');
     const [quality, setQuality] = useState('high');
     const [isDragging, setIsDragging] = useState(false);
     const [file, setFile] = useState(null);
@@ -40,20 +40,12 @@ const App = () => {
 
     const engines = [
         {
-            id: 'python',
-            name: 'Python Engine',
-            subtitle: 'Flexible & Intelligent',
-            description: '使用 PyMuPDF 技術，提供最佳的向量路徑保留。' + (!isWhitelisted ? ' (需 Pro 權限)' : ''),
-            icon: <Layers className="w-5 h-5" />,
-            tag: '推薦使用'
-        },
-        {
             id: 'ghostscript',
             name: 'Ghostscript',
             subtitle: 'Industrial Precision',
             description: '工業級點陣化技術，徹底移除所有交互層。' + (!isWhitelisted ? ' (需 Pro 權限)' : ''),
             icon: <Cpu className="w-5 h-5" />,
-            tag: '強力扁平化'
+            tag: '推薦使用'
         },
         {
             id: 'nodejs',
@@ -125,11 +117,9 @@ const App = () => {
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pdf-flattener-1082284355568.us-central1.run.app';
 
                 let endpoint = '';
-                if (selectedEngine === 'python') {
-                    const dpi = quality === 'low' ? 72 : quality === 'medium' ? 150 : 300;
-                    endpoint = `/flatten/python?dpi=${dpi}`;
-                } else {
-                    endpoint = `/flatten/ghostscript?quality=${quality}`;
+                if (selectedEngine === 'ghostscript') {
+                    const dpi = quality === 'low' ? 72 : quality === 'medium' ? 150 : 600;
+                    endpoint = `/flatten/ghostscript?quality=${quality}&dpi=${dpi}`;
                 }
 
                 const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -368,16 +358,21 @@ const App = () => {
                             </h3>
                             <div className={`p-2 rounded-2xl flex space-x-2 transition-colors duration-500 ${isDarkMode ? 'bg-zinc-900/50 border border-white/5' : 'bg-zinc-100 border border-black/5'
                                 }`}>
-                                {['low', 'medium', 'high'].map((q) => (
+                                {[
+                                    { id: 'low', label: 'Standard', sub: '72 DPI' },
+                                    { id: 'medium', label: 'High', sub: '150 DPI' },
+                                    { id: 'high', label: 'Ultra', sub: '600 DPI' }
+                                ].map((q) => (
                                     <button
-                                        key={q}
-                                        onClick={() => setQuality(q)}
-                                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${quality === q
+                                        key={q.id}
+                                        onClick={() => setQuality(q.id)}
+                                        className={`flex-1 py-3 rounded-xl flex flex-col items-center justify-center transition-all duration-300 ${quality === q.id
                                             ? (isDarkMode ? 'bg-white text-black shadow-lg' : 'bg-zinc-900 text-white shadow-lg')
                                             : (isDarkMode ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-zinc-900')
                                             }`}
                                     >
-                                        {q === 'low' ? 'Standard' : q === 'medium' ? 'High' : 'Ultra'}
+                                        <span className="text-[10px] font-black uppercase tracking-widest">{q.label}</span>
+                                        <span className="text-[7px] font-bold opacity-40 uppercase tracking-tighter mt-1">{q.sub}</span>
                                     </button>
                                 ))}
                             </div>
