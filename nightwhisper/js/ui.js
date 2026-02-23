@@ -107,20 +107,22 @@ class NightWhisperUI {
     }
 
     async loadSegments(recordingBlobs) {
-        this.currentSegments = recordingBlobs.map((rec) => ({
-            url: URL.createObjectURL(rec.blob),
-            duration: rec.duration || 300000,
-            blob: rec.blob,
-        }));
-        this.currentSegmentIndex = 0;
+        if (this.audioElement.src) {
+            URL.revokeObjectURL(this.audioElement.src);
+        }
+
+        // 核心修正：將所有分段 Blob 合併成一個單一 Blob
+        // 這樣瀏覽器才能看到第一個分段的 Header，並正確處理整體的 Seek
+        const mimeType = recordingBlobs[0]?.mimeType || 'audio/webm';
+        const combinedBlob = new Blob(recordingBlobs.map(rec => rec.blob), { type: mimeType });
+
+        this.audioElement.src = URL.createObjectURL(combinedBlob);
+        this.currentSegments = recordingBlobs; // 保留原始資訊供時間計算使用
+        this.sessionStartTime = this.sessionStartTime || recordingBlobs[0]?.timestamp || 0;
     }
 
     play() {
-        if (this.currentSegments.length === 0) return;
-        const segment = this.currentSegments[this.currentSegmentIndex];
-        if (this.audioElement.src !== segment.url) {
-            this.audioElement.src = segment.url;
-        }
+        if (!this.audioElement.src) return;
         this.audioElement.playbackRate = this.playbackRate;
         this.audioElement.play();
         this.isPlaying = true;
@@ -136,18 +138,9 @@ class NightWhisperUI {
     }
 
     seekTo(timeMs) {
-        let accumulated = 0;
-        for (let i = 0; i < this.currentSegments.length; i++) {
-            const segDuration = this.currentSegments[i].duration;
-            if (accumulated + segDuration > timeMs) {
-                this.currentSegmentIndex = i;
-                this.audioElement.src = this.currentSegments[i].url;
-                this.audioElement.currentTime = (timeMs - accumulated) / 1000;
-                if (this.isPlaying) this.audioElement.play();
-                return;
-            }
-            accumulated += segDuration;
-        }
+        if (!this.audioElement.src) return;
+        this.audioElement.currentTime = timeMs / 1000;
+        if (this.isPlaying) this.audioElement.play();
     }
 
     skip(seconds) {
@@ -172,21 +165,12 @@ class NightWhisperUI {
     }
 
     _playNextSegment() {
-        if (this.currentSegmentIndex < this.currentSegments.length - 1) {
-            this.currentSegmentIndex++;
-            this.audioElement.src = this.currentSegments[this.currentSegmentIndex].url;
-            this.audioElement.play();
-        } else {
-            this.isPlaying = false;
-        }
+        // 合併為單一 Blob 後，不再需要手動切換 Segment
+        this.isPlaying = false;
     }
 
     _getCurrentGlobalTime() {
-        let accumulated = 0;
-        for (let i = 0; i < this.currentSegmentIndex; i++) {
-            accumulated += this.currentSegments[i].duration;
-        }
-        return accumulated + (this.audioElement.currentTime * 1000);
+        return this.audioElement.currentTime * 1000;
     }
 
     _getTotalDuration() {
@@ -224,11 +208,22 @@ class NightWhisperUI {
         const iconColorClass = isSnore ? 'text-red-400' : 'text-yellow-400';
         const iconBgClass = isSnore ? 'event-icon-snore' : 'event-icon-talk';
 
-        const timeStr = new Date(event.time).toLocaleTimeString('zh-TW', {
+        const absTime = new Date(event.time);
+        const timeStr = absTime.toLocaleTimeString('zh-TW', {
             hour: '2-digit',
             minute: '2-digit',
             hour12: false,
         });
+
+        // 計算相對錄音開始的時間 (HH:mm:ss)
+        const relativeMs = event.time - this.sessionStartTime;
+        const totalSec = Math.floor(relativeMs / 1000);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        const relativeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+        const displayTime = `${timeStr} (${relativeStr})`;
 
         const durationStr = event.duration >= 60
             ? `${Math.floor(event.duration / 60)}m ${event.duration % 60}s`
@@ -243,7 +238,7 @@ class NightWhisperUI {
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <span class="text-white font-medium">${timeStr}</span>
+            <span class="text-white font-medium">${displayTime}</span>
             <span class="text-xs px-1.5 py-0.5 rounded bg-white/5 text-zinc-400">${typeLabel}</span>
           </div>
           <div class="text-[10px] text-zinc-500 flex gap-3 mt-0.5">

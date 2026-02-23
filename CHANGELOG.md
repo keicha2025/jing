@@ -69,3 +69,9 @@
 - **Dynamic Format Detection**: The download button now automatically detects the recorded format and provides the correct MIME type and file extension.
 
 針對 Chrome 瀏覽器新增「純前端 M4A 轉碼」功能，利用 WebCodecs API 實現高效能轉碼，讓下載的錄音檔在各平台（尤其是 iPhone）都能完美播放。同時重構錄音架構為「持續不間斷錄製」，徹底解決先前分段合併導致檔案毀損或無法拉動進度條的問題。現在上傳辨識也已全面支援 M4A 格式。
+## [2026-02-23] NightWhisper Playback & Timing Fixes
+### Fixed
+- **Long Segment Playback**: Resolved an issue where audio after the first 5 minutes wouldn't play or seek correctly. The player now dynamic-concatenates all segments into a single unified stream, ensuring full header validty across the entire session.
+- **Enhanced Time Format**: Updated the analysis report to display both absolute time and relative recording time (e.g. `03:55 (02:40:44)`). This helps users track exactly when an event occurred from the start of the night.
+
+修正長錄音播放失效的問題（解決 WebM 分段缺少標頭導致無法 Seek 的 Bug），現在可完整播放整夜錄音。分析報告新增顯示相對時間格式 `小時:分鐘 (錄製總長度時間)`，方便對照睡眠進度。
