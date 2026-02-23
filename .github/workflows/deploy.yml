@@ -50,6 +50,14 @@ jobs:
           mkdir -p ../dist_final/v-player-preview
           cp -r dist/* ../dist_final/v-player-preview/
           cd ..
+
+          # Build 'flatten-pdf'
+          cd flatten-pdf
+          npm install
+          npm run build
+          mkdir -p ../dist_final/flatten-pdf
+          cp -r dist/* ../dist_final/flatten-pdf/
+          cd ..
           
           # Copy static projects and root html files
           cp -r note dist_final/ || true
