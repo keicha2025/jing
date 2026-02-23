@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/jing/flatten-pdf/sw.js', { scope: '/jing/flatten-pdf/' })})}
