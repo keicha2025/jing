@@ -3,7 +3,7 @@
 // 離線快取策略 (Cache First)
 // ============================================
 
-const CACHE_NAME = 'nightwhisper-v2';
+const CACHE_NAME = 'nightwhisper-v2.4';
 const ASSETS = [
     './',
     './index.html',

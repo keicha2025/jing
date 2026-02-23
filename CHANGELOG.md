@@ -73,5 +73,7 @@
 ### Fixed
 - **Long Segment Playback**: Resolved an issue where audio after the first 5 minutes wouldn't play or seek correctly. The player now dynamic-concatenates all segments into a single unified stream, ensuring full header validty across the entire session.
 - **Enhanced Time Format**: Updated the analysis report to display both absolute time and relative recording time (e.g. `03:55 (02:40:44)`). The relative time is now displayed on a separate line with a smaller font for better readability.
+- **Update Mechanism**: Added a "System Info" card in setup with a "Check for Update" button. This allows users to manually bypass the Service Worker cache and force-reload the application to ensure they are on the latest version (`v2.4.0`).
+- **PWA Proactive Update**: The app now listens for Service Worker changes and prompts for a refresh when new code is detected.
 
-修正長錄音播放失效的問題（解決 WebM 分段缺少標頭導致無法 Seek 的 Bug），現在可完整播放整夜錄音。分析報告新增顯示相對時間格式，並將 `(小時:分鐘)` 的錄製總長度時間放在第二行並縮小字體，方便清晰對照。
+修正長錄音播放失效的問題（解決 WebM 分段缺少標頭導致無法 Seek 的 Bug），現在可完整播放整夜錄音。分析報告新增顯示相對時間格式，並將 `(小時:分鐘)` 的錄製總長度時間放在第二行並縮小字體。此外，新增「系統資訊」與「檢查更新」按鈕，確保使用者能隨時下載到最新版本的網頁功能，避免受瀏覽器暫存（Service Worker）影響。

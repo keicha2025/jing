@@ -16,26 +16,6 @@
     const waveform = new NightWhisperWaveform('waveform-canvas');
     const ui = new NightWhisperUI();
 
-    // ── Capacitor 原生支援 ──
-    const isApp = window.hasOwnProperty('Capacitor');
-    if (isApp) {
-        console.log('[Native] Running in Capacitor mode');
-        const { Filesystem, Directory } = Capacitor.Plugins;
-        const BackgroundMode = window.cordova?.plugins?.backgroundMode;
-
-        if (BackgroundMode) {
-            BackgroundMode.setDefaults({
-                title: 'NightWhisper 正在監測',
-                text: '正在記錄您的睡眠音訊...',
-                icon: 'ic_launcher',
-                color: '6366F1',
-                resume: true,
-                hidden: false,
-                bigText: true
-            });
-        }
-    }
-
     // ── DOM 元素 ──
     const allViews = document.querySelectorAll('.view-panel');
 
@@ -78,6 +58,7 @@
         skipValue: document.getElementById('skip-value'),
         transcodeStatus: document.getElementById('transcode-status'),
         transcodePercent: document.getElementById('transcode-percent'),
+        btnUpdate: document.getElementById('btn-update'),
     };
 
     // ── 狀態 ──
@@ -107,6 +88,36 @@
         navigator.getBattery().then((battery) => {
             if (els.batteryLevel) els.batteryLevel.innerText = Math.round(battery.level * 100) + '%';
         }).catch(() => { });
+    }
+
+    // ── 系統更新邏輯 ──
+    if (els.btnUpdate) {
+        els.btnUpdate.addEventListener('click', async () => {
+            els.btnUpdate.innerText = '檢查中...';
+            els.btnUpdate.classList.add('opacity-50');
+
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.update();
+                    }
+                    // 強制重整以跳過快取
+                    window.location.reload();
+                } catch (err) {
+                    window.location.reload();
+                }
+            } else {
+                window.location.reload();
+            }
+        });
+    }
+
+    // ── 自動偵測更新提示 ──
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('[PWA] New version detected');
+        });
     }
 
     // ────────────────────────────
@@ -241,11 +252,6 @@
         switchView('tracking');
         isMonitoring = true;
 
-        // 原生背景模式：開啟
-        if (isApp && window.cordova?.plugins?.backgroundMode) {
-            window.cordova.plugins.backgroundMode.enable();
-        }
-
         if (delayMinutes > 0) {
             els.monitoringStatus.innerText = `預計 ${delayMinutes} 分鐘後開始錄音...`;
             let remaining = delayMinutes * 60;
@@ -310,12 +316,6 @@
     // ── 停止監測 ──
     async function stopMonitoring() {
         isMonitoring = false;
-
-        // 原生背景模式：關閉
-        if (isApp && window.cordova?.plugins?.backgroundMode) {
-            window.cordova.plugins.backgroundMode.disable();
-        }
-
         if (delayTimer) { clearInterval(delayTimer); delayTimer = null; }
         analyzer.stop();
         await recorder.stop();
@@ -538,46 +538,6 @@
             const actualMimeType = firstSegment.mimeType || 'audio/webm';
             const safeName = sDate.replace(/[^\w]/g, '_');
 
-            // 如果是 App 環境，使用原生檔案寫入
-            if (isApp) {
-                try {
-                    showTranscodeUI(true);
-                    let finalBlob = new Blob(recordings.map(r => r.blob), { type: actualMimeType });
-                    let finalExt = (actualMimeType.includes('mp4') || actualMimeType.includes('aac')) ? 'm4a' : 'webm';
-
-                    // 如果是 Chrome 內核但需要 M4A
-                    if (finalExt === 'webm' && 'AudioEncoder' in window && window.Mp4Muxer) {
-                        finalBlob = await transcodeToM4A(recordings, (p) => {
-                            if (els.transcodePercent) els.transcodePercent.innerText = `${Math.round(p * 100)}%`;
-                        });
-                        finalExt = 'm4a';
-                    }
-
-                    const { Filesystem, Directory } = Capacitor.Plugins;
-                    const reader = new FileReader();
-                    reader.readAsDataURL(finalBlob);
-                    reader.onloadend = async () => {
-                        const base64Data = reader.result.split(',')[1];
-                        const fileName = `nightwhisper_${safeName}.${finalExt}`;
-
-                        await Filesystem.writeFile({
-                            path: fileName,
-                            data: base64Data,
-                            directory: Directory.Documents,
-                        });
-                        alert(`已成功直接存入手機儲存空間 (Documents/${fileName})`);
-                        showTranscodeUI(false);
-                    };
-                } catch (err) {
-                    console.error('Native save failed:', err);
-                    alert('原生儲存失敗，嘗試瀏覽器下載');
-                    triggerDownload(new Blob(recordings.map(r => r.blob), { type: actualMimeType }), `nightwhisper_${safeName}.webm`);
-                    showTranscodeUI(false);
-                }
-                return;
-            }
-
-            // --- 網頁下載邏輯 ---
             // 如果本來就是 mp4 (Safari)，直接下載
             if (actualMimeType.includes('mp4') || actualMimeType.includes('aac')) {
                 const combinedBlob = new Blob(recordings.map(r => r.blob), { type: actualMimeType });

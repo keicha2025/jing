@@ -58,6 +58,7 @@
         skipValue: document.getElementById('skip-value'),
         transcodeStatus: document.getElementById('transcode-status'),
         transcodePercent: document.getElementById('transcode-percent'),
+        btnUpdate: document.getElementById('btn-update'),
     };
 
     // ── 狀態 ──
@@ -87,6 +88,36 @@
         navigator.getBattery().then((battery) => {
             if (els.batteryLevel) els.batteryLevel.innerText = Math.round(battery.level * 100) + '%';
         }).catch(() => { });
+    }
+
+    // ── 系統更新邏輯 ──
+    if (els.btnUpdate) {
+        els.btnUpdate.addEventListener('click', async () => {
+            els.btnUpdate.innerText = '檢查中...';
+            els.btnUpdate.classList.add('opacity-50');
+
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.update();
+                    }
+                    // 強制重整以跳過快取
+                    window.location.reload();
+                } catch (err) {
+                    window.location.reload();
+                }
+            } else {
+                window.location.reload();
+            }
+        });
+    }
+
+    // ── 自動偵測更新提示 ──
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('[PWA] New version detected');
+        });
     }
 
     // ────────────────────────────
