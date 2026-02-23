@@ -21,7 +21,7 @@ UPLOAD_DIR = "temp_files"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.post("/flatten/python")
-async def flatten_python(file: UploadFile = File(...)):
+async def flatten_python(file: UploadFile = File(...), dpi: int = 150):
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
     
@@ -33,26 +33,33 @@ async def flatten_python(file: UploadFile = File(...)):
         with open(input_path, "wb") as f:
             f.write(await file.read())
         
-        # PyMuPDF Flattening
-        doc = fitz.open(input_path)
-        for page in doc:
-            # Applying redactions is one way to flatten "annotations"
-            # For general flattening, we can also use page.get_displaylist().get_pixmap() 
-            # but that turns it into a full raster image, which might reduce quality.
-            # Here we follow the user's suggestion for apply_redactions or static fields.
-            for annot in page.annots():
-                annot.set_flags(fitz.ANNOT_FLAG_PRINT)
+        # Open source
+        src = fitz.open(input_path)
+        # Create output
+        doc = fitz.open()
         
-        # Save with flattening
-        doc.save(output_path, flatten=True)
+        # Rasterize each page for perfect flattening
+        # zoom factor: 1.0 is 72 dpi
+        zoom = dpi / 72
+        mat = fitz.Matrix(zoom, zoom)
+        
+        for page in src:
+            pix = page.get_pixmap(matrix=mat)
+            new_page = doc.new_page(width=page.rect.width, height=page.rect.height)
+            new_page.insert_image(new_page.rect, pixmap=pix)
+        
+        doc.save(output_path)
         doc.close()
+        src.close()
         
         return FileResponse(output_path, filename=f"flattened_{file.filename}")
     except Exception as e:
+        import traceback
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/flatten/ghostscript")
-async def flatten_ghostscript(file: UploadFile = File(...)):
+async def flatten_ghostscript(file: UploadFile = File(...), quality: str = "prepress"):
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
     
@@ -60,6 +67,13 @@ async def flatten_ghostscript(file: UploadFile = File(...)):
     input_path = os.path.join(UPLOAD_DIR, f"{task_id}_input.pdf")
     output_path = os.path.join(UPLOAD_DIR, f"{task_id}_output.pdf")
     
+    # quality map for GS
+    # /screen (72dpi), /ebook (150dpi), /printer (300dpi), /prepress (300dpi high color)
+    gs_quality = f"/default"
+    if quality == "low": gs_quality = "/screen"
+    elif quality == "medium": gs_quality = "/ebook"
+    elif quality == "high": gs_quality = "/prepress"
+
     try:
         with open(input_path, "wb") as f:
             f.write(await file.read())
@@ -71,6 +85,7 @@ async def flatten_ghostscript(file: UploadFile = File(...)):
             "-dBATCH",
             "-dNOPAUSE",
             "-sDEVICE=pdfwrite",
+            f"-dPDFSETTINGS={gs_quality}",
             "-dShowAnnots=false",
             f"-sOutputFile={output_path}",
             input_path

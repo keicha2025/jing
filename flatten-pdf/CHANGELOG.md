@@ -21,3 +21,13 @@ All notable changes to this project will be documented in this file.
 - Integrated Google Cloud Project ID for future backend deployment.
 
 **已將前端 PWA 部署至 GitHub Pages，並準備好後端 GCP 整合。**
+
+## [0.1.2] - 2026-02-23
+
+### Bug Fixes & Improvements
+- **Backend**: Fixed `save()` error in Python engine by implementing a more robust rasterization flattening method.
+- **Backend**: Added Ghostscript quality presets (`/screen`, `/ebook`, `/prepress`).
+- **Frontend**: Integrated quality selection UI (Standard, High, Ultra) to allow users to prioritize file size or visual fidelity.
+- **Frontend**: Corrected deployment paths and verified GitHub Actions integration.
+
+**修復了 Python 引擎崩潰問題，並新增了畫質選擇功能（Standard, High, Ultra），讓使用者能根據需求調整輸出品質。**

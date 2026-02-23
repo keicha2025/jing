@@ -90,7 +90,15 @@ const App = () => {
 
                 // Use the environment variable if available, otherwise fallback to localhost
                 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-                const endpoint = selectedEngine === 'python' ? '/flatten/python' : '/flatten/ghostscript';
+
+                let endpoint = '';
+                if (selectedEngine === 'python') {
+                    const dpi = quality === 'low' ? 72 : quality === 'medium' ? 150 : 300;
+                    endpoint = `/flatten/python?dpi=${dpi}`;
+                } else {
+                    endpoint = `/flatten/ghostscript?quality=${quality}`;
+                }
+
                 const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                     method: 'POST',
                     body: formData,
@@ -106,7 +114,7 @@ const App = () => {
             }
         } catch (error) {
             console.error('Flattening failed:', error);
-            alert(`扁平化失敗: ${error.message}\n請確保後端服務已開啟，或是切換至 Node.js Core 嘗試。`);
+            alert(`扁平化失敗: ${error.message}\n請確保選取的引擎相容您的檔案性質。`);
         } finally {
             setIsProcessing(false);
         }
@@ -303,6 +311,28 @@ const App = () => {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+
+                        {/* Quality Selection */}
+                        <div className="space-y-4">
+                            <h3 className={`text-[10px] uppercase tracking-[0.3em] font-black ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                                Select Output Quality (DPI)
+                            </h3>
+                            <div className={`p-2 rounded-2xl flex space-x-2 transition-colors duration-500 ${isDarkMode ? 'bg-zinc-900/50 border border-white/5' : 'bg-zinc-100 border border-black/5'
+                                }`}>
+                                {['low', 'medium', 'high'].map((q) => (
+                                    <button
+                                        key={q}
+                                        onClick={() => setQuality(q)}
+                                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${quality === q
+                                                ? (isDarkMode ? 'bg-white text-black shadow-lg' : 'bg-zinc-900 text-white shadow-lg')
+                                                : (isDarkMode ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-zinc-900')
+                                            }`}
+                                    >
+                                        {q === 'low' ? 'Standard' : q === 'medium' ? 'High' : 'Ultra'}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         <button
