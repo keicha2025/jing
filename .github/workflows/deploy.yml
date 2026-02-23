@@ -51,12 +51,14 @@ jobs:
           cp -r dist/* ../dist_final/v-player-preview/
           cd ..
 
-          # Build 'flatten-pdf'
-          cd flatten-pdf
+          # Build 'pdf-tool'
+          cd pdf-tool
           npm install
           npm run build
-          mkdir -p ../dist_final/flatten-pdf
-          cp -r dist/* ../dist_final/flatten-pdf/
+          mkdir -p ../dist_final/pdf-tool
+          cp -r dist/* ../dist_final/pdf-tool/
+          # Create redirect carefully to overwrite the built index
+          echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=https://jing-lab.web.app/pdf-tool/"></head><body><p>Redirecting to <a href="https://jing-lab.web.app/pdf-tool/">https://jing-lab.web.app/pdf-tool/</a>...</p></body></html>' > ../dist_final/pdf-tool/index.html
           cd ..
           
           # Copy static projects and root html files
