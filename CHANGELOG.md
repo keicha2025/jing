@@ -72,6 +72,6 @@
 ## [2026-02-23] NightWhisper Playback & Timing Fixes
 ### Fixed
 - **Long Segment Playback**: Resolved an issue where audio after the first 5 minutes wouldn't play or seek correctly. The player now dynamic-concatenates all segments into a single unified stream, ensuring full header validty across the entire session.
-- **Enhanced Time Format**: Updated the analysis report to display both absolute time and relative recording time (e.g. `03:55 (02:40:44)`). This helps users track exactly when an event occurred from the start of the night.
+- **Enhanced Time Format**: Updated the analysis report to display both absolute time and relative recording time (e.g. `03:55 (02:40:44)`). The relative time is now displayed on a separate line with a smaller font for better readability.
 
-修正長錄音播放失效的問題（解決 WebM 分段缺少標頭導致無法 Seek 的 Bug），現在可完整播放整夜錄音。分析報告新增顯示相對時間格式 `小時:分鐘 (錄製總長度時間)`，方便對照睡眠進度。
+修正長錄音播放失效的問題（解決 WebM 分段缺少標頭導致無法 Seek 的 Bug），現在可完整播放整夜錄音。分析報告新增顯示相對時間格式，並將 `(小時:分鐘)` 的錄製總長度時間放在第二行並縮小字體，方便清晰對照。

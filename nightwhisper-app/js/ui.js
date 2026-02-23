@@ -238,10 +238,11 @@ class NightWhisperUI {
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <span class="text-white font-medium">${displayTime}</span>
+            <span class="text-white font-medium">${timeStr}</span>
             <span class="text-xs px-1.5 py-0.5 rounded bg-white/5 text-zinc-400">${typeLabel}</span>
           </div>
-          <div class="text-[10px] text-zinc-500 flex gap-3 mt-0.5">
+          <div class="text-[10px] text-zinc-500 opacity-70">(${relativeStr})</div>
+          <div class="text-[10px] text-zinc-500 flex gap-3 mt-1">
             <span>長度: ${durationStr}</span>
             <span>強度: ${Math.abs(event.dB)}dB</span>
           </div>
