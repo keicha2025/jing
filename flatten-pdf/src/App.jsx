@@ -89,8 +89,8 @@ const App = () => {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                // Use the environment variable if available, otherwise fallback to the live production URL
-                const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pdf-flattener-1082284355568.us-central1.run.app';
+                // Use the precise Cloud Run URL discovered via gcloud describe
+                const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pdf-flattener-hh37ednm6q-uc.a.run.app';
 
                 let endpoint = '';
                 if (selectedEngine === 'python') {
@@ -154,23 +154,13 @@ const App = () => {
                     <span className="text-xl font-black tracking-tighter italic">FLATMODERN</span>
                 </div>
 
-                <div className="flex items-center space-x-10">
-                    <div className="hidden md:flex space-x-10 text-[10px] font-bold tracking-[0.3em] uppercase opacity-50">
-                        <a href="#" className="hover:opacity-100 transition-opacity">Technology</a>
-                        <a href="#" className="hover:opacity-100 transition-opacity">Docs</a>
-                    </div>
-
+                <div className="flex items-center">
                     <button
                         onClick={toggleTheme}
                         className={`p-2 rounded-full border transition-all duration-500 ${isDarkMode ? 'border-white/10 hover:bg-white/10' : 'border-black/5 hover:bg-black/5'
                             }`}
                     >
                         {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-                    </button>
-
-                    <button className={`px-6 py-2.5 text-[10px] font-bold rounded-full transition-all uppercase tracking-widest ${isDarkMode ? 'bg-white text-black hover:bg-zinc-200' : 'bg-zinc-900 text-white hover:bg-black shadow-lg shadow-black/10'
-                        }`}>
-                        Enterprise
                     </button>
                 </div>
             </nav>
@@ -379,16 +369,11 @@ const App = () => {
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center space-y-8 md:space-y-0">
                     <div className="flex flex-col items-center md:items-start space-y-2">
                         <p className="text-[10px] font-bold tracking-[0.4em] uppercase opacity-30">
-                            © 2024 FLATMODERN STUDIO
+                            © 2025 FLATMODERN STUDIO
                         </p>
                         <p className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-20">
-                            Designed in Taipei / Built for the web
+                            Professional PDF Processing Utilities
                         </p>
-                    </div>
-                    <div className="flex space-x-12 text-[10px] font-bold tracking-[0.3em] uppercase opacity-40">
-                        <a href="#" className="hover:opacity-100 transition-opacity">Privacy</a>
-                        <a href="#" className="hover:opacity-100 transition-opacity">Legal</a>
-                        <a href="#" className="hover:opacity-100 transition-opacity">Contact</a>
                     </div>
                 </div>
             </footer>
