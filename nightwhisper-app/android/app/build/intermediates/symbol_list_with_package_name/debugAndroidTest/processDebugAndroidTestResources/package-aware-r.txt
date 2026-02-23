@@ -1,0 +1,3 @@
+com.keicha2025.nightwhisper.test
+style WhiteBackgroundDialogTheme
+style WhiteBackgroundTheme

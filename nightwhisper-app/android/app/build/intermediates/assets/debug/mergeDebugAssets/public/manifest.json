@@ -1,0 +1,30 @@
+{
+    "name": "NightWhisper 夜語",
+    "short_name": "夜語",
+    "description": "智慧睡眠監測工具 — 偵測打呼與夢話",
+    "start_url": "./index.html",
+    "scope": ".",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#000000",
+    "theme_color": "#6366F1",
+    "lang": "zh-TW",
+    "categories": [
+        "health",
+        "lifestyle"
+    ],
+    "icons": [
+        {
+            "src": "icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
