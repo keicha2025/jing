@@ -759,9 +759,26 @@
         els.monitoringStatus.innerText = '正在讀取音檔...';
 
         try {
-            const arrayBuffer = await file.arrayBuffer();
+            // 使用 FileReader 讀取 ArrayBuffer (更穩定的方式)
+            const reader = new FileReader();
+            const arrayBuffer = await new Promise((resolve, reject) => {
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('讀取檔案失敗'));
+                reader.readAsArrayBuffer(file);
+            });
+
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+            // 提示解碼中
+            els.monitoringStatus.innerText = '正在解碼音檔 (這可能需要一點時間)...';
+
+            // 部分瀏覽器不支援 Promise 版 decodeAudioData，使用回溯寫法
+            const audioBuffer = await new Promise((resolve, reject) => {
+                audioCtx.decodeAudioData(arrayBuffer, resolve, (err) => {
+                    reject(err || new Error('不支援的音檔格式或檔案過大'));
+                });
+            });
 
             currentSessionId = 'up_' + Date.now().toString(36);
             const startTime = Date.now(); // 預設使用當前時間作為起始點
@@ -805,9 +822,23 @@
             isMonitoring = false;
             switchView('analysis');
         } catch (err) {
-            console.error('Upload failed:', err);
-            alert('音檔解碼或分析失敗：' + err.message);
+            console.error('Upload failed details:', err);
+            isMonitoring = false;
+
+            let errorMsg = err.message || '未知錯誤';
+            if (err.name === 'EncodingError') errorMsg = '瀏覽器無法識別此音檔格式。';
+            if (err.name === 'QuotaExceededError') errorMsg = '瀏覽器儲存空間不足。';
+
+            await showModal({
+                title: '分析失敗',
+                message: `錯誤原因：${errorMsg}\n\n請確認檔案是效的音檔，且長度不要超過數小時。`,
+                icon: 'error',
+                confirmText: '返回',
+            });
             switchView('setup');
+        } finally {
+            // 重置 input 以便下次選取
+            e.target.value = '';
         }
     });
 
