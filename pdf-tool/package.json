@@ -1,5 +1,5 @@
 {
-    "name": "flatten-pdf",
+    "name": "pdf-tool",
     "private": true,
     "version": "0.1.0",
     "type": "module",

@@ -8,6 +8,7 @@
     'use strict';
 
     // ── 初始化模組 ──
+    const isApp = window.hasOwnProperty('Capacitor') || window.hasOwnProperty('cordova');
     const storage = new NightWhisperStorage();
     await storage.init();
 
@@ -59,6 +60,8 @@
         transcodeStatus: document.getElementById('transcode-status'),
         transcodePercent: document.getElementById('transcode-percent'),
         btnUpdate: document.getElementById('btn-update'),
+        appVersionText: document.getElementById('app-version-text'),
+        appInfoTitle: document.getElementById('app-info-title'),
     };
 
     // ── 狀態 ──
@@ -90,8 +93,19 @@
         }).catch(() => { });
     }
 
-    // ── 系統更新邏輯 ──
-    if (els.btnUpdate) {
+    // ── 系統更新與環境適應 ──
+    if (isApp) {
+        console.log('[NightWhisper] Running in Native App mode');
+        if (els.appInfoTitle) els.appInfoTitle.innerText = 'App 版本';
+        if (els.btnUpdate) {
+            els.btnUpdate.innerText = '下載最新 APK';
+            els.btnUpdate.addEventListener('click', () => {
+                // 導向 GitHub 的 APK 下載連結 (請確保此路徑正確)
+                const apkUrl = 'https://github.com/keicha2025/jing/releases';
+                window.open(apkUrl, '_system');
+            });
+        }
+    } else if (els.btnUpdate) {
         els.btnUpdate.addEventListener('click', async () => {
             els.btnUpdate.innerText = '檢查中...';
             els.btnUpdate.classList.add('opacity-50');
@@ -102,7 +116,6 @@
                     for (let registration of registrations) {
                         await registration.update();
                     }
-                    // 強制重整以跳過快取
                     window.location.reload();
                 } catch (err) {
                     window.location.reload();

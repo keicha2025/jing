@@ -69,11 +69,12 @@
 - **Dynamic Format Detection**: The download button now automatically detects the recorded format and provides the correct MIME type and file extension.
 
 針對 Chrome 瀏覽器新增「純前端 M4A 轉碼」功能，利用 WebCodecs API 實現高效能轉碼，讓下載的錄音檔在各平台（尤其是 iPhone）都能完美播放。同時重構錄音架構為「持續不間斷錄製」，徹底解決先前分段合併導致檔案毀損或無法拉動進度條的問題。現在上傳辨識也已全面支援 M4A 格式。
-## [2026-02-23] NightWhisper Playback & Timing Fixes
-### Fixed
-- **Long Segment Playback**: Resolved an issue where audio after the first 5 minutes wouldn't play or seek correctly. The player now dynamic-concatenates all segments into a single unified stream, ensuring full header validty across the entire session.
-- **Enhanced Time Format**: Updated the analysis report to display both absolute time and relative recording time (e.g. `03:55 (02:40:44)`). The relative time is now displayed on a separate line with a smaller font for better readability.
-- **Update Mechanism**: Added a "System Info" card in setup with a "Check for Update" button. This allows users to manually bypass the Service Worker cache and force-reload the application to ensure they are on the latest version (`v2.4.0`).
-- **PWA Proactive Update**: The app now listens for Service Worker changes and prompts for a refresh when new code is detected.
+## [2026-02-24] NightWhisper v2.5.0 — Synchronization & Native Updates
+### Added
+- **Context-Aware Updates**: The application now detects if it's running as a Web PWA or a Native Android App.
+- **Native APK Download**: In the Android App version, the "Check for Update" button is automatically replaced with a "Download Latest APK" button, pointing to the project's GitHub releases.
+- **Full Parity**: All recent fixes (playback, time format, analysis improvements) are now fully synchronized between the web repository and the native Android project.
+### Changed
+- Bumped version to `v2.5.0` for all platforms.
 
-修正長錄音播放失效的問題（解決 WebM 分段缺少標頭導致無法 Seek 的 Bug），現在可完整播放整夜錄音。分析報告新增顯示相對時間格式，並將 `(小時:分鐘)` 的錄製總長度時間放在第二行並縮小字體。此外，新增「系統資訊」與「檢查更新」按鈕，確保使用者能隨時下載到最新版本的網頁功能，避免受瀏覽器暫存（Service Worker）影響。
+正式將網頁版與 App 版代碼同步。新增「環境辨識」功能：在網頁版維持「檢查更新」清空換存，在 App 版則會自動切換為「下載最新 APK」按鈕，方便使用者直接從 GitHub 獲取最新安裝包。目前所有播放修正與時間格式優化已全面覆蓋所有版本。
