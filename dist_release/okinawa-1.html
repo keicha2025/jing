@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>冬之南國，緩慢的四日</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+JP:wght@400;600&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,0,0" />
+
+    <style>
+        :root {
+            --bg-color: #F4F4F0;
+            --card-bg: #FFFFFF;
+            --text-primary: #2D2D2D;
+            --text-secondary: #666666;
+            --accent-color: #8E403A;
+            --nav-bg: rgba(255, 255, 255, 0.98);
+            --border-color: #E5E5E5;
+            --plan-a-bg: #FAF9F6;
+            --plan-b-bg: #F0F2F4;
+        }
+
+        html { scroll-behavior: smooth; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-primary); font-family: 'Noto Sans TC', sans-serif; line-height: 1.75; font-weight: 300; padding-bottom: 90px; }
+        h1, h2, h3, .serif { font-family: 'Noto Serif TC', serif; letter-spacing: 0.05em; color: var(--text-primary); }
+        .jp-text { font-family: 'Noto Serif JP', serif; font-size: 0.8em; display: block; margin-top: 4px; color: var(--text-secondary); opacity: 0.8; }
+        p { margin-bottom: 0; color: var(--text-secondary); text-align: justify; font-size: 0.95rem; }
+        .container { max-width: 600px; margin: 0 auto; padding: 0 20px; }
+
+        /* Hero */
+        header.hero { padding: 80px 20px 60px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        header.hero h1 { font-size: 2rem; margin-bottom: 24px; line-height: 1.4; }
+        header.hero .intro-text { font-size: 0.9rem; max-width: 320px; margin: 0 auto; position: relative; }
+        header.hero .intro-text::before { content: ''; display: block; width: 30px; height: 1px; background: var(--text-secondary); margin: 0 auto 20px; }
+
+        /* Info Bar & Flight */
+        .info-bar { background-color: var(--card-bg); padding: 30px 20px; margin: 20px 0 30px; border-radius: 2px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .info-item { display: flex; align-items: flex-start; gap: 15px; }
+        .info-icon { color: var(--accent-color); background: rgba(142, 64, 58, 0.1); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .info-content h4 { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 2px; }
+        .info-content p { font-size: 1rem; color: var(--text-primary); font-weight: 500; }
+
+        .flight-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 15px; padding: 20px; position: relative; overflow: hidden; }
+        .flight-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background-color: var(--accent-color); opacity: 0.7; }
+        .flight-header { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dashed var(--border-color); }
+        .flight-no { font-weight: 700; color: var(--accent-color); font-size: 1.1rem; }
+        .flight-body { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .flight-port { flex: 1; }
+        .port-time { font-size: 1.5rem; font-weight: 500; line-height: 1; }
+        .port-name { font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px; }
+        .port-terminal { font-size: 0.75rem; background-color: #f0f0f0; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
+        .flight-duration { flex: 0 0 80px; text-align: center; font-size: 0.75rem; color: var(--text-secondary); position: relative; top: -5px; }
+        .flight-arrow { display: block; font-size: 1.2rem; color: #ddd; margin-bottom: -5px; }
+        .flight-footer { background-color: #FAFAFA; margin: 0 -20px -20px -20px; padding: 10px 20px; font-size: 0.8rem; color: var(--text-secondary); display: flex; gap: 15px; align-items: center; }
+        .baggage-tag { display: flex; align-items: center; gap: 5px; }
+
+        /* Day & Spots */
+        .day-section { padding-top: 60px; margin-bottom: 40px; }
+        .day-header { margin-bottom: 30px; padding-left: 15px; border-left: 3px solid var(--accent-color); }
+        .day-header h2 { font-size: 1.6rem; line-height: 1.2; }
+        .day-theme { font-size: 0.9rem; color: var(--text-secondary); margin-top: 8px; display: block; }
+        .spot-card { background-color: var(--card-bg); padding: 24px; margin-bottom: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .spot-header { display: flex; align-items: center; margin-bottom: 16px; gap: 12px; }
+        .spot-icon { font-size: 1.5rem; color: var(--accent-color); }
+        .spot-title { font-size: 1.15rem; font-weight: 500; }
+        
+        /* Plan Styles */
+        .plan-wrapper { margin: 30px 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
+        .plan-header { padding: 15px 20px; font-weight: 500; font-size: 0.9rem; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
+        .plan-a .plan-header { background-color: #EFEBE9; color: #5D4037; }
+        .plan-b .plan-header { background-color: #ECEFF1; color: #455A64; }
+        .plan-body { padding: 20px; }
+        .plan-a .plan-body { background-color: var(--plan-a-bg); }
+        .plan-b .plan-body { background-color: var(--plan-b-bg); }
+        .plan-subtitle { font-family: 'Noto Serif TC', serif; font-size: 1.3rem; margin-bottom: 10px; }
+        .plan-tags { display: inline-block; font-size: 0.8rem; padding: 4px 8px; background: rgba(255,255,255,0.6); border-radius: 4px; margin-bottom: 20px; color: var(--text-secondary); }
+
+        /* Gallery per Day */
+        .day-gallery {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px;
+        }
+        .gallery-img {
+            width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 4px; background: #eee;
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .gallery-img:active { transform: scale(0.98); }
+
+        /* Upload Area */
+        .upload-area { margin-top: 20px; text-align: center; border-top: 1px dashed var(--border-color); padding-top: 20px; }
+        .upload-label {
+            display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border: 1px solid var(--text-secondary);
+            border-radius: 4px; color: var(--text-secondary); font-size: 0.9rem; cursor: pointer; transition: 0.3s;
+        }
+        .upload-label:hover { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
+        .upload-input { display: none; }
+        .upload-status { font-size: 0.8rem; margin-top: 8px; color: var(--accent-color); min-height: 1.2em; }
+
+        /* Expense Section */
+        .expense-section { display: none; padding-top: 80px; min-height: 100vh; }
+        .expense-section.active { display: block; animation: fadeIn 0.3s ease; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; }
+        .form-input, .form-select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; background: #fff; font-size: 1rem; }
+        .splitter-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .splitter-check { display: none; }
+        .splitter-label { padding: 8px 16px; background: #fff; border: 1px solid var(--border-color); border-radius: 20px; font-size: 0.9rem; color: var(--text-secondary); cursor: pointer; transition: 0.2s; }
+        .splitter-check:checked + .splitter-label { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+        .btn-add { width: 100%; padding: 14px; background: var(--text-primary); color: #fff; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; margin-top: 10px; }
+        .btn-add:disabled { background: #ccc; cursor: not-allowed; }
+        
+        .expense-list { margin-top: 40px; border-top: 1px dashed var(--border-color); padding-top: 20px; }
+        .expense-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .expense-details { color: var(--text-secondary); font-size: 0.8rem; margin-top: 2px; }
+        
+        .settlement-box { background: #fff; padding: 20px; border-radius: 8px; margin-top: 30px; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .settlement-title { font-size: 1.1rem; margin-bottom: 15px; font-weight: 500; border-bottom: 2px solid var(--bg-color); padding-bottom: 10px; }
+        .settlement-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
+        .settlement-arrow { color: var(--text-secondary); margin: 0 8px; font-size: 0.8em; }
+
+        /* Curator Note */
+        .curator-note { background-color: #E8E8E6; padding: 40px 20px; margin-top: 60px; border-radius: 8px; }
+        .note-item { background: rgba(255,255,255,0.5); padding: 15px; border-radius: 6px; display: flex; gap: 12px; margin-bottom: 15px; }
+
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--nav-bg); backdrop-filter: blur(10px); border-top: 1px solid var(--border-color); display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 0 25px; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        .nav-item { text-decoration: none; color: var(--text-secondary); text-align: center; font-size: 0.65rem; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-item.active { color: var(--accent-color); }
+        .nav-item span.material-symbols-outlined { font-size: 1.4rem; }
+        .nav-text { font-weight: 500; }
+
+        /* Loading Overlay */
+        #global-loading {
+            position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:2000;
+            display:flex; justify-content:center; align-items:center; color: var(--text-primary); font-size:1.2rem;
+            backdrop-filter: blur(5px);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <!-- Global Loading -->
+    <div id="global-loading">
+        <div><span class="material-symbols-outlined" style="animation:spin 1s infinite linear;">sync</span> 資料讀取中...</div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content">
+        <header class="hero" id="top">
+            <div class="container">
+                <h1>冬之南國<br>緩慢的四日<span class="jp-text">冬の南国、緩やかな四日間</span></h1>
+                <p class="intro-text">不是為了遠方，而是「為了自己」。<br>在浪聲裡，把生活調成慢速播放。</p>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="info-bar">
+                <div class="info-item">
+                    <div class="info-icon"><span class="material-symbols-outlined">calendar_month</span></div>
+                    <div class="info-content"><h4>日程 / 日程</h4><p>01.18 (日) — 01.21 (三)</p></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-icon"><span class="material-symbols-outlined">bed</span></div>
+                    <div class="info-content"><h4>住宿 / 宿泊</h4><p>那霸東急 REI Hotel</p></div>
+                </div>
+            </div>
+        </div>
+
+        <section class="container" style="margin-bottom: 50px;">
+            <h3 class="serif" style="margin-bottom: 20px; font-size: 1.2rem;">航班詳情 <span class="jp-text" style="display:inline;">フライト情報</span></h3>
+            <!-- VZ568 -->
+            <div class="flight-card">
+                <div class="flight-header"><div><span class="flight-no">VZ 568</span><span style="font-size:0.8rem; margin-left:10px; color:#666;">1月18日 (日)</span></div></div>
+                <div class="flight-body">
+                    <div class="flight-port" style="text-align: left;"><div class="port-time">14:45</div><div class="port-name">台北 <span class="port-terminal">T1</span></div></div>
+                    <div class="flight-duration"><span class="flight-arrow">------</span>1h 25m</div>
+                    <div class="flight-port" style="text-align: right;"><div class="port-time">17:10</div><div class="port-name">那覇 <span class="port-terminal">I</span></div></div>
+                </div>
+                <div class="flight-footer"><div class="baggage-tag"><span class="material-symbols-outlined" style="font-size:1rem;">backpack</span>隨身 7kg</div><div class="baggage-tag"><span class="material-symbols-outlined" style="font-size:1rem;">luggage</span>無託運</div></div>
+            </div>
+            <!-- VZ569 -->
+            <div class="flight-card">
+                <div class="flight-header"><div><span class="flight-no">VZ 569</span><span style="font-size:0.8rem; margin-left:10px; color:#666;">1月21日 (三)</span></div></div>
+                <div class="flight-body">
+                    <div class="flight-port" style="text-align: left;"><div class="port-time">18:05</div><div class="port-name">那覇 <span class="port-terminal">I</span></div></div>
+                    <div class="flight-duration"><span class="flight-arrow">------</span>1h 40m</div>
+                    <div class="flight-port" style="text-align: right;"><div class="port-time">18:45</div><div class="port-name">台北 <span class="port-terminal">T1</span></div></div>
+                </div>
+                <div class="flight-footer"><div class="baggage-tag"><span class="material-symbols-outlined" style="font-size:1rem;">backpack</span>隨身 7kg</div><div class="baggage-tag"><span class="material-symbols-outlined" style="font-size:1rem;">luggage</span>無託運</div></div>
+            </div>
+        </section>
+
+        <!-- Day 1 -->
+        <section id="day1" class="container day-section">
+            <div class="day-header"><h2>Day 1<span class="jp-text">那覇到着、南国の夜</span></h2><span class="day-theme">抵達那霸，初探南國夜晚的微風</span></div>
+            <div class="spot-card"><div class="spot-header"><span class="material-symbols-outlined spot-icon">flight_land</span><h3 class="spot-title">那霸機場與前往市區</h3></div><p>下午五點，飛機降落在被海洋包圍的跑道上。冬天的沖繩氣溫舒適宜人。出關後，搭乘單軌電車前往「旭橋站」。</p></div>
+            <div class="spot-card"><div class="spot-header"><span class="material-symbols-outlined spot-icon">hotel</span><h3 class="spot-title">那霸東急 REI 飯店</h3></div><p>今晚的落腳處與車站有空橋直連。大廳位於高樓層，視野開闊。</p></div>
+            <div class="spot-card"><div class="spot-header"><span class="material-symbols-outlined spot-icon">directions_walk</span><h3 class="spot-title">國際通的夜間散策</h3></div><p>夜幕下的國際通依舊熱鬧明亮。不用設定目的地，隨意走進一家居酒屋，或是慢慢逛逛小店。</p></div>
+            
+            <!-- Upload Day 1 -->
+            <div class="upload-area">
+                <div class="day-gallery" id="gallery-day1"></div>
+                <label class="upload-label" style="margin-top:15px;">
+                    <span class="material-symbols-outlined">add_a_photo</span> 上傳照片至 Day 1
+                    <input type="file" accept="image/*" class="upload-input" onchange="handleUpload(this, 'day1')">
+                </label>
+                <div class="upload-status"></div>
+            </div>
+        </section>
+
+        <!-- Day 2 -->
+        <section id="day2" class="container day-section">
+            <div class="day-header"><h2>Day 2<span class="jp-text">桜と海、二つの選択</span></h2><span class="day-theme">追逐早開的櫻花與海島公路旅行</span></div>
+            <p style="text-align: center; margin-bottom: 20px; font-size: 0.9rem; opacity: 0.7;"><span class="material-symbols-outlined" style="vertical-align: text-bottom; font-size:1.1rem;">splitscreen</span> 本日行程二選一</p>
+            <div class="plan-wrapper plan-a">
+                <div class="plan-header"><span>PLAN A</span><span class="material-symbols-outlined">directions_car</span></div>
+                <div class="plan-body">
+                    <h3 class="plan-subtitle">南方自然與文化之旅</h3>
+                    <div class="spot-card" style="border:none; box-shadow:none; background:rgba(255,255,255,0.6);"><div class="spot-header"><span class="material-symbols-outlined spot-icon">local_florist</span><strong class="spot-title">八重瀨公園</strong></div><p>南部的賞櫻名所。一月中旬，深粉紅色的寒緋櫻可能已經悄悄綻放。</p></div>
+                    <div class="spot-card" style="border:none; box-shadow:none; background:rgba(255,255,255,0.6);"><div class="spot-header"><span class="material-symbols-outlined spot-icon">water_lux</span><strong class="spot-title">奧武島的貓與天婦羅</strong></div><p>車子駛過短橋即達。買一份現炸天婦羅坐在防波堤上享用，身邊可能還會有幾隻不怕生的貓咪。</p></div>
+                    <div class="spot-card" style="border:none; box-shadow:none; background:rgba(255,255,255,0.6); margin-bottom:0;"><div class="spot-header"><strong class="spot-title">玉泉洞與沖繩世界</strong></div><p>走進全長五公里的地下鐘乳石洞，宛如異世界。</p></div>
+                </div>
+            </div>
+            <div class="plan-wrapper plan-b">
+                <div class="plan-header"><span>PLAN B</span><div style="display:flex; gap:5px;"><span class="material-symbols-outlined">directions_car</span><span class="material-symbols-outlined">directions_bus</span></div></div>
+                <div class="plan-body">
+                    <h3 class="plan-subtitle">北谷美式悠閒與名護櫻花</h3>
+                    <div class="spot-card" style="border:none; box-shadow:none; background:rgba(255,255,255,0.6);"><div class="spot-header"><span class="material-symbols-outlined spot-icon">landscape</span><strong class="spot-title">名護中央公園</strong></div><p>沖繩最壯觀的賞櫻勝地。</p></div>
+                    <div class="spot-card" style="border:none; box-shadow:none; background:rgba(255,255,255,0.6); margin-bottom:0;"><div class="spot-header"><span class="material-symbols-outlined spot-icon">deck</span><strong class="spot-title">北谷町與美國村的日落</strong></div><p>充滿美式西岸風情的濱海小鎮。</p></div>
+                </div>
+            </div>
+
+            <!-- Upload Day 2 -->
+            <div class="upload-area">
+                <div class="day-gallery" id="gallery-day2"></div>
+                <label class="upload-label" style="margin-top:15px;">
+                    <span class="material-symbols-outlined">add_a_photo</span> 上傳照片至 Day 2
+                    <input type="file" accept="image/*" class="upload-input" onchange="handleUpload(this, 'day2')">
+                </label>
+                <div class="upload-status"></div>
+            </div>
+        </section>
+
+        <!-- Day 3 -->
+        <section id="day3" class="container day-section">
+            <div class="day-header"><h2>Day 3<span class="jp-text">古都の散策、陶器の街</span></h2><span class="day-theme">走入時光隧道，古道、陶器與咖啡香</span></div>
+            <div class="spot-card"><div class="spot-header"><span class="material-symbols-outlined spot-icon">temple_buddhist</span><h3 class="spot-title">首里城與金城町石疊道</h3></div><p>「金城町石疊道」被列為日本道路百選。尋找那棵三百年的「首里大噴赤木」。</p></div>
+            <div class="spot-card"><div class="spot-header"><h3 class="spot-title">壺屋通陶瓷街</h3></div><p>那霸陶藝的發源地。逛累了，推薦去茶屋喝一碗沖繩傳統的「泡泡茶」。</p></div>
+            <div class="spot-card"><div class="spot-header"><span class="material-symbols-outlined spot-icon">storefront</span><h3 class="spot-title">牧志公設市場周邊</h3></div><p>傍晚走入市場的巷弄迷宮。這裡充滿生活感，有魚貨攤販，也有文青書店。</p></div>
+
+            <!-- Upload Day 3 -->
+            <div class="upload-area">
+                <div class="day-gallery" id="gallery-day3"></div>
+                <label class="upload-label" style="margin-top:15px;">
+                    <span class="material-symbols-outlined">add_a_photo</span> 上傳照片至 Day 3
+                    <input type="file" accept="image/*" class="upload-input" onchange="handleUpload(this, 'day3')">
+                </label>
+                <div class="upload-status"></div>
+            </div>
+        </section>
+
+        <!-- Day 4 -->
+        <section id="day4" class="container day-section">
+            <div class="day-header"><h2>Day 4<span class="jp-text">旅の終わり、エネルギー</span></h2><span class="day-theme">最後的能量補給，將海風打包回家</span></div>
+            <div class="spot-card"><div class="spot-header"><span class="material-symbols-outlined spot-icon">self_improvement</span><h3 class="spot-title">琉球八社・沖宮</h3></div><p>相較於波上宮，這裡更顯清幽。在奧武山公園的小山丘俯瞰那霸。</p></div>
+            <div class="spot-card"><div class="spot-header"><span class="material-symbols-outlined spot-icon">flight_takeoff</span><h3 class="spot-title">瀨長島與返程</h3></div><p>純白色的露台建築層層疊疊。找個位置看著飛機起降的震撼畫面。</p></div>
+
+            <!-- Upload Day 4 -->
+            <div class="upload-area">
+                <div class="day-gallery" id="gallery-day4"></div>
+                <label class="upload-label" style="margin-top:15px;">
+                    <span class="material-symbols-outlined">add_a_photo</span> 上傳照片至 Day 4
+                    <input type="file" accept="image/*" class="upload-input" onchange="handleUpload(this, 'day4')">
+                </label>
+                <div class="upload-status"></div>
+            </div>
+        </section>
+
+        <div class="container">
+            <div class="curator-note">
+                <h3 class="note-title">顧問小提醒 <span class="jp-text" style="display:inline;">旅のヒント</span></h3>
+                <div class="note-item"><span class="material-symbols-outlined" style="color:#555">tips_and_updates</span><div><strong>賞櫻情報</strong><br><span style="font-size:0.9rem; color:#666">出發前搜尋 IG 地標「沖縄 桜 開花」。</span></div></div>
+                <div class="note-item"><span class="material-symbols-outlined" style="color:#555">directions_car</span><div><strong>租車建議</strong><br><span style="font-size:0.9rem; color:#666">建議選「旭橋站取、那霸市區還」。</span></div></div>
+            </div>
+        </div>
+        
+        <footer style="text-align: center; padding: 40px 20px 20px; color: #666; font-size: 0.8rem;"><p>祝 旅途愉快。</p></footer>
+    </div>
+
+    <!-- Expense Section -->
+    <div id="expense-content" class="container expense-section">
+        <h2 class="serif" style="margin-bottom: 30px; text-align:center;">記帳與分帳 <span class="jp-text">割り勘計算</span></h2>
+        
+        <div class="flight-card" style="padding: 25px;">
+            <div class="form-group"><label class="form-label">幣別</label><select id="ex-currency" class="form-select"><option value="TWD">TWD 台幣</option><option value="JPY" selected>JPY 日幣</option></select></div>
+            <div class="form-group"><label class="form-label">金額</label><input type="number" id="ex-amount" class="form-input" placeholder="例如：3000"></div>
+            <div class="form-group"><label class="form-label">類別</label><input type="text" id="ex-desc" class="form-input" placeholder="例如：第一天晚餐"></div>
+            <div class="form-group"><label class="form-label">付款人</label><select id="ex-payer" class="form-select"><option value="Me">我</option><option value="FriendA">朋友 A</option><option value="FriendB">朋友 B</option><option value="FriendC">朋友 C</option></select></div>
+            <div class="form-group">
+                <label class="form-label">分擔人</label>
+                <div class="splitter-group">
+                    <input type="checkbox" id="split-me" class="splitter-check" value="Me" checked><label for="split-me" class="splitter-label">我</label>
+                    <input type="checkbox" id="split-a" class="splitter-check" value="FriendA" checked><label for="split-a" class="splitter-label">朋友 A</label>
+                    <input type="checkbox" id="split-b" class="splitter-check" value="FriendB" checked><label for="split-b" class="splitter-label">朋友 B</label>
+                    <input type="checkbox" id="split-c" class="splitter-check" value="FriendC" checked><label for="split-c" class="splitter-label">朋友 C</label>
+                </div>
+            </div>
+            <button class="btn-add" id="btn-submit-expense" onclick="addExpense()">新增並儲存</button>
+        </div>
+
+        <div id="settlement-area" style="display:none;" class="settlement-box">
+            <h3 class="settlement-title">結算總覽</h3>
+            <div id="settlement-result"></div>
+        </div>
+
+        <div class="expense-list" id="expense-list">
+            <h4 style="margin-bottom:15px; color:#555;">雲端紀錄明細</h4>
+            <div style="text-align:center; color:#999; font-size:0.85rem;" id="no-data">讀取中...</div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#main-content" class="nav-item active" onclick="switchTab('home', this)"><span class="material-symbols-outlined">home</span><span class="nav-text">行程</span></a>
+        <a href="#day2" class="nav-item" onclick="switchTab('home', this)"><span class="material-symbols-outlined">calendar_today</span><span class="nav-text">Day 2</span></a>
+        <a href="#day3" class="nav-item" onclick="switchTab('home', this)"><span class="material-symbols-outlined">temple_buddhist</span><span class="nav-text">Day 3</span></a>
+        <a href="#expense-content" class="nav-item" onclick="switchTab('expense', this)"><span class="material-symbols-outlined">calculate</span><span class="nav-text">記帳</span></a>
+    </nav>
+
+    <script>
+        // ============================================
+        // 設定區
+        // ============================================
+        const API_URL = "https://script.google.com/macros/s/AKfycbyM8q9qpWV_OPq9Srf9_SXCMs0QegYdu9RrTAehjKnHyaKGi0d0S27JK1NlLTzrbN9l/exec"; // 請在此貼上您的 Google Apps Script 網址
+
+        // ============================================
+        // 程式邏輯
+        // ============================================
+        let expenses = [];
+        let photos = [];
+        const members = { 'Me': '我', 'FriendA': '朋友 A', 'FriendB': '朋友 B', 'FriendC': '朋友 C' };
+
+        window.onload = function() {
+            fetchData();
+        };
+
+// 修改 fetchData 函式：加入時間戳記防止快取
+function fetchData() {
+    // 加上 &t=... 防止瀏覽器快取舊資料
+    const timestamp = new Date().getTime();
+    fetch(API_URL + "?action=get_data&t=" + timestamp)
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            expenses = data.data.expenses;
+            photos = data.data.photos;
+            
+            console.log("成功讀取照片數：", photos.length); // 除錯用
+            
+            renderExpenseList();
+            calculateDebt();
+            renderAllPhotos();
+        } else {
+            console.error("後端回傳錯誤:", data.message);
+        }
+        document.getElementById('global-loading').style.display = 'none';
+    })
+    .catch(err => {
+        console.error("連線錯誤:", err);
+        document.getElementById('global-loading').innerHTML = "讀取失敗，請檢查網路或 API";
+    });
+}
+
+        // 2. 上傳照片
+        function handleUpload(input, day) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const statusDiv = input.parentElement.nextElementSibling;
+            statusDiv.textContent = "上傳中，請稍候...";
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result.split(',')[1];
+                const payload = {
+                    type: 'image',
+                    day: day,
+                    filename: file.name,
+                    mimeType: file.type,
+                    fileData: base64Data
+                };
+
+                fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        statusDiv.textContent = "上傳成功！";
+                        statusDiv.style.color = "#4CAF50";
+                        photos.push({day: day, url: data.url, filename: file.name});
+                        renderAllPhotos();
+                    } else {
+                        throw new Error(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    statusDiv.textContent = "上傳失敗。";
+                    statusDiv.style.color = "red";
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderAllPhotos() {
+            ['day1', 'day2', 'day3', 'day4'].forEach(d => {
+                const container = document.getElementById(`gallery-${d}`);
+                if (container) container.innerHTML = '';
+            });
+
+            photos.forEach(p => {
+                const container = document.getElementById(`gallery-${p.day}`);
+                if (container) {
+                    const img = document.createElement('img');
+                    img.src = p.url;
+                    img.className = 'gallery-img';
+                    img.onclick = () => window.open(p.url, '_blank');
+                    container.appendChild(img);
+                }
+            });
+        }
+
+        // 3. 新增記帳
+        function addExpense() {
+            const btn = document.getElementById('btn-submit-expense');
+            const currency = document.getElementById('ex-currency').value;
+            const amount = parseFloat(document.getElementById('ex-amount').value);
+            const desc = document.getElementById('ex-desc').value;
+            const payer = document.getElementById('ex-payer').value;
+            const splitters = [];
+            document.querySelectorAll('.splitter-check:checked').forEach(cb => splitters.push(cb.value));
+
+            if (isNaN(amount) || !desc || splitters.length === 0) {
+                alert("請完整填寫資料");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "儲存中...";
+
+            const payload = {
+                type: 'expense',
+                currency, amount, desc, payer, splitters
+            };
+
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert("新增成功");
+                    fetchData(); 
+                    document.getElementById('ex-amount').value = '';
+                    document.getElementById('ex-desc').value = '';
+                }
+            })
+            .catch(err => alert("儲存失敗"))
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = "新增並儲存";
+            });
+        }
+
+        function renderExpenseList() {
+            const listDiv = document.getElementById('expense-list');
+            listDiv.innerHTML = '<h4 style="margin-bottom:15px; color:#555;">雲端紀錄明細</h4>';
+            
+            if (expenses.length === 0) {
+                listDiv.innerHTML += '<div style="text-align:center; color:#999; font-size:0.85rem;">尚未有紀錄</div>';
+                return;
+            }
+
+            expenses.slice().reverse().forEach(ex => {
+                const splitterList = typeof ex.splitters === 'string' ? ex.splitters.split(',') : ex.splitters;
+                const names = splitterList.map(code => members[code] || code).join(', ');
+                
+                const item = document.createElement('div');
+                item.className = 'expense-item';
+                item.innerHTML = `
+                    <div><strong>${ex.desc}</strong><div class="expense-details">墊付: ${members[ex.payer]} (分擔: ${names})</div></div>
+                    <div style="font-weight:500;">${ex.amount} ${ex.currency}</div>
+                `;
+                listDiv.appendChild(item);
+            });
+        }
+
+        function calculateDebt() {
+            let balances = {};
+            for (let m in members) balances[m] = 0;
+
+            expenses.forEach(ex => {
+                const splitterList = typeof ex.splitters === 'string' ? ex.splitters.split(',') : ex.splitters;
+                const share = ex.amount / splitterList.length;
+                balances[ex.payer] += ex.amount;
+                splitterList.forEach(s => {
+                    if(balances[s] !== undefined) balances[s] -= share;
+                });
+            });
+
+            const resultDiv = document.getElementById('settlement-result');
+            const resultBox = document.getElementById('settlement-area');
+            resultDiv.innerHTML = '';
+            resultBox.style.display = 'none';
+            
+            let debtors = [], creditors = [];
+            for (let m in balances) {
+                if (balances[m] < -0.01) debtors.push({ id: m, amount: balances[m] });
+                if (balances[m] > 0.01) creditors.push({ id: m, amount: balances[m] });
+            }
+
+            if(debtors.length > 0) resultBox.style.display = 'block';
+
+            debtors.sort((a, b) => a.amount - b.amount);
+            creditors.sort((a, b) => b.amount - a.amount);
+
+            let i = 0, j = 0;
+            while (i < debtors.length && j < creditors.length) {
+                let debtor = debtors[i];
+                let creditor = creditors[j];
+                let amount = Math.min(Math.abs(debtor.amount), creditor.amount);
+                
+                const line = document.createElement('div');
+                line.className = 'settlement-row';
+                line.innerHTML = `<span>${members[debtor.id]}</span><span class="settlement-arrow">給付 ➔</span><span>${members[creditor.id]}</span><strong>${Math.round(amount)}</strong>`;
+                resultDiv.appendChild(line);
+
+                debtor.amount += amount;
+                creditor.amount -= amount;
+                if (Math.abs(debtor.amount) < 0.01) i++;
+                if (creditor.amount < 0.01) j++;
+            }
+        }
+
+        function switchTab(tab, navItem) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if(navItem) navItem.classList.add('active');
+
+            const mainDiv = document.getElementById('main-content');
+            const expenseDiv = document.getElementById('expense-content');
+
+            if (tab === 'expense') {
+                mainDiv.style.display = 'none';
+                expenseDiv.classList.add('active');
+                window.scrollTo(0,0);
+            } else {
+                mainDiv.style.display = 'block';
+                expenseDiv.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

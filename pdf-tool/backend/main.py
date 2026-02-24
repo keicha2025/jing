@@ -67,8 +67,46 @@ async def flatten_ghostscript(file: UploadFile = File(...), quality: str = "medi
     except Exception as e:
         print(f"Error during GS flattening: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-    # Finally: deletion of temp files could be handled here or via background task
-    # For now, we keep them for response, but in a real prod env we'd use BackgroundTasks
+
+@app.post("/compress/ghostscript")
+async def compress_ghostscript(file: UploadFile = File(...), quality: str = "medium"):
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+    
+    temp_input = os.path.join(UPLOAD_DIR, f"temp_comp_in_{uuid.uuid4()}.pdf")
+    temp_output = os.path.join(UPLOAD_DIR, f"temp_comp_out_{uuid.uuid4()}.pdf")
+    
+    try:
+        with open(temp_input, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        quality_presets = {
+            "extreme": "/screen",
+            "recommended": "/ebook",
+            "high": "/prepress"
+        }
+        preset = quality_presets.get(quality, "/ebook")
+
+        gs_cmd = [
+            "gs",
+            "-dSAFER",
+            "-dBATCH",
+            "-dNOPAUSE",
+            "-dNOPROMPT",
+            "-sDEVICE=pdfwrite",
+            f"-dPDFSETTINGS={preset}",
+            f"-sOutputFile={temp_output}",
+            temp_input,
+        ]
+        
+        result = subprocess.run(gs_cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise Exception(f"Ghostscript error: {result.stderr}")
+        
+        return FileResponse(temp_output, filename=f"compressed_{file.filename}")
+    except Exception as e:
+        print(f"Error during GS compression: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

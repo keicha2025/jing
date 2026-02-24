@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>note</title>
+
+    <!-- PWA / Mobile Meta -->
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" href="./note_appicon.png">
+    <link rel="apple-touch-icon" href="./note_appicon.png">
+    <meta name="theme-color" content="#FDFCFB">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <!-- Styles & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20,400,0,0" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <script src="config.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#FDFCFB',
+                        primary: '#374151',
+                        secondary: '#9CA3AF',
+                        accent: '#F3F4F6',
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans TC', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #FDFCFB;
+            color: #374151;
+            -webkit-tap-highlight-color: transparent;
+            font-feature-settings: "palt";
+        }
+
+        .material-symbols-rounded {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+            vertical-align: middle;
+        }
+
+        .tap-feedback {
+            @apply transition-transform duration-75 active:scale-[0.96];
+        }
+
+        /* Diff 強化標示 */
+        del {
+            @apply bg-red-50 text-red-500 no-underline px-1 rounded mx-0.5 font-bold;
+        }
+
+        ins {
+            @apply bg-green-50 text-green-600 no-underline px-1 rounded mx-0.5 font-bold;
+        }
+
+        .note-card {
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .note-card.editing {
+            @apply ring-2 ring-gray-100;
+        }
+
+        /* 自動伸展文字框 */
+        .auto-expand {
+            overflow: hidden;
+            resize: none;
+            min-height: 1.5em;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(15px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Modal Animation */
+        .modal-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        .modal-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Spinner */
+        .loader {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-top: 2px solid #374151;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col font-sans pb-safe">
+
+    <!-- 導覽列 -->
+    <nav
+        class="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl border-b border-gray-100 px-5 pt-[env(safe-area-inset-top)]">
+        <div class="h-16 flex justify-between items-center max-w-xl mx-auto">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-rounded text-primary">border_color</span>
+                <h1 class="text-xl font-black tracking-tight lowercase">note</h1>
+            </div>
+            <div class="flex items-center gap-1">
+                <button id="addBtnNav" onclick="prepareNewNote()"
+                    class="hidden w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-accent tap-feedback">
+                    <span class="material-symbols-rounded">add_circle</span>
+                </button>
+                <button id="logoutBtn" onclick="tryLogout()"
+                    class="hidden w-10 h-10 flex items-center justify-center rounded-full text-secondary hover:bg-accent tap-feedback">
+                    <span class="material-symbols-rounded">logout</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主內容區 -->
+    <main class="flex-grow w-full max-w-xl mx-auto p-5 pb-32">
+
+        <!-- 登入介面 -->
+        <div id="loginView" class="hidden flex flex-col items-center justify-center min-h-[60vh]">
+            <div class="w-full max-w-xs space-y-8 text-center">
+                <div class="space-y-2">
+                    <h2 class="text-2xl font-bold">歡迎回來</h2>
+                    <p class="text-sm text-secondary">請輸入存取密碼</p>
+                </div>
+                <div class="space-y-4">
+                    <input type="password" id="passwordInput" placeholder="••••"
+                        class="w-full bg-accent border-none rounded-2xl px-4 py-4 text-center tracking-[1em] text-xl focus:ring-2 focus:ring-gray-200 outline-none transition-all"
+                        inputmode="numeric" />
+                    <button id="loginSubmitBtn" onclick="performLogin()"
+                        class="w-full bg-primary text-white font-bold rounded-2xl py-4 tap-feedback">
+                        登入
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 筆記清單介面 -->
+        <div id="notesView" class="hidden space-y-4">
+            <div id="notesList" class="space-y-4">
+                <!-- 筆記動態注入 -->
+            </div>
+
+            <div id="loadingIndicator" class="hidden flex justify-center py-10">
+                <div class="loader w-8 h-8 border-4"></div>
+            </div>
+
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 text-gray-300 space-y-2">
+                <span class="material-symbols-rounded text-5xl">inventory_2</span>
+                <p class="text-sm font-medium">尚無任何筆記</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- 自訂對話視窗 (Custom Modal) -->
+    <div id="customModal" class="fixed inset-0 z-[80] hidden flex items-center justify-center px-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="closeCustomModal()">
+        </div>
+        <div
+            class="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl relative z-10 transform transition-all modal-enter modal-enter-active">
+            <div class="text-center space-y-4">
+                <div class="w-12 h-12 bg-accent rounded-full flex items-center justify-center mx-auto text-primary">
+                    <span id="modalIcon" class="material-symbols-rounded text-2xl">info</span>
+                </div>
+                <div>
+                    <h3 id="modalTitle" class="text-lg font-bold text-primary">提示</h3>
+                    <p id="modalMsg" class="text-sm text-secondary mt-1 leading-relaxed">內容</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button id="modalInternalCancelBtn" onclick="closeCustomModal()"
+                        class="w-full py-3 rounded-xl font-bold text-secondary bg-accent tap-feedback">
+                        取消
+                    </button>
+                    <button id="modalConfirmBtn"
+                        class="w-full py-3 rounded-xl font-bold text-white bg-primary tap-feedback">
+                        確認
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 異動比對視窗 (確認存檔時跳出) -->
+    <div id="diffModal" class="fixed inset-0 z-[60] hidden">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" onclick="closeDiffModal()"></div>
+        <div
+            class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[2.5rem] shadow-2xl flex flex-col max-h-[85vh] animate-slide-up pb-[env(safe-area-inset-bottom)]">
+            <div class="px-6 py-5 border-b border-gray-50 flex justify-between items-center">
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                    <span class="material-symbols-rounded">difference</span> 確認變更
+                </h3>
+                <button onclick="closeDiffModal()"
+                    class="w-8 h-8 flex items-center justify-center rounded-full bg-accent tap-feedback">
+                    <span class="material-symbols-rounded text-secondary">close</span>
+                </button>
+            </div>
+
+            <div class="px-6 py-6 overflow-y-auto space-y-6">
+                <div class="space-y-2">
+                    <p class="text-xs font-bold text-secondary uppercase tracking-widest">標題異動</p>
+                    <div id="diffTitleOutput" class="p-4 bg-accent rounded-xl text-base leading-relaxed"></div>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-xs font-bold text-secondary uppercase tracking-widest">內容異動</p>
+                    <div id="diffContentOutput"
+                        class="p-4 bg-accent rounded-xl text-base leading-relaxed whitespace-pre-wrap"></div>
+                </div>
+            </div>
+
+            <div class="p-6 pt-2">
+                <button id="confirmDiffBtn" onclick="confirmSaveFromDiff()"
+                    class="w-full bg-primary text-white font-bold py-4 rounded-2xl tap-feedback flex items-center justify-center gap-2">
+                    確認變更並儲存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示框 -->
+    <div id="toast"
+        class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-primary text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-300 translate-y-20 opacity-0 pointer-events-none">
+        <span id="toastIcon" class="material-symbols-rounded">info</span>
+        <span id="toastMsg" class="text-sm font-bold">提示訊息</span>
+    </div>
+
+    <script>
+        // --- 狀態管理 ---
+        let state = {
+            token: localStorage.getItem('device_token') || null,
+            notes: [],
+            pendingEdit: null,
+            isSyncing: false
+        };
+
+        // --- Config Check ---
+        function checkConfig() {
+            if (typeof GAS_API_URL === 'undefined' || !GAS_API_URL || GAS_API_URL.includes("YOUR_DEPLOYMENT_ID")) {
+                showToast("Config Error: API URL missing", "error");
+                return false;
+            }
+            return true;
+        }
+
+        // --- API Client ---
+        async function apiCall(action, payload = {}) {
+            payload.action = action;
+            payload.token = state.token;
+
+            if (!checkConfig()) return { success: false, error: "Config Missing" };
+
+            try {
+                const response = await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                return await response.json();
+            } catch (e) {
+                console.error(e);
+                showToast("網路錯誤", "wifi_off");
+                return { success: false, error: e.message };
+            }
+        }
+
+        // --- 初始化 & Guard ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Intercept reload/close
+            window.addEventListener('beforeunload', (e) => {
+                if (state.isSyncing || hasOpenEdits()) {
+                    e.preventDefault();
+                    e.returnValue = ''; // Generic browser warning
+                }
+            });
+
+            if (state.token) {
+                showView('notesView');
+            } else {
+                showView('loginView');
+            }
+        });
+
+        function hasOpenEdits() {
+            return state.notes.some(n => n.isEditing);
+        }
+
+        function showView(viewId) {
+            ['loginView', 'notesView'].forEach(id => {
+                document.getElementById(id).classList.toggle('hidden', id !== viewId);
+            });
+            if (viewId === 'notesView') {
+                document.getElementById('logoutBtn').classList.remove('hidden');
+                document.getElementById('addBtnNav').classList.remove('hidden');
+                fetchNotes();
+            } else {
+                document.getElementById('logoutBtn').classList.add('hidden');
+                document.getElementById('addBtnNav').classList.add('hidden');
+            }
+        }
+
+        // --- 驗證邏輯 ---
+        async function performLogin() {
+            const pwd = document.getElementById('passwordInput').value;
+            if (!pwd) return;
+
+            const btn = document.getElementById('loginSubmitBtn');
+            setLoading(btn, true);
+
+            const result = await apiCall('login', { password: pwd });
+            setLoading(btn, false);
+
+            if (result.success) {
+                state.token = result.token;
+                localStorage.setItem('device_token', state.token);
+                showView('notesView');
+                showToast("登入成功", "verified_user");
+            } else {
+                showToast(result.message || "密碼錯誤", "lock");
+            }
+        }
+
+        function tryLogout() {
+            if (state.isSyncing || hasOpenEdits()) {
+                openCustomModal({
+                    title: "確認登出",
+                    msg: "仍有編輯中或同步中的資料，登出後可能會遺失。確定要登出嗎？",
+                    icon: "logout",
+                    onConfirm: () => {
+                        logout();
+                    }
+                });
+            } else {
+                logout();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('device_token');
+            state.token = null;
+            location.reload();
+        }
+
+        async function fetchNotes() {
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+
+            const res = await apiCall('get_notes');
+            document.getElementById('loadingIndicator').classList.add('hidden');
+
+            if (res.success) {
+                state.notes = res.notes; // Server order
+                renderNotes();
+            } else if (res.error === "Unauthorized") {
+                logout();
+            }
+        }
+
+        // --- 核心算繪 ---
+        function renderNotes() {
+            const list = document.getElementById('notesList');
+            list.innerHTML = '';
+            document.getElementById('emptyState').classList.toggle('hidden', state.notes.length > 0);
+
+            state.notes.forEach((note, index) => {
+                let tags = [];
+                try { tags = note.tags ? JSON.parse(note.tags) : []; } catch (e) { tags = []; }
+
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-[1.5rem] p-6 note-card flex flex-col gap-3 animate-slide-up relative transition-all ${note.isEditing ? 'editing' : ''}`;
+
+                if (note.isEditing) {
+                    // 編輯模式組件 (Text Buttons, Split Layout)
+                    card.innerHTML = `
+                         <button onclick="confirmDelete('${note.uuid}')" class="absolute top-2 right-2 p-2 text-gray-300 hover:text-primary hover:bg-gray-50 rounded-full transition-colors tap-feedback" title="刪除">
+                            <span class="material-symbols-rounded">delete</span>
+                        </button>
+                        <div class="space-y-3 mt-2">
+                            <textarea id="editTitle-${note.uuid}" rows="1" class="auto-expand w-full text-base font-bold outline-none border-b border-gray-50 pb-1 bg-transparent" placeholder="標題" oninput="autoExpand(this)">${note.title || ''}</textarea>
+                            <textarea id="editContent-${note.uuid}" rows="1" class="auto-expand w-full text-base text-gray-400 leading-relaxed outline-none bg-transparent" placeholder="內容..." oninput="autoExpand(this)">${note.content || ''}</textarea>
+                            
+                            <div class="flex items-center gap-2 mt-2">
+                                <div class="flex-grow flex items-center gap-2 bg-accent rounded-xl px-4 py-2">
+                                    <span class="material-symbols-rounded text-secondary text-lg">tag</span>
+                                    <input id="editTags-${note.uuid}" type="text" class="bg-transparent w-full text-sm outline-none text-primary font-medium" placeholder="標籤 (以空白分隔)" value="${tags.join(' ')}">
+                                </div>
+                                <div class="flex gap-1 shrink-0">
+                                    <!-- Split Text Buttons as requested -->
+                                    <button onclick="cancelEdit('${note.uuid}')" class="px-3 py-2 rounded-xl text-sm font-bold text-secondary hover:bg-accent tap-feedback">取消</button>
+                                    <button id="saveBtn-${note.uuid}" onclick="processSave('${note.uuid}')" class="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-white tap-feedback">儲存</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        const t = card.querySelector(`#editTitle-${note.uuid}`);
+                        const c = card.querySelector(`#editContent-${note.uuid}`);
+                        if (t) autoExpand(t);
+                        if (c) autoExpand(c);
+
+                        if (note.isNew && !note._viewed) {
+                            if (t) t.focus();
+                            note._viewed = true;
+                        }
+                    }, 0);
+                } else {
+                    // 檢視模式組件
+                    const tagsMarkup = tags.map(t => `<span class="text-xs text-secondary font-medium ml-2 shrink-0">#${escapeHtml(t)}</span>`).join('');
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-baseline flex-wrap overflow-hidden pr-2 flex-grow">
+                                <h3 class="text-base font-bold text-primary truncate">${escapeHtml(note.title || '未命名')}</h3>
+                                <div class="flex flex-wrap">${tagsMarkup}</div>
+                            </div>
+                            <div class="flex gap-1 shrink-0 -mt-2 -mr-2">
+                                <button onclick="moveNote(${index}, -1)" class="w-9 h-9 flex items-center justify-center rounded-full text-gray-200 hover:text-primary tap-feedback ${index === 0 ? 'invisible' : ''}">
+                                    <span class="material-symbols-rounded">expand_less</span>
+                                </button>
+                                <button onclick="moveNote(${index}, 1)" class="w-9 h-9 flex items-center justify-center rounded-full text-gray-200 hover:text-primary tap-feedback ${index === state.notes.length - 1 ? 'invisible' : ''}">
+                                    <span class="material-symbols-rounded">expand_more</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start gap-4">
+                            <p class="text-base text-gray-400 leading-relaxed select-text cursor-auto flex-grow">${escapeHtml(note.content)}</p>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button id="copy-btn-${note.uuid}" onclick="copyToClipboard('${escapeHtml(String(note.content || '').replace(/'/g, "\\'"))}', '${note.uuid}')" class="w-9 h-9 flex items-center justify-center rounded-full text-secondary bg-gray-50 hover:bg-accent tap-feedback">
+                                    <span class="material-symbols-rounded text-[18px] transition-all duration-200">content_copy</span>
+                                </button>
+                                <button onclick="toggleEditMode('${note.uuid}', true)" class="w-9 h-9 flex items-center justify-center rounded-full text-secondary bg-gray-50 hover:bg-accent tap-feedback">
+                                    <span class="material-symbols-rounded text-[18px]">edit</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                list.appendChild(card);
+            });
+        }
+
+        // --- 功能邏輯 ---
+        function autoExpand(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+        }
+
+        function prepareNewNote() {
+            // Close any other open edits first
+            state.notes.forEach(n => n.isEditing = false);
+
+            const newNote = {
+                uuid: 'new-' + Date.now(),
+                title: '',
+                content: '',
+                tags: '[]',
+                order: -100,
+                isEditing: true,
+                isNew: true
+            };
+            state.notes.unshift(newNote);
+            renderNotes();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleEditMode(uuid, isEditing) {
+            // Single Edit Mode Logic
+            if (isEditing) {
+                const currentEdit = state.notes.find(n => n.isEditing);
+                if (currentEdit && currentEdit.uuid !== uuid) {
+                    // Check if it's a new empty note, if so remove it
+                    if (currentEdit.isNew && !currentEdit.title && !currentEdit.content) {
+                        const idx = state.notes.findIndex(n => n.uuid === currentEdit.uuid);
+                        if (idx !== -1) state.notes.splice(idx, 1);
+                    } else {
+                        currentEdit.isEditing = false;
+                    }
+                }
+            }
+
+            const index = state.notes.findIndex(n => n.uuid === uuid);
+            if (index !== -1) {
+                state.notes[index].isEditing = isEditing;
+                renderNotes();
+            }
+        }
+
+        function cancelEdit(uuid) {
+            const index = state.notes.findIndex(n => n.uuid === uuid);
+            if (index === -1) return;
+
+            if (state.notes[index].isNew) {
+                state.notes.splice(index, 1);
+            } else {
+                state.notes[index].isEditing = false;
+            }
+            renderNotes();
+        }
+
+        function confirmDelete(uuid) {
+            openCustomModal({
+                title: "確認刪除",
+                msg: "確定要刪除這則筆記嗎？",
+                icon: "delete",
+                onConfirm: () => {
+                    deleteNote(uuid);
+                }
+            });
+        }
+
+        async function deleteNote(uuid) {
+            const idx = state.notes.findIndex(n => n.uuid === uuid);
+            if (idx === -1) return;
+
+            const [deleted] = state.notes.splice(idx, 1);
+            renderNotes();
+
+            const res = await apiCall('delete_note', { uuid });
+
+            if (!res.success) {
+                state.notes.splice(idx, 0, deleted); // Revert
+                renderNotes();
+                showToast("刪除失敗: " + (res.message || "未支援"), "error");
+            } else {
+                showToast("已刪除", "delete");
+            }
+        }
+
+        function processSave(uuid) {
+            const titleInput = document.getElementById(`editTitle-${uuid}`);
+            const contentInput = document.getElementById(`editContent-${uuid}`);
+            const tagsInput = document.getElementById(`editTags-${uuid}`);
+
+            const title = titleInput.value;
+            const content = contentInput.value;
+            const tags = tagsInput.value.split(/[\s,]+/).filter(t => t);
+
+            const oldNote = state.notes.find(n => n.uuid === uuid);
+
+            state.pendingEdit = { uuid, title, content, tags };
+
+            const btn = document.getElementById(`saveBtn-${uuid}`);
+
+            if (oldNote.isNew) {
+                confirmSaveFromDiff(true);
+            } else {
+                showDiff(oldNote, state.pendingEdit);
+            }
+        }
+
+        function showDiff(oldNote, newNote) {
+            const dmp = new diff_match_patch();
+
+            const titleDiffs = dmp.diff_main(oldNote.title || '', newNote.title || '');
+            dmp.diff_cleanupSemantic(titleDiffs);
+            document.getElementById('diffTitleOutput').innerHTML = dmp.diff_prettyHtml(titleDiffs);
+
+            const contentDiffs = dmp.diff_main(oldNote.content || '', newNote.content || '');
+            dmp.diff_cleanupSemantic(contentDiffs);
+            document.getElementById('diffContentOutput').innerHTML = dmp.diff_prettyHtml(contentDiffs);
+
+            document.getElementById('diffModal').classList.remove('hidden');
+        }
+
+        function closeDiffModal() {
+            document.getElementById('diffModal').classList.add('hidden');
+        }
+
+        async function confirmSaveFromDiff(isDirect = false) {
+            const { uuid, title, content, tags } = state.pendingEdit;
+
+            let btn;
+            if (isDirect) {
+                btn = document.getElementById(`saveBtn-${uuid}`);
+            } else {
+                btn = document.getElementById('confirmDiffBtn');
+            }
+            setLoading(btn, true);
+
+            const noteIndex = state.notes.findIndex(n => n.uuid === uuid);
+            const isNew = noteIndex !== -1 && state.notes[noteIndex].isNew;
+
+            let res;
+            if (isNew) {
+                res = await apiCall('add_note', { title, content, tags });
+            } else {
+                res = await apiCall('update_note', { uuid, title, content, tags });
+            }
+
+            setLoading(btn, false);
+
+            if (res.success) {
+                if (isNew) {
+                    state.notes[noteIndex] = { ...res.note, isEditing: false, isNew: false };
+                    showToast("筆記已新增", "verified");
+                } else {
+                    state.notes[noteIndex] = { ...state.notes[noteIndex], title, content, tags: JSON.stringify(tags), updated_at: new Date().toISOString(), isEditing: false };
+                    showToast("筆記已儲存", "save");
+                }
+
+                if (!isDirect) closeDiffModal();
+                state.pendingEdit = null;
+                renderNotes();
+            } else {
+                showToast("儲存失敗: " + res.error, "error");
+            }
+        }
+
+        function moveNote(index, direction) {
+            if (state.isSyncing) return;
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= state.notes.length) return;
+
+            const temp = state.notes[index];
+            state.notes[index] = state.notes[targetIndex];
+            state.notes[targetIndex] = temp;
+
+            const tempOrder = state.notes[index].order;
+            state.notes[index].order = state.notes[targetIndex].order;
+            state.notes[targetIndex].order = tempOrder;
+
+            renderNotes();
+            syncOrder();
+        }
+
+        let syncTimer = null;
+        function syncOrder() {
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(async () => {
+                state.isSyncing = true;
+                const orderedUuids = state.notes.map(n => n.uuid);
+
+                const res = await apiCall('reorder_notes', { ordered_uuids: orderedUuids });
+
+                state.isSyncing = false;
+                if (res.success) {
+                    showToast("排序已同步", "cloud_done");
+                } else {
+                    showToast("排序同步失敗", "cloud_off");
+                }
+            }, 1000);
+        }
+
+        // --- Custom Dialog System ---
+        function openCustomModal({ title, msg, icon, onConfirm, onCancel }) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMsg').innerText = msg;
+            document.getElementById('modalIcon').innerText = icon || "info";
+
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            const cancelBtn = document.getElementById('modalInternalCancelBtn');
+
+            // Clean listeners
+            const newConfirm = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+
+            // Re-assign listeners
+            newConfirm.onclick = () => {
+                if (onConfirm) onConfirm();
+                closeCustomModal();
+            };
+
+            // Handle Cancel/Close
+            const newCancel = cancelBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+            newCancel.onclick = () => {
+                if (onCancel) onCancel();
+                closeCustomModal();
+            };
+
+            document.getElementById('customModal').classList.remove('hidden');
+        }
+
+        function closeCustomModal() {
+            document.getElementById('customModal').classList.add('hidden');
+        }
+
+        // --- 工具 ---
+        function copyToClipboard(text, uuid) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Micro-interaction: Change icon from copy to check
+                const btn = document.getElementById(`copy-btn-${uuid}`);
+                if (!btn) return;
+
+                const icon = btn.querySelector('.material-symbols-rounded');
+                if (!icon) return;
+
+                // Change to check icon
+                icon.textContent = 'check';
+
+                // Revert back after 1.5s
+                setTimeout(() => {
+                    icon.textContent = 'content_copy';
+                }, 1500);
+            });
+        }
+
+        function showToast(msg, icon = 'info') {
+            const el = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            document.getElementById('toastIcon').innerText = icon;
+            el.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => el.classList.add('translate-y-20', 'opacity-0'), 2000);
+        }
+
+        function setLoading(btn, isLoading) {
+            if (!btn) return;
+            if (isLoading) {
+                btn.disabled = true;
+                btn.dataset.originalText = btn.innerHTML;
+                btn.innerHTML = '<div class="loader"></div>';
+                btn.classList.add('opacity-70');
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = btn.dataset.originalText || btn.innerHTML;
+                btn.classList.remove('opacity-70');
+            }
+        }
+
+        function escapeHtml(unsafe) {
+            if (unsafe == null) return '';
+            return String(unsafe).replace(/[&<"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+        }
+    </script>
+</body>
+
+</html>

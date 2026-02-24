@@ -1,0 +1,203 @@
+import React, { useState } from 'react';
+import { 
+  Upload, FileText, Zap, Shield, Cloud, 
+  ChevronRight, Check, Sliders, Info, 
+  ArrowDownCircle, Sun, Moon 
+} from 'lucide-react';
+
+const App = () => {
+  const [selectedLevel, setSelectedLevel] = useState('recommended');
+  const [mode, setMode] = useState('client'); // 'client' or 'cloud'
+  const [file, setFile] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  const compressionLevels = [
+    {
+      id: 'extreme',
+      title: 'Extreme',
+      subtitle: '最低畫質，最高壓縮',
+      description: '將圖片降至 72 DPI，適合郵件附件傳輸。',
+      icon: <Zap className="w-5 h-5" />,
+      tag: '最快'
+    },
+    {
+      id: 'recommended',
+      title: 'Recommended',
+      subtitle: '平衡畫質與體積',
+      description: '維持 150 DPI，大部分文件的最佳選擇。',
+      icon: <Check className="w-5 h-5" />,
+      tag: '最佳平衡'
+    },
+    {
+      id: 'high',
+      title: 'High Quality',
+      subtitle: '保留細節，輕微壓縮',
+      description: '300 DPI 原生品質，僅優化檔案結構。',
+      icon: <FileText className="w-5 h-5" />,
+      tag: '無損感'
+    }
+  ];
+
+  const toggleTheme = () => setIsDarkMode(!isDarkMode);
+
+  return (
+    <div className={`min-h-screen transition-all duration-700 font-sans ${
+      isDarkMode ? 'bg-[#0a0a0a] text-white' : 'bg-[#fafafa] text-zinc-900'
+    }`}>
+      
+      {/* Premium Navigation */}
+      <nav className="relative z-20 flex justify-between items-center px-10 py-8 max-w-7xl mx-auto">
+        <div className="flex items-center space-x-3">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+            isDarkMode ? 'bg-white' : 'bg-zinc-900 shadow-xl'
+          }`}>
+            <div className={`w-3 h-3 rounded-full ${isDarkMode ? 'bg-black' : 'bg-white'} animate-pulse`} />
+          </div>
+          <span className="text-xl font-black tracking-tighter italic">FLATMODERN</span>
+        </div>
+        
+        <div className="flex items-center space-x-6">
+          <button onClick={toggleTheme} className="opacity-40 hover:opacity-100 transition-opacity">
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+          <div className={`h-8 w-[1px] ${isDarkMode ? 'bg-white/10' : 'bg-black/10'}`} />
+          <span className="text-[10px] font-black tracking-[0.3em] uppercase opacity-40">Compactor V1.0</span>
+        </div>
+      </nav>
+
+      <main className="relative z-10 max-w-7xl mx-auto px-10 pt-10 pb-20">
+        <div className="grid lg:grid-cols-12 gap-20">
+          
+          {/* Left Side: Logic & Mode Selection */}
+          <div className="lg:col-span-6">
+            <h1 className="text-6xl font-black tracking-tighter leading-none mb-6">
+              Reduce <br />
+              <span className={isDarkMode ? 'text-zinc-600' : 'text-zinc-300'}>Without Regret.</span>
+            </h1>
+            
+            <p className={`text-lg mb-12 font-light ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+              針對不同的使用場景，精準重構您的 PDF 體積。
+            </p>
+
+            {/* Mode Switcher (Graphite Style) */}
+            <div className={`inline-flex p-1.5 rounded-2xl mb-12 border ${
+              isDarkMode ? 'bg-zinc-900/50 border-white/5' : 'bg-zinc-100 border-black/5'
+            }`}>
+              <button 
+                onClick={() => setMode('client')}
+                className={`flex items-center px-6 py-3 rounded-xl text-xs font-bold transition-all ${
+                  mode === 'client' 
+                  ? (isDarkMode ? 'bg-white text-black shadow-lg' : 'bg-zinc-900 text-white shadow-xl')
+                  : 'opacity-40 hover:opacity-100'
+                }`}
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                本地處理 (隱私/免費)
+              </button>
+              <button 
+                onClick={() => setMode('cloud')}
+                className={`flex items-center px-6 py-3 rounded-xl text-xs font-bold transition-all ${
+                  mode === 'cloud' 
+                  ? (isDarkMode ? 'bg-white text-black shadow-lg' : 'bg-zinc-900 text-white shadow-xl')
+                  : 'opacity-40 hover:opacity-100'
+                }`}
+              >
+                <Cloud className="w-4 h-4 mr-2" />
+                雲端極速 (高級/推薦)
+              </button>
+            </div>
+
+            {/* Dropzone with Subtle Iridescence */}
+            <div className={`relative aspect-video rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center group cursor-pointer transition-all duration-500 ${
+              isDarkMode ? 'bg-zinc-900/20 border-white/10 hover:border-indigo-500/50' : 'bg-white border-black/10 hover:border-indigo-500 shadow-sm'
+            }`}>
+              <div className="mb-6 p-5 rounded-full bg-indigo-500/10 text-indigo-500 group-hover:scale-110 transition-transform">
+                <ArrowDownCircle size={40} />
+              </div>
+              <p className="text-lg font-bold tracking-tight mb-1">將 PDF 放置於此</p>
+              <p className="text-xs font-medium tracking-widest opacity-30 uppercase">Maximum size 200MB</p>
+              
+              {/* Subtle radial glow for Matte effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Right Side: Compression Levels */}
+          <div className="lg:col-span-6 space-y-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[10px] uppercase tracking-[0.4em] font-black opacity-40">Compression Intensity</h3>
+              <Sliders size={14} className="opacity-30" />
+            </div>
+
+            <div className="space-y-4">
+              {compressionLevels.map((level) => (
+                <div 
+                  key={level.id}
+                  onClick={() => setSelectedLevel(level.id)}
+                  className={`relative p-8 rounded-3xl border transition-all duration-500 cursor-pointer overflow-hidden ${
+                    selectedLevel === level.id 
+                    ? (isDarkMode ? 'bg-[#111] border-white/20' : 'bg-white border-zinc-900 shadow-2xl')
+                    : (isDarkMode ? 'bg-zinc-900/10 border-white/5 opacity-50 hover:opacity-100' : 'bg-white border-black/5 opacity-60 hover:opacity-100')
+                  }`}
+                >
+                  <div className="flex justify-between items-center mb-6">
+                    <div className={selectedLevel === level.id ? 'text-indigo-500' : 'text-zinc-500'}>
+                      {level.icon}
+                    </div>
+                    {level.tag && (
+                      <span className={`text-[9px] px-3 py-1 rounded-full font-black tracking-widest uppercase ${
+                        selectedLevel === level.id ? 'bg-indigo-500 text-white' : 'bg-zinc-800 text-zinc-500'
+                      }`}>
+                        {level.tag}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <h4 className="text-2xl font-black tracking-tight mb-1">{level.title}</h4>
+                  <p className="text-[10px] uppercase tracking-widest font-bold text-indigo-500/70 mb-3">{level.subtitle}</p>
+                  <p className={`text-sm font-light leading-relaxed ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    {level.description}
+                  </p>
+
+                  {/* Active Indicator Line */}
+                  {selectedLevel === level.id && (
+                    <div className="absolute left-0 top-0 w-1 h-full bg-indigo-500" />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <button className={`w-full py-8 rounded-[2rem] font-black text-xs uppercase tracking-[0.4em] transition-all duration-700 relative group overflow-hidden ${
+              isDarkMode 
+              ? 'bg-white text-black hover:bg-zinc-200' 
+              : 'bg-zinc-900 text-white hover:bg-black shadow-2xl shadow-black/20'
+            }`}>
+              {/* Iridescent Glow on Button hover */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" 
+                   style={{ background: 'linear-gradient(135deg, transparent 0%, rgba(79, 70, 229, 0.2) 50%, transparent 100%)' }} />
+              
+              <span className="relative z-10">Start Compression</span>
+            </button>
+            
+            <div className={`p-6 rounded-3xl border flex items-start space-x-4 ${
+              isDarkMode ? 'bg-zinc-900/30 border-white/5' : 'bg-zinc-50 border-black/5'
+            }`}>
+              <Info size={16} className="text-indigo-500 shrink-0 mt-1" />
+              <p className="text-xs leading-relaxed opacity-40 font-medium">
+                註：本地處理速度取決於您的瀏覽器效能。若處理超過 50MB 的大型檔案，建議切換至「雲端模式」。
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer className="relative z-10 py-20 px-10 border-t border-white/5 text-center">
+        <p className="text-[10px] font-bold tracking-[0.5em] uppercase opacity-20">
+          FlatModern Engineering / Cloud-Native PDF Solutions
+        </p>
+      </footer>
+    </div>
+  );
+};
+
+export default App;

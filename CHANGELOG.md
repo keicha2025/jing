@@ -69,12 +69,13 @@
 - **Dynamic Format Detection**: The download button now automatically detects the recorded format and provides the correct MIME type and file extension.
 
 針對 Chrome 瀏覽器新增「純前端 M4A 轉碼」功能，利用 WebCodecs API 實現高效能轉碼，讓下載的錄音檔在各平台（尤其是 iPhone）都能完美播放。同時重構錄音架構為「持續不間斷錄製」，徹底解決先前分段合併導致檔案毀損或無法拉動進度條的問題。現在上傳辨識也已全面支援 M4A 格式。
-## [2026-02-24] NightWhisper v2.5.0 — Synchronization & Native Updates
-### Added
-- **Context-Aware Updates**: The application now detects if it's running as a Web PWA or a Native Android App.
-- **Native APK Download**: In the Android App version, the "Check for Update" button is automatically replaced with a "Download Latest APK" button, pointing to the project's GitHub releases.
-- **Full Parity**: All recent fixes (playback, time format, analysis improvements) are now fully synchronized between the web repository and the native Android project.
-### Changed
-- Bumped version to `v2.5.0` for all platforms.
+## [2026-02-24] NightWhisper v2.5.1 — Android SDK 35 & Compatibility Fix
+### Fixed
+- **SDK 35 Upgrade**: Lifted `compileSdk` and `targetSdk` to 35 to resolve compilation errors in `SystemBars.java` (Android 15 constants).
+- **Build Tool Parity**: Upgraded Gradle to 8.10.2 and AGP to 8.7.2 to ensure full compatibility with Java 21 environments.
+- **Icon Resource Found**: Fixed a bug where adaptive icons were referencing background resources in the wrong directory (`mipmap` vs `drawable`).
+- **Resource Completeness**: Added missing `colors.xml` to prevent theme-related build failures.
 
-正式將網頁版與 App 版代碼同步。新增「環境辨識」功能：在網頁版維持「檢查更新」清空換存，在 App 版則會自動切換為「下載最新 APK」按鈕，方便使用者直接從 GitHub 獲取最新安裝包。目前所有播放修正與時間格式優化已全面覆蓋所有版本。
+升級 Android 環境至 SDK 35 (Android 15) 以解決套件衝突與常數找不到的問題。同時同步升級 Gradle 與 AGP 版本，確保在 Java 21 環境下能穩定編譯。修正了 App Icon 的路徑引用錯誤並補全了遺失的顏色設定檔。
+
+## [2026-02-24] NightWhisper v2.5.0 — Synchronization & Native Updates

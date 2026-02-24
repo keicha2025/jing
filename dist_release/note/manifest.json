@@ -1,0 +1,15 @@
+{
+    "name": "Personal Note Manager",
+    "short_name": "Notes",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#FDFCFB",
+    "theme_color": "#FDFCFB",
+    "icons": [
+        {
+            "src": "./note_appicon.png",
+            "sizes": "1024x1024",
+            "type": "image/png"
+        }
+    ]
+}

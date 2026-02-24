@@ -2,21 +2,20 @@ import React, { useState } from 'react';
 import {
     Upload, FileText, Cpu, Zap, Layers, ChevronRight,
     Check, Settings2, Info, Sun, Moon, ArrowRight, Loader2,
-    LogIn, LogOut, User
+    LogIn, LogOut, User, Shield, Cloud, ArrowDownCircle, Sliders,
+    CheckCircle, RefreshCw
 } from 'lucide-react';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFDict, PDFStream, PDFRawStream } from 'pdf-lib';
 import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } from './lib/firebase';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const WHITELIST = ['wj209ing@gmail.com'];
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pdf-flattener-1082284355568.us-central1.run.app';
 
 const App = () => {
-    const [selectedEngine, setSelectedEngine] = useState('ghostscript');
-    const [quality, setQuality] = useState('high');
-    const [isDragging, setIsDragging] = useState(false);
-    const [file, setFile] = useState(null);
-    const [isDarkMode, setIsDarkMode] = useState(true);
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [view, setView] = useState('flatten'); // 'flatten' or 'compress'
     const [user, setUser] = useState(null);
+    const [isDarkMode, setIsDarkMode] = useState(true);
 
     React.useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -37,6 +36,103 @@ const App = () => {
     };
 
     const handleLogout = () => signOut(auth);
+    const toggleTheme = () => setIsDarkMode(!isDarkMode);
+
+    const commonProps = { user, isWhitelisted, isDarkMode, handleLogin, handleLogout, toggleTheme };
+
+    return (
+        <div className={`min-h-screen transition-colors duration-700 font-sans selection:bg-indigo-500/30 ${isDarkMode ? 'bg-[#0a0a0a] text-white' : 'bg-[#fafafa] text-zinc-900'}`}>
+            {/* Background Decorative Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] blur-[120px] rounded-full transition-opacity duration-1000 ${isDarkMode ? 'bg-indigo-900/20 opacity-100' : 'bg-indigo-500/10 opacity-60'}`} />
+                <div className={`absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] blur-[120px] rounded-full transition-opacity duration-1000 ${isDarkMode ? 'bg-blue-900/10 opacity-100' : 'bg-blue-500/5 opacity-60'}`} />
+            </div>
+
+            {/* Navigation */}
+            <nav className="relative z-20 flex justify-between items-center px-6 md:px-10 py-6 md:py-8 max-w-7xl mx-auto">
+                <div className="flex items-center space-x-8">
+                    <div className="flex items-center space-x-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isDarkMode ? 'bg-white' : 'bg-zinc-900 shadow-xl'}`}>
+                            <div className={`w-3 h-3 rounded-full ${isDarkMode ? 'bg-black' : 'bg-white'} animate-pulse`} />
+                        </div>
+                        <span className="text-xl font-black tracking-tighter italic">FLATMODERN</span>
+                    </div>
+
+                    {/* View Switcher */}
+                    <div className={`hidden md:flex p-1 rounded-full border ${isDarkMode ? 'bg-zinc-900/50 border-white/5' : 'bg-zinc-100 border-black/5'}`}>
+                        <button
+                            onClick={() => setView('flatten')}
+                            className={`px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${view === 'flatten' ? (isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white') : 'opacity-40 hover:opacity-100'}`}
+                        >
+                            Flatten
+                        </button>
+                        <button
+                            onClick={() => setView('compress')}
+                            className={`px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${view === 'compress' ? (isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white') : 'opacity-40 hover:opacity-100'}`}
+                        >
+                            Compress
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                    {user ? (
+                        <div className="flex items-center space-x-3">
+                            <div className="flex flex-col items-end hidden sm:flex">
+                                <span className="text-[9px] font-bold opacity-50 uppercase tracking-widest">{user.displayName}</span>
+                                {isWhitelisted && <span className="text-[8px] font-bold text-indigo-500 uppercase tracking-tighter">Pro Access</span>}
+                            </div>
+                            <button onClick={handleLogout} className={`p-2.5 rounded-full border transition-all duration-500 ${isDarkMode ? 'border-white/10 hover:bg-white/10' : 'border-black/5 hover:bg-black/5'}`} title="登出">
+                                <LogOut size={16} />
+                            </button>
+                        </div>
+                    ) : (
+                        <button onClick={handleLogin} className={`flex items-center space-x-2 px-5 py-2 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all ${isDarkMode ? 'border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'}`}>
+                            <User size={14} />
+                            <span>Login</span>
+                        </button>
+                    )}
+                    <button onClick={toggleTheme} className={`p-2.5 rounded-full border transition-all duration-500 ${isDarkMode ? 'border-white/10 hover:bg-white/10' : 'border-black/5 hover:bg-black/5'}`}>
+                        {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                    </button>
+                </div>
+            </nav>
+
+            {/* Mobile View Switcher */}
+            <div className="md:hidden flex justify-center px-6 mb-4">
+                <div className={`flex p-1 rounded-full border w-full ${isDarkMode ? 'bg-zinc-900/50 border-white/5' : 'bg-zinc-100 border-black/5'}`}>
+                    <button onClick={() => setView('flatten')} className={`flex-1 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${view === 'flatten' ? (isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white') : 'opacity-40'}`}>Flatten</button>
+                    <button onClick={() => setView('compress')} className={`flex-1 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${view === 'compress' ? (isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white') : 'opacity-40'}`}>Compress</button>
+                </div>
+            </div>
+
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={view}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                >
+                    {view === 'flatten' ? <FlattenView {...commonProps} /> : <CompressView {...commonProps} />}
+                </motion.div>
+            </AnimatePresence>
+
+            <footer className={`relative z-10 border-t py-16 px-8 text-center transition-colors duration-500 ${isDarkMode ? 'border-white/5' : 'border-black/5'}`}>
+                <p className="text-[10px] font-bold tracking-[0.5em] uppercase opacity-20">FlatModern Engineering / Cloud-Native PDF Solutions</p>
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-10 mt-2">© 2025 FLATMODERN STUDIO</p>
+            </footer>
+        </div>
+    );
+};
+
+const FlattenView = ({ isWhitelisted, isDarkMode, user, handleLogin }) => {
+    const [selectedEngine, setSelectedEngine] = useState('ghostscript');
+    const [quality, setQuality] = useState('high');
+    const [file, setFile] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const [result, setResult] = useState(null);
 
     const engines = [
         {
@@ -57,87 +153,34 @@ const App = () => {
         }
     ];
 
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = () => {
-        setIsDragging(false);
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        setIsDragging(false);
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            const uploadedFile = e.dataTransfer.files[0];
-            if (uploadedFile.type === 'application/pdf') {
-                setFile(uploadedFile);
-            } else {
-                alert('請上傳 PDF 檔案');
-            }
-        }
-    };
-
-    const handleFileSelect = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0]);
-        }
-    };
-
-    const toggleTheme = () => setIsDarkMode(!isDarkMode);
-
     const executeFlattening = async () => {
         if (!file) return;
-
-        // Whitelist check for Python and Ghostscript
         if (selectedEngine !== 'nodejs' && !isWhitelisted) {
             alert('此引擎僅限白名單使用者使用。請先登入或連繫管理員。');
             return;
         }
-
         setIsProcessing(true);
-
         try {
             if (selectedEngine === 'nodejs') {
                 const arrayBuffer = await file.arrayBuffer();
                 const pdfDoc = await PDFDocument.load(arrayBuffer);
                 const form = pdfDoc.getForm();
                 form.flatten();
-                const pdfBytes = await pdfDoc.save();
-
+                const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-                downloadFile(blob, `flattened_node_${file.name}`);
+                setResult({ blob, size: blob.size, name: `flattened_node_${file.name}` });
             } else {
-                // Backend integration for Python and Ghostscript
                 const formData = new FormData();
                 formData.append('file', file);
-
-                // Use the precise Cloud Run URL verified via gcloud
-                const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pdf-flattener-1082284355568.us-central1.run.app';
-
-                let endpoint = '';
-                if (selectedEngine === 'ghostscript') {
-                    const dpi = quality === 'low' ? 72 : quality === 'medium' ? 150 : 600;
-                    endpoint = `/flatten/ghostscript?quality=${quality}&dpi=${dpi}`;
-                }
-
-                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                    method: 'POST',
-                    body: formData,
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || '後端處理失敗');
-                }
-
+                const dpi = quality === 'low' ? 72 : quality === 'medium' ? 150 : 600;
+                const endpoint = `/flatten/ghostscript?quality=${quality}&dpi=${dpi}`;
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, { method: 'POST', body: formData });
+                if (!response.ok) throw new Error('後端處理失敗');
                 const blob = await response.blob();
-                downloadFile(blob, `flattened_${selectedEngine}_${file.name}`);
+                setResult({ blob, size: blob.size, name: `flattened_gs_${file.name}` });
             }
         } catch (error) {
-            console.error('Flattening failed:', error);
-            alert(`扁平化失敗: ${error.message}\n請確保選取的引擎相容您的檔案性質。`);
+            alert(`扁平化失敗: ${error.message}`);
         } finally {
             setIsProcessing(false);
         }
@@ -155,281 +198,312 @@ const App = () => {
     };
 
     return (
-        <div className={`min-h-screen transition-colors duration-700 font-sans selection:bg-indigo-500/30 ${isDarkMode ? 'bg-[#0a0a0a] text-white' : 'bg-[#fafafa] text-zinc-900'
-            }`}>
-
-            {/* Background Decorative Elements */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] blur-[120px] rounded-full transition-opacity duration-1000 ${isDarkMode ? 'bg-indigo-900/20 opacity-100' : 'bg-indigo-500/10 opacity-60'
-                    }`} />
-                <div className={`absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] blur-[120px] rounded-full transition-opacity duration-1000 ${isDarkMode ? 'bg-blue-900/10 opacity-100' : 'bg-blue-500/5 opacity-60'
-                    }`} />
-            </div>
-
-            {/* Navigation */}
-            <nav className="relative z-20 flex justify-between items-center px-6 md:px-8 py-6 md:py-10 max-w-7xl mx-auto">
-                <div className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-500 ${isDarkMode ? 'bg-white' : 'bg-zinc-900'
-                        }`}>
-                        <div className={`w-4 h-4 rounded-sm rotate-45 ${isDarkMode ? 'bg-black' : 'bg-white'}`} />
-                    </div>
-                    <span className="text-xl font-black tracking-tighter italic">FLATMODERN</span>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                    {user ? (
-                        <div className="flex items-center space-x-3">
-                            <div className="flex flex-col items-end hidden sm:flex">
-                                <span className="text-[9px] font-bold opacity-50 uppercase tracking-widest">{user.displayName}</span>
-                                {isWhitelisted && <span className="text-[8px] font-bold text-indigo-500 uppercase tracking-tighter">Pro Access</span>}
-                            </div>
-                            <button
-                                onClick={handleLogout}
-                                className={`p-2.5 rounded-full border transition-all duration-500 ${isDarkMode ? 'border-white/10 hover:bg-white/10' : 'border-black/5 hover:bg-black/5'}`}
-                                title="登出"
-                            >
-                                <LogOut size={16} />
-                            </button>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={handleLogin}
-                            className={`flex items-center space-x-2 px-5 py-2 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all ${isDarkMode ? 'border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'
-                                }`}
-                        >
-                            <User size={14} />
-                            <span>Login</span>
-                        </button>
-                    )}
-
-                    <button
-                        onClick={toggleTheme}
-                        className={`p-2.5 rounded-full border transition-all duration-500 ${isDarkMode ? 'border-white/10 hover:bg-white/10' : 'border-black/5 hover:bg-black/5'
-                            }`}
+        <main className="relative z-10 max-w-7xl mx-auto px-6 md:px-10 pt-10 pb-20">
+            <div className="grid lg:grid-cols-12 gap-10 lg:gap-20">
+                <div className="lg:col-span-7">
+                    <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8">
+                        Flatten <br />
+                        <span className={isDarkMode ? 'text-zinc-600' : 'text-zinc-300'}>Every Layer.</span>
+                    </h1>
+                    <p className={`text-lg md:text-xl max-w-lg mb-12 font-light ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>極簡、精確、不可逆。為現代數位流程重新定義 PDF 扁平化體驗。</p>
+                    <label
+                        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                        onDragLeave={() => setIsDragging(false)}
+                        onDrop={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); const f = e.dataTransfer.files[0]; if (f?.type === 'application/pdf') setFile(f); }}
+                        className={`relative group cursor-pointer aspect-video lg:h-96 backdrop-blur-3xl border rounded-[2.5rem] flex flex-col items-center justify-center p-8 transition-all duration-500 ${isDarkMode ? 'bg-zinc-900/40 border-white/10' : 'bg-white/80 border-black/5 shadow-2xl'}`}
                     >
-                        {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-                    </button>
-                </div>
-            </nav>
-
-            {/* Hero Section */}
-            <main className="relative z-10 max-w-7xl mx-auto px-6 md:px-8 pt-6 pb-20">
-                <div className="grid lg:grid-cols-12 gap-10 lg:gap-20 items-start">
-
-                    {/* Left Side: Upload & Info */}
-                    <div className="lg:col-span-7">
-                        <div className="inline-block px-3 py-1 mb-6 rounded-full border border-indigo-500/20 text-[10px] font-bold tracking-widest text-indigo-500 uppercase">
-                            V2.4 Stable Build
-                        </div>
-                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.9] mb-8 md:mb-10">
-                            Flatten <br />
-                            <span className={`transition-colors duration-500 ${isDarkMode ? 'text-zinc-600' : 'text-zinc-300'}`}>Every Layer.</span>
-                        </h1>
-
-                        <p className={`text-lg md:text-xl max-w-lg mb-10 md:mb-14 leading-relaxed font-light ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                            極簡、精確、不可逆。為現代數位流程重新定義 PDF 扁平化體驗。
-                        </p>
-
-                        {/* Dropzone */}
-                        <div
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            onClick={() => document.getElementById('fileInput').click()}
-                            className={`relative group cursor-pointer transition-all duration-700 ${isDragging ? 'scale-[0.97]' : 'scale-100'
-                                }`}
-                        >
-                            <input
-                                id="fileInput"
-                                type="file"
-                                accept=".pdf"
-                                className="hidden"
-                                onChange={handleFileSelect}
-                            />
-                            <div className={`absolute -inset-1 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-[2rem] blur transition-opacity duration-1000 ${isDragging ? 'opacity-40' : 'opacity-0 group-hover:opacity-10'
-                                }`} />
-
-                            <div className={`relative aspect-video lg:aspect-[16/9] lg:h-96 backdrop-blur-3xl border rounded-[2rem] flex flex-col items-center justify-center p-6 md:p-12 overflow-hidden transition-all duration-500 ${isDarkMode
-                                ? 'bg-zinc-900/40 border-white/10'
-                                : 'bg-white/80 border-black/5 shadow-2xl shadow-black/[0.03]'
-                                }`}>
-                                {file ? (
-                                    <div className="flex flex-col items-center space-y-6 animate-in fade-in zoom-in duration-700">
-                                        <div className="relative">
-                                            <div className="w-24 h-24 bg-indigo-500/10 rounded-3xl flex items-center justify-center text-indigo-500">
-                                                <FileText size={48} />
-                                            </div>
-                                            <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-[#0a0a0a] flex items-center justify-center">
-                                                <Check size={14} className="text-white" strokeWidth={4} />
-                                            </div>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="text-2xl font-bold tracking-tight mb-1">{file.name}</p>
-                                            <p className={`text-xs uppercase tracking-widest opacity-40`}>{(file.size / 1024 / 1024).toFixed(2)} MB • PDF Document</p>
-                                        </div>
-                                        <button onClick={(e) => { e.stopPropagation(); setFile(null); }} className="text-[10px] font-bold uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity underline underline-offset-8">Remove and retry</button>
+                        <input
+                            type="file"
+                            accept=".pdf"
+                            className="hidden"
+                            onChange={(e) => { if (e.target.files?.[0]) setFile(e.target.files[0]); }}
+                        />
+                        {result ? (
+                            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center w-full">
+                                <div className="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center text-green-500 mx-auto mb-6"><CheckCircle size={48} /></div>
+                                <h3 className="text-2xl font-black mb-2">處理完成</h3>
+                                <div className="flex justify-center items-center space-x-6 mb-8 mt-4">
+                                    <div className="text-center">
+                                        <p className="text-[10px] uppercase font-bold opacity-30">Original</p>
+                                        <p className="text-lg font-black italic">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                                     </div>
-                                ) : (
-                                    <>
-                                        <div className={`mb-8 p-6 rounded-full transition-colors duration-500 ${isDarkMode ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-100 text-zinc-400'}`}>
-                                            <Upload size={40} />
-                                        </div>
-                                        <p className="text-xl font-bold tracking-tight mb-2 uppercase">Drag & Drop or Click</p>
-                                        <p className={`text-sm tracking-wide opacity-40 font-medium`}>支援向量 PDF、表單與註解文件</p>
-                                    </>
-                                )}
-                                <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${isDarkMode ? 'invert-0' : 'invert'}`} style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right Side: Engine Selection */}
-                    <div className="lg:col-span-5 space-y-8 pt-10">
-                        <div className="flex items-center justify-between mb-2">
-                            <h3 className={`text-[10px] uppercase tracking-[0.3em] font-black ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                Select Processing Engine
-                            </h3>
-                            <Settings2 size={16} className="opacity-30" />
-                        </div>
-
-                        <div className="space-y-4">
-                            {engines.map((engine) => (
-                                <div
-                                    key={engine.id}
-                                    onClick={() => setSelectedEngine(engine.id)}
-                                    className={`group relative p-6 md:p-8 rounded-3xl border transition-all duration-500 cursor-pointer overflow-hidden ${selectedEngine === engine.id
-                                        ? (isDarkMode ? 'bg-white border-white scale-[1.02]' : 'bg-zinc-900 border-zinc-900 scale-[1.02] shadow-2xl shadow-black/20')
-                                        : (isDarkMode ? 'bg-zinc-900/30 border-white/5 hover:border-white/20' : 'bg-white border-black/5 hover:border-black/10')
-                                        }`}
-                                >
-                                    <div className="flex justify-between items-center mb-6">
-                                        <div className={`transition-colors duration-500 ${selectedEngine === engine.id
-                                            ? (isDarkMode ? 'text-black' : 'text-white')
-                                            : (isDarkMode ? 'text-zinc-500' : 'text-zinc-400')
-                                            }`}>
-                                            {engine.icon}
-                                        </div>
-
-                                        <div className="flex items-center space-x-3">
-                                            {engine.tag && (
-                                                <span className={`text-[9px] px-2.5 py-1 rounded-full uppercase tracking-widest font-black transition-colors duration-500 ${selectedEngine === engine.id
-                                                    ? (isDarkMode ? 'bg-black/5 text-black' : 'bg-white/10 text-white')
-                                                    : (isDarkMode ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-100 text-zinc-400')
-                                                    }`}>
-                                                    {engine.tag}
-                                                </span>
-                                            )}
-                                            {selectedEngine === engine.id && (
-                                                <div className={`animate-in fade-in zoom-in duration-500 ${isDarkMode ? 'text-black' : 'text-white'}`}>
-                                                    <Check size={18} strokeWidth={3} />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <h4 className={`text-2xl font-black tracking-tight mb-1 transition-colors duration-500 ${selectedEngine === engine.id
-                                            ? (isDarkMode ? 'text-black' : 'text-white')
-                                            : (isDarkMode ? 'text-white' : 'text-zinc-900')
-                                            }`}>
-                                            {engine.name}
-                                        </h4>
-                                        <p className={`text-[10px] mb-4 uppercase tracking-[0.1em] font-bold transition-colors duration-500 ${selectedEngine === engine.id
-                                            ? (isDarkMode ? 'text-black/50' : 'text-white/50')
-                                            : 'text-indigo-500'
-                                            }`}>
-                                            {engine.subtitle}
-                                        </p>
-                                        <p className={`text-sm leading-relaxed transition-colors duration-500 ${selectedEngine === engine.id
-                                            ? (isDarkMode ? 'text-black/70' : 'text-white/70')
-                                            : (isDarkMode ? 'text-zinc-500' : 'text-zinc-500')
-                                            }`}>
-                                            {engine.description}
-                                        </p>
+                                    <ArrowRight className="opacity-20" size={16} />
+                                    <div className="text-center">
+                                        <p className="text-[10px] uppercase font-bold text-indigo-500">Flattened</p>
+                                        <p className="text-lg font-black italic">{(result.size / 1024 / 1024).toFixed(2)} MB</p>
                                     </div>
                                 </div>
+                                <div className="flex space-x-3 justify-center">
+                                    <button onClick={() => downloadFile(result.blob, result.name)} className={`px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest ${isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white shadow-xl'}`}>即刻下載</button>
+                                    <button onClick={() => { setFile(null); setResult(null); }} className={`px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest border ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-black/5 hover:bg-black/5'}`}>重新開始</button>
+                                </div>
+                            </motion.div>
+                        ) : file ? (
+                            <div className="text-center animate-in zoom-in duration-500">
+                                <div className="w-20 h-20 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 mx-auto mb-6"><FileText size={40} /></div>
+                                <p className="text-xl font-bold mb-1">{file.name}</p>
+                                <p className="text-[10px] uppercase tracking-widest opacity-40">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFile(null); }} className="mt-4 text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity underline">移除檔案</button>
+                            </div>
+                        ) : (
+                            <>
+                                <div className={`p-6 rounded-full mb-6 ${isDarkMode ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-100 text-zinc-400'}`}><Upload size={32} /></div>
+                                <p className="text-lg font-bold uppercase tracking-tight">Drag & Drop PDF</p>
+                            </>
+                        )}
+                    </label>
+                </div>
+                <div className="lg:col-span-5 space-y-8 pt-10">
+                    <div className="space-y-4">
+                        {engines.map(engine => (
+                            <div key={engine.id} onClick={() => setSelectedEngine(engine.id)} className={`p-6 rounded-3xl border cursor-pointer transition-all duration-500 ${selectedEngine === engine.id ? (isDarkMode ? 'bg-white text-black scale-[1.02]' : 'bg-zinc-900 text-white scale-[1.02]') : (isDarkMode ? 'bg-zinc-900/30 border-white/5 opacity-60' : 'bg-white border-black/5 opacity-60')}`}>
+                                <div className="flex justify-between mb-4">
+                                    <div className={selectedEngine === engine.id ? (isDarkMode ? 'text-black' : 'text-white') : 'text-zinc-500'}>{engine.icon}</div>
+                                    {selectedEngine === engine.id && <Check size={16} strokeWidth={3} />}
+                                </div>
+                                <h4 className="text-xl font-black mb-1">{engine.name}</h4>
+                                <p className={`text-[9px] font-bold uppercase tracking-widest mb-2 ${selectedEngine === engine.id ? 'opacity-50' : 'text-indigo-500'}`}>{engine.subtitle}</p>
+                                <p className="text-xs opacity-70 leading-relaxed">{engine.description}</p>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="space-y-4">
+                        <div className={`p-1.5 rounded-2xl flex space-x-2 ${isDarkMode ? 'bg-zinc-900/50 border border-white/5' : 'bg-zinc-100 border border-black/5'}`}>
+                            {[{ id: 'low', label: 'Standard' }, { id: 'medium', label: 'High' }, { id: 'high', label: 'Ultra' }].map(q => (
+                                <button key={q.id} onClick={() => setQuality(q.id)} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${quality === q.id ? (isDarkMode ? 'bg-white text-black shadow-lg' : 'bg-zinc-900 text-white shadow-lg') : 'opacity-40 hover:opacity-100'}`}>{q.label}</button>
                             ))}
                         </div>
+                    </div>
+                    <button disabled={!file || isProcessing} onClick={executeFlattening} className={`w-full py-7 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.4em] transition-all duration-700 ${file && !isProcessing ? (isDarkMode ? 'bg-indigo-600 text-white' : 'bg-zinc-900 text-white shadow-2xl') : 'bg-zinc-800/20 text-zinc-600 cursor-not-allowed'}`}>
+                        {isProcessing ? 'Processing...' : 'Run Flatten'}
+                    </button>
+                </div>
+            </div>
+        </main>
+    );
+};
 
-                        {/* Quality Selection */}
-                        <div className="space-y-4">
-                            <h3 className={`text-[10px] uppercase tracking-[0.3em] font-black ${isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                Select Output Quality (DPI)
-                            </h3>
-                            <div className={`p-2 rounded-2xl flex space-x-2 transition-colors duration-500 ${isDarkMode ? 'bg-zinc-900/50 border border-white/5' : 'bg-zinc-100 border border-black/5'
-                                }`}>
-                                {[
-                                    { id: 'low', label: 'Standard', sub: '72 DPI' },
-                                    { id: 'medium', label: 'High', sub: '150 DPI' },
-                                    { id: 'high', label: 'Ultra', sub: '600 DPI' }
-                                ].map((q) => (
-                                    <button
-                                        key={q.id}
-                                        onClick={() => setQuality(q.id)}
-                                        className={`flex-1 py-3 rounded-xl flex flex-col items-center justify-center transition-all duration-300 ${quality === q.id
-                                            ? (isDarkMode ? 'bg-white text-black shadow-lg' : 'bg-zinc-900 text-white shadow-lg')
-                                            : (isDarkMode ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-zinc-900')
-                                            }`}
-                                    >
-                                        <span className="text-[10px] font-black uppercase tracking-widest">{q.label}</span>
-                                        <span className="text-[7px] font-bold opacity-40 uppercase tracking-tighter mt-1">{q.sub}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+const CompressView = ({ isWhitelisted, isDarkMode, user, handleLogin }) => {
+    const [selectedLevel, setSelectedLevel] = useState('recommended');
+    const [mode, setMode] = useState('client');
+    const [file, setFile] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [result, setResult] = useState(null);
+    const [progress, setProgress] = useState(0);
 
-                        <button
-                            disabled={!file || isProcessing}
-                            onClick={executeFlattening}
-                            className={`w-full py-8 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] transition-all duration-700 group relative overflow-hidden ${file && !isProcessing
-                                ? (isDarkMode ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-500/20' : 'bg-zinc-900 text-white shadow-xl shadow-black/20')
-                                : 'bg-zinc-800/20 text-zinc-600 cursor-not-allowed border border-white/5'
-                                }`}
-                        >
-                            <div className="relative z-10 flex items-center justify-center">
-                                {isProcessing ? (
-                                    <>
-                                        <Loader2 className="animate-spin mr-3 w-4 h-4" />
-                                        Processing...
-                                    </>
-                                ) : (
-                                    <>
-                                        Execute Flattening
-                                        <ArrowRight className={`ml-3 w-4 h-4 transition-transform duration-500 ${file ? 'group-hover:translate-x-2' : ''}`} />
-                                    </>
-                                )}
-                            </div>
-                            {file && !isProcessing && (
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
-                            )}
-                        </button>
+    const levels = [
+        { id: 'extreme', title: 'Extreme', subtitle: '最低畫質，最高壓縮', description: '將圖片降至 72 DPI，適合郵件附件傳輸。', icon: <Zap className="w-5 h-5" />, tag: '最快', quality: 0.3, scale: 0.4 },
+        { id: 'recommended', title: 'Recommended', subtitle: '平衡畫質與體積', description: '維持 150 DPI，大部分文件的最佳選擇。', icon: <Check className="w-5 h-5" />, tag: '最佳平衡', quality: 0.6, scale: 0.7 },
+        { id: 'high', title: 'High Quality', subtitle: '保留細節，輕微壓縮', description: '300 DPI 原生品質，僅優化檔案結構。', icon: <FileText className="w-5 h-5" />, tag: '無損感', quality: 0.8, scale: 0.9 }
+    ];
 
-                        <div className={`flex items-start space-x-4 p-6 rounded-3xl border transition-colors duration-500 ${isDarkMode ? 'bg-indigo-500/5 border-indigo-500/10' : 'bg-indigo-50 border-indigo-200'
-                            }`}>
-                            <Info className="w-5 h-5 text-indigo-500 shrink-0" />
-                            <p className={`text-xs leading-relaxed font-medium ${isDarkMode ? 'text-indigo-300/60' : 'text-indigo-600/70'}`}>
-                                Note: 扁平化處理是不可逆的。一旦執行，所有表單欄位將永久合併至頁面內容流。
-                            </p>
+    const compressImageBytes = async (bytes, quality, scale) => {
+        return new Promise((resolve, reject) => {
+            const blob = new Blob([bytes]);
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const w = Math.max(1, img.width * scale);
+                const h = Math.max(1, img.height * scale);
+                canvas.width = w;
+                canvas.height = h;
+                ctx.drawImage(img, 0, 0, w, h);
+                canvas.toBlob((resultBlob) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(new Uint8Array(reader.result));
+                    reader.readAsArrayBuffer(resultBlob);
+                }, 'image/jpeg', quality);
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error('Image load failed'));
+            };
+            img.src = url;
+        });
+    };
+
+    const executeCompression = async () => {
+        if (!file) return;
+        if (mode === 'cloud' && !isWhitelisted) {
+            alert('雲端模式僅限白名單專業版使用者功能。請先登入。');
+            return;
+        }
+        setIsProcessing(true);
+        setProgress(0);
+        try {
+            if (mode === 'client') {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdfDoc = await PDFDocument.load(arrayBuffer);
+                const config = levels.find(l => l.id === selectedLevel);
+
+                const indirectObjects = pdfDoc.context.enumerateIndirectObjects();
+                let totalImages = 0;
+                let processedImages = 0;
+
+                // First pass: count images
+                for (const [ref, obj] of indirectObjects) {
+                    if (obj instanceof PDFRawStream || obj instanceof PDFStream) {
+                        const subtype = obj.dict.get(PDFName.of('Subtype'));
+                        if (subtype === PDFName.of('Image')) totalImages++;
+                    }
+                }
+
+                // Second pass: compress
+                for (const [ref, obj] of indirectObjects) {
+                    if (obj instanceof PDFRawStream || obj instanceof PDFStream) {
+                        const subtype = obj.dict.get(PDFName.of('Subtype'));
+                        if (subtype === PDFName.of('Image')) {
+                            try {
+                                const filter = obj.dict.get(PDFName.of('Filter'));
+                                // We primarily handle DCTDecode (JPEG) or FlateDecode (PNG/Raw)
+                                // Standard PDF image streams allow US to replace contents with JPEG
+                                const bytes = obj.getContents();
+                                const newBytes = await compressImageBytes(bytes, config.quality, config.scale);
+
+                                // Create new stream with compressed data
+                                // Use .stream() instead of .flateStream() to avoid double-compressing JPEG data
+                                const newStream = pdfDoc.context.stream(newBytes, {
+                                    Type: PDFName.of('XObject'),
+                                    Subtype: PDFName.of('Image'),
+                                    Width: obj.dict.get(PDFName.of('Width')),
+                                    Height: obj.dict.get(PDFName.of('Height')),
+                                    BitsPerComponent: obj.dict.get(PDFName.of('BitsPerComponent')),
+                                    ColorSpace: obj.dict.get(PDFName.of('ColorSpace')),
+                                    Filter: PDFName.of('DCTDecode'),
+                                });
+
+                                // Replace indirect object content
+                                pdfDoc.context.assign(ref, newStream);
+                            } catch (e) {
+                                console.warn("Skip image due to error:", e);
+                            }
+                            processedImages++;
+                            setProgress(Math.round((processedImages / totalImages) * 100));
+                        }
+                    }
+                }
+
+                const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                setResult({ blob, size: blob.size, name: `compressed_client_${file.name}` });
+            } else {
+                const formData = new FormData();
+                formData.append('file', file);
+                const response = await fetch(`${API_BASE_URL}/compress/ghostscript?quality=${selectedLevel}`, { method: 'POST', body: formData });
+                if (!response.ok) throw new Error('雲端壓縮失敗');
+                const blob = await response.blob();
+                setResult({ blob, size: blob.size, name: `compressed_cloud_${file.name}` });
+            }
+        } catch (error) {
+            alert(`壓縮失敗: ${error.message}`);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const downloadFile = (blob, filename) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+    return (
+        <main className="relative z-10 max-w-7xl mx-auto px-6 md:px-10 pt-10 pb-20">
+            <div className="grid lg:grid-cols-12 gap-10 lg:gap-20">
+                <div className="lg:col-span-6">
+                    <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-none mb-8">Reduce <br /><span className={isDarkMode ? 'text-zinc-600' : 'text-zinc-300'}>Without Regret.</span></h1>
+                    <p className={`text-lg md:text-xl mb-12 font-light ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>針對不同的使用場景，精準重構您的 PDF 體積。</p>
+                    <div className="flex flex-col items-center mb-10">
+                        <div className={`inline-flex p-1.5 rounded-2xl border ${isDarkMode ? 'bg-zinc-900/50 border-white/5' : 'bg-zinc-100 border-black/5'}`}>
+                            <button onClick={() => setMode('client')} className={`flex items-center px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mode === 'client' ? (isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white') : 'opacity-40 hover:opacity-100'}`}><Shield className="w-4 h-4 mr-2" />本地</button>
+                            <button onClick={() => setMode('cloud')} className={`flex items-center px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mode === 'cloud' ? (isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white') : 'opacity-40 hover:opacity-100'}`}><Cloud className="w-4 h-4 mr-2" />雲端</button>
                         </div>
                     </div>
+                    <label
+                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                        onDrop={(e) => { e.preventDefault(); e.stopPropagation(); const f = e.dataTransfer.files[0]; if (f?.type === 'application/pdf') setFile(f); }}
+                        className={`relative aspect-video rounded-[3rem] border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-500 ${isDarkMode ? 'bg-zinc-900/20 border-white/10 hover:border-indigo-500' : 'bg-white border-black/10 hover:border-indigo-500 shadow-sm'}`}
+                    >
+                        <input
+                            type="file"
+                            accept=".pdf"
+                            className="hidden"
+                            onChange={(e) => { if (e.target.files?.[0]) setFile(e.target.files[0]); }}
+                        />
+                        {result ? (
+                            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center w-full px-6">
+                                <h3 className="text-xl font-black mb-8">壓縮任務完成</h3>
+                                <div className="grid grid-cols-3 items-center gap-4 mb-10">
+                                    <div className="text-right">
+                                        <p className="text-[8px] uppercase font-bold opacity-30 tracking-widest mb-1">Before</p>
+                                        <p className="text-md font-black italic">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    </div>
+                                    <div className="flex flex-col items-center opacity-20">
+                                        <ArrowRight size={20} />
+                                        <p className="text-[8px] font-black">{((1 - result.size / file.size) * 100).toFixed(0)}% OFF</p>
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-[8px] uppercase font-bold text-indigo-500 tracking-widest mb-1">After</p>
+                                        <p className="text-md font-black italic">{(result.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    </div>
+                                </div>
+                                <div className="flex space-x-3 justify-center">
+                                    <button onClick={() => downloadFile(result.blob, result.name)} className={`px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest ${isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white shadow-xl'}`}>即刻下載</button>
+                                    <button onClick={() => { setFile(null); setResult(null); }} className={`p-5 rounded-2xl border ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-black/5 hover:bg-black/5'}`}><RefreshCw size={16} /></button>
+                                </div>
+                            </motion.div>
+                        ) : file ? (
+                            <div className="text-center">
+                                <FileText size={48} className="text-indigo-500 mx-auto mb-4" />
+                                <p className="text-lg font-bold">{file.name}</p>
+                                <p className="text-[10px] opacity-40">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFile(null); }} className="mt-4 text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity underline">移除檔案</button>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="mb-6 p-5 rounded-full bg-indigo-500/10 text-indigo-500"><ArrowDownCircle size={40} /></div>
+                                <p className="text-xl font-bold">放置 PDF 於此</p>
+                            </>
+                        )}
+                    </label>
                 </div>
-            </main>
-
-            {/* Footer */}
-            <footer className={`relative z-10 border-t py-16 px-8 transition-colors duration-500 ${isDarkMode ? 'border-white/5' : 'border-black/5'
-                }`}>
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center space-y-8 md:space-y-0">
-                    <div className="flex flex-col items-center md:items-start space-y-2">
-                        <p className="text-[10px] font-bold tracking-[0.4em] uppercase opacity-30">
-                            © 2025 FLATMODERN STUDIO
-                        </p>
-                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-20">
-                            Professional PDF Processing Utilities
-                        </p>
+                <div className="lg:col-span-6 space-y-6 pt-10">
+                    <div className="space-y-4">
+                        {levels.map(level => (
+                            <div key={level.id} onClick={() => setSelectedLevel(level.id)} className={`relative p-8 rounded-[2.5rem] border cursor-pointer transition-all duration-500 ${selectedLevel === level.id ? (isDarkMode ? 'bg-[#111] border-white/20' : 'bg-white border-zinc-900 shadow-2xl') : (isDarkMode ? 'bg-zinc-900/10 border-white/5 opacity-50' : 'bg-white border-black/5 opacity-60')}`}>
+                                <div className="flex justify-between items-center mb-6">
+                                    <div className={selectedLevel === level.id ? 'text-indigo-500' : 'text-zinc-500'}>{level.icon}</div>
+                                    {level.tag && <span className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest ${selectedLevel === level.id ? 'bg-indigo-500 text-white' : 'bg-zinc-800 text-zinc-500'}`}>{level.tag}</span>}
+                                </div>
+                                <h4 className="text-2xl font-black mb-1">{level.title}</h4>
+                                <p className="text-[10px] uppercase font-bold text-indigo-500/70 mb-3">{level.subtitle}</p>
+                                <p className="text-sm opacity-50 leading-relaxed font-light">{level.description}</p>
+                            </div>
+                        ))}
                     </div>
+                    <button disabled={!file || isProcessing} onClick={executeCompression} className={`relative overflow-hidden w-full py-8 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.4em] transition-all duration-700 ${file && !isProcessing ? (isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white shadow-2xl') : 'bg-zinc-800/20 text-zinc-600 cursor-not-allowed'}`}>
+                        {isProcessing && progress > 0 && (
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${progress}%` }}
+                                className="absolute inset-0 bg-indigo-500/20 pointer-events-none"
+                            />
+                        )}
+                        <span className="relative z-10 transition-all duration-500">
+                            {isProcessing ? (progress > 0 ? `Processing ${progress}%` : 'Initializing...') : 'Start Compression'}
+                        </span>
+                    </button>
                 </div>
-            </footer>
-        </div>
+            </div>
+        </main >
     );
 };
 
