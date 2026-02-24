@@ -61,9 +61,16 @@ jobs:
           echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=https://jing-lab.web.app/pdf-tool/"></head><body><p>Redirecting to <a href="https://jing-lab.web.app/pdf-tool/">https://jing-lab.web.app/pdf-tool/</a>...</p></body></html>' > ../dist_final/pdf-tool/index.html
           cd ..
           
+          # Build 'travel-planner'
+          cd travel-planner/frontend
+          npm install
+          npm run build
+          mkdir -p ../../dist_final/travel-planner
+          cp -r dist/* ../../dist_final/travel-planner/
+          cd ../..
+          
           # Copy static projects and root html files
           cp -r note dist_final/ || true
-          cp -r travel-planner dist_final/ || true
           cp -r nightwhisper dist_final/ || true
           cp *.html dist_final/ || true
           

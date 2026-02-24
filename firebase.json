@@ -1,0 +1,33 @@
+{
+    "hosting": {
+        "site": "jing-lab",
+        "public": "dist_release",
+        "ignore": [
+            "firebase.json",
+            "**/.*",
+            "**/node_modules/**"
+        ],
+        "rewrites": [
+            {
+                "source": "/pdf-tool/**",
+                "destination": "/pdf-tool/index.html"
+            },
+            {
+                "source": "/preview/**",
+                "destination": "/preview/index.html"
+            },
+            {
+                "source": "/v-player-preview/**",
+                "destination": "/v-player-preview/index.html"
+            },
+            {
+                "source": "/travel-planner/**",
+                "destination": "/travel-planner/index.html"
+            },
+            {
+                "source": "/**",
+                "destination": "/index.html"
+            }
+        ]
+    }
+}

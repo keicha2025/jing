@@ -13,7 +13,7 @@ export default defineConfig({
                 short_name: 'V-Player',
                 description: 'A premium personal video player with local playback and PWA support.',
                 theme_color: '#4f46e5',
-                start_url: '/jing/v-player-preview/',
+                start_url: '/v-player-preview/',
                 display: 'standalone',
                 background_color: '#171717',
                 icons: [
@@ -43,7 +43,7 @@ export default defineConfig({
             }
         })
     ],
-    base: '/jing/v-player-preview/',
+    base: '/v-player-preview/',
     server: {
         host: true,
         port: 5174,
