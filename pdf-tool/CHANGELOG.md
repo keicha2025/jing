@@ -31,3 +31,12 @@ All notable changes to this project will be documented in this file.
 - **Frontend**: Corrected deployment paths and verified GitHub Actions integration.
 
 **修復了 Python 引擎崩潰問題，並新增了畫質選擇功能（Standard, High, Ultra），讓使用者能根據需求調整輸出品質。**
+
+## [0.1.3] - 2026-02-25
+
+### UI & Aesthetic Refinement
+- **Color Restrictions**: Removed all occurrences of the color green and yellow from the application UI.
+- **Icon Refactoring**: Replaced "Success" checkmarks and selection dots with neutral `FileText` and `ChevronRight` icons.
+- **Theming**: Standardized success states to use `indigo` and `zinc` tones for a cleaner, more professional look.
+
+**移除所有綠色勾勾與黃色元素。將處理完成圖示改為中性的文件圖標，並全面排除綠色與黃色調，確保介面呈現更一致且高級的 indigo/zinc 色系。**

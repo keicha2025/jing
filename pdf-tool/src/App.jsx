@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import {
     Upload, FileText, Cpu, Zap, Layers, ChevronRight,
-    Check, Settings2, Info, Sun, Moon, ArrowRight, Loader2,
+    Settings2, Info, Sun, Moon, ArrowRight, Loader2,
     LogIn, LogOut, User, Shield, Cloud, ArrowDownCircle, Sliders,
-    CheckCircle, RefreshCw
+    RefreshCw
 } from 'lucide-react';
 import { PDFDocument, PDFName, PDFDict, PDFStream, PDFRawStream } from 'pdf-lib';
 import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } from './lib/firebase';
@@ -220,7 +220,7 @@ const FlattenView = ({ isWhitelisted, isDarkMode, user, handleLogin }) => {
                         />
                         {result ? (
                             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center w-full">
-                                <div className="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center text-green-500 mx-auto mb-6"><CheckCircle size={48} /></div>
+                                <div className="w-24 h-24 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-500 mx-auto mb-6"><FileText size={48} /></div>
                                 <h3 className="text-2xl font-black mb-2">處理完成</h3>
                                 <div className="flex justify-center items-center space-x-6 mb-8 mt-4">
                                     <div className="text-center">
@@ -259,7 +259,7 @@ const FlattenView = ({ isWhitelisted, isDarkMode, user, handleLogin }) => {
                             <div key={engine.id} onClick={() => setSelectedEngine(engine.id)} className={`p-6 rounded-3xl border cursor-pointer transition-all duration-500 ${selectedEngine === engine.id ? (isDarkMode ? 'bg-white text-black scale-[1.02]' : 'bg-zinc-900 text-white scale-[1.02]') : (isDarkMode ? 'bg-zinc-900/30 border-white/5 opacity-60' : 'bg-white border-black/5 opacity-60')}`}>
                                 <div className="flex justify-between mb-4">
                                     <div className={selectedEngine === engine.id ? (isDarkMode ? 'text-black' : 'text-white') : 'text-zinc-500'}>{engine.icon}</div>
-                                    {selectedEngine === engine.id && <Check size={16} strokeWidth={3} />}
+                                    {selectedEngine === engine.id && <ChevronRight size={16} strokeWidth={3} />}
                                 </div>
                                 <h4 className="text-xl font-black mb-1">{engine.name}</h4>
                                 <p className={`text-[9px] font-bold uppercase tracking-widest mb-2 ${selectedEngine === engine.id ? 'opacity-50' : 'text-indigo-500'}`}>{engine.subtitle}</p>
@@ -293,7 +293,7 @@ const CompressView = ({ isWhitelisted, isDarkMode, user, handleLogin }) => {
 
     const levels = [
         { id: 'extreme', title: 'Extreme', subtitle: '最低畫質，最高壓縮', description: '將圖片降至 72 DPI，適合郵件附件傳輸。', icon: <Zap className="w-5 h-5" />, tag: '最快', quality: 0.3, scale: 0.4 },
-        { id: 'recommended', title: 'Recommended', subtitle: '平衡畫質與體積', description: '維持 150 DPI，大部分文件的最佳選擇。', icon: <Check className="w-5 h-5" />, tag: '最佳平衡', quality: 0.6, scale: 0.7 },
+        { id: 'recommended', title: 'Recommended', subtitle: '平衡畫質與體積', description: '維持 150 DPI，大部分文件的最佳選擇。', icon: <FileText className="w-5 h-5" />, tag: '最佳平衡', quality: 0.6, scale: 0.7 },
         { id: 'high', title: 'High Quality', subtitle: '保留細節，輕微壓縮', description: '300 DPI 原生品質，僅優化檔案結構。', icon: <FileText className="w-5 h-5" />, tag: '無損感', quality: 0.8, scale: 0.9 }
     ];
 

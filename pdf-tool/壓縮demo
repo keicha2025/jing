@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Upload, FileText, Zap, Shield, Cloud, 
-  ChevronRight, Check, Sliders, Info, 
+  ChevronRight, FileText, Sliders, Info, 
   ArrowDownCircle, Sun, Moon 
 } from 'lucide-react';
 
@@ -25,7 +25,7 @@ const App = () => {
       title: 'Recommended',
       subtitle: '平衡畫質與體積',
       description: '維持 150 DPI，大部分文件的最佳選擇。',
-      icon: <Check className="w-5 h-5" />,
+      icon: <FileText className="w-5 h-5" />,
       tag: '最佳平衡'
     },
     {
