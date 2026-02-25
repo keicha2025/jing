@@ -216,7 +216,7 @@
         // --- Firebase Init ---
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.firestore();
+        const db = firebase.app().firestore('jing-lab');
         const provider = new firebase.auth.GoogleAuthProvider();
         const ADMIN_EMAIL = "wj209ing@gmail.com";
 
