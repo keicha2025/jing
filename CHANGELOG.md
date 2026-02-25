@@ -87,5 +87,6 @@
 - **Navigation Bar Structural Fix**: Resolved a critical issue where the bottom navigation bar buttons for "Report" and "History" were broken due to incorrect HTML tag nesting.
 - **Dependency Repair**: Fixed a 404 error for the `mp4-muxer` library by updating the CDN link to the latest stable version (v5.2.2).
 - **Audio Decoding Logic**: Improved the re-analysis workflow by implementing asynchronous buffer combination for seamless processing of multi-segment recordings.
+- **Fixed Bottom Navigation**: Replaced `absolute` positioning with `fixed` and added CSS `safe-area-inset-bottom` support to ensure the menu stays visible and stable on all mobile devices and iOS Safari.
 
-分析引擎全面升級！偵測靈敏度擴展為 5 階（極低至極高），並在報告頁面直接整合了「重新分析」與「場次切換選單」，讓使用者能針對現有錄音進行即時調整與對比。同步修復了底部選單失效的結構性 bug 與外部套件連結失效的問題。
+分析引擎全面升級！偵測靈敏度擴展為 5 階（極低至極高），並在報告頁面直接整合了「重新分析」與「場次切換選單」，讓使用者能針對現有錄音進行即時調整與對比。同步修復了底部選單失效的結構性 bug，並將導覽列改為固定定位（Fixed Positioning）以解決手機版顯示不穩定的問題。
