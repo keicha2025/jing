@@ -13,7 +13,7 @@ export default defineConfig({
                 short_name: 'AudioPlayer',
                 description: 'A premium personal audio player with 3s skip and playback speed control.',
                 theme_color: '#4f46e5',
-                start_url: '/preview/',
+                start_url: './',
                 display: 'standalone',
                 background_color: '#171717',
                 icons: [
@@ -43,7 +43,7 @@ export default defineConfig({
             }
         })
     ],
-    base: '/preview/',
+    base: './',
     server: {
         host: true,
         port: 5173,
