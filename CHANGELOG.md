@@ -95,5 +95,6 @@
 - **Enhanced Load Performance (Note App)**: Implemented LocalStorage caching for notes and background synchronization. Notes are now instantly loaded from the cache for a "click-and-open" experience, with a subtle background update check.
 - **Neutral UI Overhaul (Note App)**: Removed all red-colored warnings and highlight styles, replacing them with a more consistent grayscale and premium stone-based color palette.
 - **Admin Management for Project Index**: Integrated Firebase Auth and Firestore into the main project index (`index.html`). Admins can now toggle visibility for each project; hidden projects are only visible to the admin and filtered out for public guests.
+- **Drag-and-Drop Sorting & Batch Saving**: Implemented native-feeling drag-and-drop sorting using `SortableJS` for the project index. Added a "Batch Save" mechanism with a floating Stone-styled button that appears only when changes (order or visibility) are pending, reducing database interaction and improving UX.
 
-分析引擎全面升級！內容包含 5 階靈敏度、重新分析面板與導覽列固定定位修復。同步解決了 V-Player 在 GitHub Pages 上的資源載入 (404) 錯誤，並將 `note` 筆記應用升級為 Firebase Google 登入驗證。此外，為「專案索引」首頁整合了 Firebase 管理機制，允許管理員隱藏特定專案。最後，應要求優化了 PDF 工具處理完成後的介面質感。
+分析引擎全面升級！內容包含 5 階靈敏度、重新分析面板與導覽列固定定位修復。同步解決了 V-Player 在 GitHub Pages 上的資源載入 (404) 錯誤，並將 `note` 筆記應用升級為 Firebase Google 登入驗證。此外，為「專案索引」首頁整合了 Firebase 管理機制，支援直覺的拖拉排序與隱藏功能，並採用批次儲存優化體驗。最後，應要求優化了 PDF 工具處理完成後的介面質感。

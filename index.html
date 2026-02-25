@@ -12,10 +12,11 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
         rel="stylesheet">
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase & Tools -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="note/config.js"></script>
     <style>
         body {
@@ -62,6 +63,29 @@
             border-style: dashed;
             background: #fcfcfb;
         }
+
+        .drag-handle {
+            cursor: grab;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        /* 浮動儲存按鈕 */
+        #saveChangesBtn {
+            transform: translateY(100px);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #saveChangesBtn.show {
+            transform: translateY(0);
+        }
+
+        .sortable-ghost {
+            opacity: 0.3;
+            background: #f5f5f4 !important;
+        }
     </style>
 </head>
 
@@ -104,6 +128,19 @@
         <div id="emptyState" class="hidden flex flex-col items-center justify-center py-32 text-stone-400">
             <i data-lucide="inbox" class="w-10 h-10 mb-4 stroke-[1.5px] opacity-30"></i>
             <p class="text-sm">無相符專案</p>
+        </div>
+
+        <!-- 批次儲存按鈕 (浮動) -->
+        <div id="saveChangesBtn"
+            class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-4 bg-stone-900 text-white px-6 py-4 rounded-2xl shadow-2xl pointer-events-none opacity-0 transition-all">
+            <div class="flex flex-col">
+                <span class="text-sm font-bold">內容已變更</span>
+                <span class="text-[10px] text-stone-400 uppercase tracking-widest font-medium">Pending Update</span>
+            </div>
+            <button onclick="saveBatchChanges()"
+                class="bg-white text-stone-900 px-5 py-2 rounded-xl text-sm font-bold tap-feedback pointer-events-auto">
+                儲存變更
+            </button>
         </div>
     </main>
 
@@ -185,8 +222,14 @@
 
         let state = {
             isAdmin: false,
-            hiddenProjects: [] // 儲存在 Firestore 中的隱藏專案 path 清單
+            hiddenProjects: [], // 儲存在 Firestore 中的隱藏專案 path 清單
+            projectOrder: [],   // 儲存在 Firestore 中的專案路徑順序
+            localOrder: [],     // 本地目前的排序
+            localHidden: [],    // 本地目前的隱藏狀態
+            isDirty: false
         };
+
+        let sortableInstance = null;
 
         // --- Auth 邏輯 ---
         async function toggleAuth() {
@@ -223,10 +266,46 @@
             try {
                 const doc = await db.collection('configs').doc('project_index').get();
                 if (doc.exists) {
-                    state.hiddenProjects = doc.data().hiddenProjects || [];
+                    const data = doc.data();
+                    state.hiddenProjects = data.hiddenProjects || [];
+                    state.projectOrder = data.projectOrder || [];
+
+                    // 同步本地狀態
+                    state.localHidden = [...state.hiddenProjects];
+
+                    // 如果雲端沒有順序，則使用目前的預設順序
+                    if (state.projectOrder.length === 0) {
+                        state.localOrder = projects.map(p => p.path);
+                    } else {
+                        state.localOrder = [...state.projectOrder];
+                        // 檢查是否有新專案不在 projectOrder 中
+                        projects.forEach(p => {
+                            if (!state.localOrder.includes(p.path)) state.localOrder.push(p.path);
+                        });
+                    }
+                } else {
+                    state.localOrder = projects.map(p => p.path);
+                    state.localHidden = [];
                 }
             } catch (e) {
                 console.warn("Firestore fetch error (guest mode likely):", e);
+                state.localOrder = projects.map(p => p.path);
+            }
+        }
+
+        function checkDirty() {
+            const isOrderChanged = JSON.stringify(state.localOrder) !== JSON.stringify(state.projectOrder);
+            const isHiddenChanged = JSON.stringify(state.localHidden.sort()) !== JSON.stringify(state.hiddenProjects.sort());
+
+            state.isDirty = state.isAdmin && (isOrderChanged || isHiddenChanged);
+
+            const btn = document.getElementById('saveChangesBtn');
+            if (state.isDirty) {
+                btn.classList.add('show', 'opacity-100', 'pointer-events-auto');
+                btn.classList.remove('pointer-events-none');
+            } else {
+                btn.classList.remove('show', 'opacity-100', 'pointer-events-auto');
+                btn.classList.add('pointer-events-none');
             }
         }
 
@@ -236,47 +315,129 @@
 
             if (!state.isAdmin) return;
 
-            if (state.hiddenProjects.includes(path)) {
-                state.hiddenProjects = state.hiddenProjects.filter(p => p !== path);
+            if (state.localHidden.includes(path)) {
+                state.localHidden = state.localHidden.filter(p => p !== path);
             } else {
-                state.hiddenProjects.push(path);
+                state.localHidden.push(path);
             }
 
-            // 更新 UI
             renderProjects(searchInput.value);
+            checkDirty();
+        }
 
-            // 儲存至 Firestore
+        async function saveBatchChanges() {
+            if (!state.isAdmin) return;
+
+            const btn = document.querySelector('#saveChangesBtn button');
+            const originalText = btn.innerText;
+            btn.innerText = "儲存中...";
+            btn.disabled = true;
+
             try {
                 await db.collection('configs').doc('project_index').set({
-                    hiddenProjects: state.hiddenProjects
+                    hiddenProjects: state.localHidden,
+                    projectOrder: state.localOrder
                 });
+
+                // 更新基準點
+                state.hiddenProjects = [...state.localHidden];
+                state.projectOrder = [...state.localOrder];
+                state.isDirty = false;
+
+                checkDirty();
+                // 這裡不使用提示，改回原本的低調風格
+                lucide.createIcons();
             } catch (e) {
-                alert("儲存設定失敗，請檢查 Firestore 權限。");
+                console.error(e);
+                alert("儲存失敗，請檢查權限。");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
             }
         }
 
+        // --- 初始化 Sortable ---
+        function initSortable() {
+            if (!state.isAdmin) {
+                if (sortableInstance) {
+                    sortableInstance.destroy();
+                    sortableInstance = null;
+                }
+                return;
+            }
+
+            // 如果已經有搜尋過濾，不允許拖拉
+            if (searchInput.value) {
+                if (sortableInstance) {
+                    sortableInstance.option("disabled", true);
+                }
+                return;
+            }
+
+            if (sortableInstance) {
+                sortableInstance.option("disabled", false);
+                return;
+            }
+
+            sortableInstance = Sortable.create(projectsGrid, {
+                animation: 250,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost',
+                forceFallback: true, // 行動裝置優化
+                onEnd: function () {
+                    const newOrder = Array.from(projectsGrid.querySelectorAll('[data-path]')).map(el => el.dataset.path);
+                    state.localOrder = newOrder;
+                    checkDirty();
+                }
+            });
+        }
+
         function renderProjects(filterText = '') {
-            let filtered = projects.filter(p =>
+            // 首先按照 localOrder 重新排序專案陣列
+            const orderedProjects = state.localOrder.map(path => projects.find(p => p.path === path)).filter(p => p);
+
+            // 加入那些可能在 code 中有但 localOrder 沒紀錄到的專案
+            projects.forEach(p => {
+                if (!state.localOrder.includes(p.path)) orderedProjects.push(p);
+            });
+
+            let filtered = orderedProjects.filter(p =>
                 p.title.includes(filterText) ||
                 p.description.includes(filterText)
             );
 
             // 隱私過濾：如果不是管理員，則排除隱藏專案
             if (!state.isAdmin) {
-                filtered = filtered.filter(p => !state.hiddenProjects.includes(p.path));
+                filtered = filtered.filter(p => !state.localHidden.includes(p.path));
             }
 
             projectsGrid.innerHTML = filtered.map(p => {
-                const isHidden = state.hiddenProjects.includes(p.path);
+                const isHidden = state.localHidden.includes(p.path);
                 return `
-                <div class="relative group">
+                <div class="relative group h-full" data-path="${p.path}">
                     <a href="${p.path}" class="project-card block bg-white border border-stone-200/80 rounded-xl p-5 hover:border-stone-400 hover:shadow-sm h-full ${isHidden ? 'project-hidden' : ''}">
-                        <div class="w-10 h-10 rounded-lg ${isHidden ? 'bg-stone-100' : 'bg-stone-50'} flex items-center justify-center mb-4 text-stone-400 group-hover:text-stone-600 transition-colors">
-                            <i data-lucide="${p.icon}" class="w-5 h-5 stroke-[1.5px]"></i>
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="w-10 h-10 rounded-lg ${isHidden ? 'bg-stone-100' : 'bg-stone-50'} flex items-center justify-center text-stone-400 group-hover:text-stone-600 transition-colors">
+                                <i data-lucide="${p.icon}" class="w-5 h-5 stroke-[1.5px]"></i>
+                            </div>
+                            
+                            ${state.isAdmin ? `
+                                <div class="flex items-center gap-1">
+                                    <button onclick="toggleProjectVisibility('${p.path}', event)" 
+                                        class="w-8 h-8 flex items-center justify-center rounded-lg bg-stone-50 border border-stone-200 text-stone-400 hover:text-stone-600 hover:bg-white transition-all shadow-sm"
+                                        title="${isHidden ? '顯示專案' : '隱藏專案'}">
+                                        <i data-lucide="${isHidden ? 'eye' : 'eye-off'}" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <div class="drag-handle w-8 h-8 flex items-center justify-center rounded-lg bg-stone-50 border border-stone-200 text-stone-300 hover:text-stone-500 transition-all">
+                                        <i data-lucide="grip-vertical" class="w-3.5 h-3.5"></i>
+                                    </div>
+                                </div>
+                            ` : ''}
                         </div>
+
                         <h3 class="text-base font-medium text-stone-800 mb-1.5 flex items-center gap-2">
                             ${p.title}
-                            ${isHidden ? '<span class="text-[10px] bg-stone-100 text-stone-400 px-1.5 py-0.5 rounded uppercase tracking-tighter">Hidden</span>' : ''}
+                            ${isHidden ? '<span class="text-[10px] bg-stone-100 text-stone-400 px-1.5 py-0.5 rounded uppercase tracking-tighter font-bold">Hidden</span>' : ''}
                         </h3>
                         <p class="text-sm text-stone-400 leading-relaxed mb-4 line-clamp-2">${p.description}</p>
                         
@@ -284,19 +445,12 @@
                             View Project <i data-lucide="arrow-up-right" class="ml-1 w-3 h-3"></i>
                         </div>
                     </a>
-                    
-                    ${state.isAdmin ? `
-                        <button onclick="toggleProjectVisibility('${p.path}', event)" 
-                            class="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-lg bg-stone-50 border border-stone-200 text-stone-400 hover:text-stone-600 hover:bg-white transition-all shadow-sm z-10"
-                            title="${isHidden ? '顯示專案' : '隱藏專案'}">
-                            <i data-lucide="${isHidden ? 'eye' : 'eye-off'}" class="w-3.5 h-3.5"></i>
-                        </button>
-                    ` : ''}
                 </div>
             `;
             }).join('');
 
             lucide.createIcons();
+            initSortable();
 
             if (filtered.length === 0) {
                 emptyState.classList.remove('hidden');
