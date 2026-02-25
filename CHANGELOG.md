@@ -88,5 +88,7 @@
 - **Dependency Repair**: Fixed a 404 error for the `mp4-muxer` library by updating the CDN link to the latest stable version (v5.2.2).
 - **Audio Decoding Logic**: Improved the re-analysis workflow by implementing asynchronous buffer combination for seamless processing of multi-segment recordings.
 - **Fixed Bottom Navigation**: Replaced `absolute` positioning with `fixed` and added CSS `safe-area-inset-bottom` support to ensure the menu stays visible and stable on all mobile devices and iOS Safari.
+- **Fixed V-Player 404 Issue**: Updated Vite configuration to use relative base paths (`base: './'`) and corrected the deployment script to push build artifacts to the `v-player-preview` branch of the `jing.git` repository.
+- **Improved PDF Tool UI**: Removed the large checkmark icon from the success state of the PDF Flattening view for a cleaner, more premium look.
 
-分析引擎全面升級！偵測靈敏度擴展為 5 階（極低至極高），並在報告頁面直接整合了「重新分析」與「場次切換選單」，讓使用者能針對現有錄音進行即時調整與對比。同步修復了底部選單失效的結構性 bug，並將導覽列改為固定定位（Fixed Positioning）以解決手機版顯示不穩定的問題。
+分析引擎全面升級！內容包含 5 階靈敏度、重新分析面板與導覽列固定定位修復。同步解決了 V-Player 在 GitHub Pages 上的資源載入 (404) 錯誤，並應要求優化了 PDF 工具處理完成後的介面質感，移除多餘圖示。

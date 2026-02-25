@@ -43,7 +43,7 @@ export default defineConfig({
             }
         })
     ],
-    base: '/v-player-preview/',
+    base: './',
     server: {
         host: true,
         port: 5174,

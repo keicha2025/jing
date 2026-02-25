@@ -14,7 +14,7 @@ git init
 git add -A
 git commit -m 'deploy v-player'
 
-# 部署到 nichi-nichi/jing 的 v-player-preview 分支 (使用 HTTPS URL)
-git push -f https://github.com/nichi-nichi/jing.git master:v-player-preview
+# 部署到 keicha2025/jing 的 v-player-preview 分支
+git push -f https://github.com/keicha2025/jing.git main:v-player-preview
 
 cd -

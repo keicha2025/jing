@@ -220,7 +220,6 @@ const FlattenView = ({ isWhitelisted, isDarkMode, user, handleLogin }) => {
                         />
                         {result ? (
                             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center w-full">
-                                <div className="w-24 h-24 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-500 mx-auto mb-6"><FileText size={48} /></div>
                                 <h3 className="text-2xl font-black mb-2">處理完成</h3>
                                 <div className="flex justify-center items-center space-x-6 mb-8 mt-4">
                                     <div className="text-center">
