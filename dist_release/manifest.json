@@ -1,0 +1,28 @@
+{
+    "name": "Jing Lab - Project Portal",
+    "short_name": "Jing Lab",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#FAFAF9",
+    "theme_color": "#FAFAF9",
+    "icons": [
+        {
+            "src": "./note/note_appicon.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "./note/note_appicon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "./note/note_appicon.png",
+            "sizes": "1024x1024",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
