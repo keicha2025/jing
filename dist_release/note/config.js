@@ -4,7 +4,7 @@ const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwSiWPN1AYgLh20ExGU
 
 const firebaseConfig = {
     apiKey: "AIzaSyDFNKdGzAHeULoTfWOYatswKQmZ132FYVA",
-    authDomain: "gen-lang-client-0428297574.web.app",
+    authDomain: "gen-lang-client-0428297574.firebaseapp.com",
     projectId: "gen-lang-client-0428297574",
     storageBucket: "gen-lang-client-0428297574.firebasestorage.app",
     messagingSenderId: "1082284355568",
