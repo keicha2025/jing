@@ -90,5 +90,6 @@
 - **Fixed Bottom Navigation**: Replaced `absolute` positioning with `fixed` and added CSS `safe-area-inset-bottom` support to ensure the menu stays visible and stable on all mobile devices and iOS Safari.
 - **Fixed V-Player 404 Issue**: Updated Vite configuration to use relative base paths (`base: './'`) and corrected the deployment script to push build artifacts to the `v-player-preview` branch of the `jing.git` repository.
 - **Improved PDF Tool UI**: Removed the large checkmark icon from the success state of the PDF Flattening view for a cleaner, more premium look.
+- **Integrated Google Auth for Note App**: Upgraded the `note` application from a password-based system to Firebase Authentication (Google Login) with an Email whitelist backend check in GAS.
 
-分析引擎全面升級！內容包含 5 階靈敏度、重新分析面板與導覽列固定定位修復。同步解決了 V-Player 在 GitHub Pages 上的資源載入 (404) 錯誤，並應要求優化了 PDF 工具處理完成後的介面質感，移除多餘圖示。
+分析引擎全面升級！內容包含 5 階靈敏度、重新分析面板與導覽列固定定位修復。同步解決了 V-Player 在 GitHub Pages 上的資源載入 (404) 錯誤，並將 `note` 筆記應用升級為 Firebase Google 登入驗證。此外，應要求優化了 PDF 工具處理完成後的介面質感，移除多餘圖示。

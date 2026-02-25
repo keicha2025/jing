@@ -75,15 +75,20 @@ function doPost(e) {
 // --- Auth Handling ---
 
 function handleLogin(params) {
-  const masterPwd = SCRIPT_PROP.getProperty("MASTER_PWD");
-  if (String(params.password) !== String(masterPwd)) {
-    return { success: false, message: "密碼錯誤" };
+  const allowedEmails = ["wj209ing@gmail.com"]; // 管理員 Email 白名單
+  const userEmail = params.email;
+
+  if (!userEmail || allowedEmails.indexOf(userEmail) === -1) {
+    return { success: false, message: "存取被拒：您的帳號不在允許清單中" };
   }
 
   const token = Utilities.getUuid();
-  const tokenSheet = SS.getSheetByName("_Meta_Tokens");
-  // Simple check if sheet exists, if not run initSheet logic briefly or fail gracefully
-  if(!tokenSheet) return { success: false, error: "System not initialized. Run setup.gs" };
+  const tokenSheet = SS.getSheetByName("_Meta_Tokens") || SS.insertSheet("_Meta_Tokens");
+  
+  // Ensure headers exist if new sheet
+  if (tokenSheet.getLastRow() === 0) {
+    tokenSheet.appendRow(["token", "created_at", "last_used_at"]);
+  }
   
   tokenSheet.appendRow([token, new Date(), new Date()]);
 

@@ -22,6 +22,9 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20,400,0,0" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
         rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="config.js"></script>
 
     <script>
@@ -166,16 +169,29 @@
             <div class="w-full max-w-xs space-y-8 text-center">
                 <div class="space-y-2">
                     <h2 class="text-2xl font-bold">歡迎回來</h2>
-                    <p class="text-sm text-secondary">請輸入存取密碼</p>
+                    <p class="text-sm text-secondary">請登入以存取您的筆記</p>
                 </div>
                 <div class="space-y-4">
-                    <input type="password" id="passwordInput" placeholder="••••"
-                        class="w-full bg-accent border-none rounded-2xl px-4 py-4 text-center tracking-[1em] text-xl focus:ring-2 focus:ring-gray-200 outline-none transition-all"
-                        inputmode="numeric" />
-                    <button id="loginSubmitBtn" onclick="performLogin()"
-                        class="w-full bg-primary text-white font-bold rounded-2xl py-4 tap-feedback">
-                        登入
+                    <button id="googleLoginBtn" onclick="performGoogleLogin()"
+                        class="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-2xl py-4 tap-feedback hover:bg-gray-50 transition-colors">
+                        <svg class="w-5 h-5" viewBox="0 0 48 48">
+                            <path fill="#EA4335"
+                                d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z">
+                            </path>
+                            <path fill="#4285F4"
+                                d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z">
+                            </path>
+                            <path fill="#FBBC05"
+                                d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z">
+                            </path>
+                            <path fill="#34A853"
+                                d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z">
+                            </path>
+                            <path fill="none" d="M0 0h48v48H0z"></path>
+                        </svg>
+                        使用 Google 帳戶登入
                     </button>
+                    <div id="loginStatus" class="text-xs text-red-400 font-medium"></div>
                 </div>
             </div>
         </div>
@@ -306,6 +322,11 @@
             }
         }
 
+        // --- Firebase Initialize ---
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
         // --- 初始化 & Guard ---
         document.addEventListener('DOMContentLoaded', () => {
             // Intercept reload/close
@@ -316,11 +337,16 @@
                 }
             });
 
-            if (state.token) {
-                showView('notesView');
-            } else {
-                showView('loginView');
-            }
+            // Listen for Auth changes
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    performGASLogin(user);
+                } else {
+                    state.token = null;
+                    localStorage.removeItem('device_token');
+                    showView('loginView');
+                }
+            });
         });
 
         function hasOpenEdits() {
@@ -342,23 +368,40 @@
         }
 
         // --- 驗證邏輯 ---
-        async function performLogin() {
-            const pwd = document.getElementById('passwordInput').value;
-            if (!pwd) return;
-
-            const btn = document.getElementById('loginSubmitBtn');
+        async function performGoogleLogin() {
+            const btn = document.getElementById('googleLoginBtn');
             setLoading(btn, true);
+            try {
+                await auth.signInWithPopup(provider);
+            } catch (error) {
+                console.error(error);
+                showToast("登入中斷: " + error.message, "error");
+                setLoading(btn, false);
+            }
+        }
 
-            const result = await apiCall('login', { password: pwd });
-            setLoading(btn, false);
+        async function performGASLogin(user) {
+            const btn = document.getElementById('googleLoginBtn');
+            const statusEl = document.getElementById('loginStatus');
+
+            if (statusEl) statusEl.innerText = "驗證權限中...";
+
+            const result = await apiCall('login', {
+                email: user.email,
+                uid: user.uid,
+                displayName: user.displayName
+            });
 
             if (result.success) {
                 state.token = result.token;
                 localStorage.setItem('device_token', state.token);
                 showView('notesView');
-                showToast("登入成功", "verified_user");
+                showToast("歡迎, " + user.displayName, "verified_user");
             } else {
-                showToast(result.message || "密碼錯誤", "lock");
+                auth.signOut();
+                showToast(result.message || "帳號不在允許清單中", "lock");
+                if (statusEl) statusEl.innerText = result.message || "存取被拒：請洽管理員";
+                setLoading(btn, false);
             }
         }
 
@@ -378,6 +421,7 @@
         }
 
         function logout() {
+            auth.signOut();
             localStorage.removeItem('device_token');
             state.token = null;
             location.reload();
