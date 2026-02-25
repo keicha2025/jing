@@ -147,6 +147,10 @@
             <div class="flex items-center gap-2">
                 <span class="material-symbols-rounded text-primary">border_color</span>
                 <h1 class="text-xl font-black tracking-tight lowercase">note</h1>
+                <div id="offlineIndicator"
+                    class="hidden flex items-center gap-1.5 px-2 py-1 bg-stone-100 rounded-full text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">
+                    <span class="material-symbols-rounded text-[12px]">wifi_off</span> Offline
+                </div>
             </div>
             <div class="flex items-center gap-1">
                 <button id="addBtnNav" onclick="prepareNewNote()"
@@ -287,10 +291,12 @@
     <script>
         // --- 狀態管理 ---
         let state = {
-            token: localStorage.getItem('device_token') || null,
+            token: localStorage.getItem('device_token'),
             notes: JSON.parse(localStorage.getItem('cached_notes') || '[]'),
             pendingEdit: null,
-            isSyncing: false
+            isSyncing: false,
+            isOffline: !navigator.onLine,
+            offlineQueue: JSON.parse(localStorage.getItem('offline_queue') || '[]')
         };
 
         // --- Config Check ---
@@ -309,6 +315,16 @@
 
             if (!checkConfig()) return { success: false, error: "Config Missing" };
 
+            // 離線處理策略
+            if (state.isOffline) {
+                // 只有特定的寫入動作需要進入 Queue (我們暫時處理儲存與排序)
+                if (['add_note', 'update_note', 'reorder_notes', 'delete_note'].includes(action)) {
+                    addToOfflineQueue(action, payload);
+                    return { success: true, isOfflineMode: true, note: payload };
+                }
+                return { success: false, error: "Offline" };
+            }
+
             try {
                 const response = await fetch(GAS_API_URL, {
                     method: 'POST',
@@ -317,9 +333,45 @@
                 return await response.json();
             } catch (e) {
                 console.error(e);
-                showToast("網路錯誤", "wifi_off");
+                // 網路突發中斷
+                if (!state.isOffline) {
+                    toggleOfflineMode(true);
+                    if (['add_note', 'update_note', 'reorder_notes', 'delete_note'].includes(action)) {
+                        addToOfflineQueue(action, payload);
+                        return { success: true, isOfflineMode: true, note: payload };
+                    }
+                }
                 return { success: false, error: e.message };
             }
+        }
+
+        function addToOfflineQueue(action, payload) {
+            state.offlineQueue.push({ action, payload, timestamp: Date.now() });
+            localStorage.setItem('offline_queue', JSON.stringify(state.offlineQueue));
+            showToast("已存入離線快取，恢復連線後同步", "cloud_off");
+        }
+
+        async function syncOfflineQueue() {
+            if (state.offlineQueue.length === 0 || state.isOffline) return;
+
+            state.isSyncing = true;
+            showToast("正在同步離線變更...", "sync");
+
+            const queue = [...state.offlineQueue];
+            state.offlineQueue = [];
+            localStorage.setItem('offline_queue', '[]');
+
+            for (const item of queue) {
+                try {
+                    await apiCall(item.action, item.payload);
+                } catch (e) {
+                    console.error("Sync failed for", item, e);
+                    // 失敗則塞回隊列 (選填)
+                }
+            }
+
+            state.isSyncing = false;
+            fetchNotes(); // 同步完刷新
         }
 
         // --- Firebase Initialize ---
@@ -329,11 +381,22 @@
 
         // --- 初始化 & Guard ---
         document.addEventListener('DOMContentLoaded', () => {
+            // Register Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW Registered', reg))
+                    .catch(err => console.log('SW Failed', err));
+            }
+
+            // Connection Listeners
+            window.addEventListener('online', () => toggleOfflineMode(false));
+            window.addEventListener('offline', () => toggleOfflineMode(true));
+
             // Intercept reload/close
             window.addEventListener('beforeunload', (e) => {
-                if (state.isSyncing || hasOpenEdits()) {
+                if (state.isSyncing || hasOpenEdits() || state.offlineQueue.length > 0) {
                     e.preventDefault();
-                    e.returnValue = ''; // Generic browser warning
+                    e.returnValue = '';
                 }
             });
 
@@ -347,7 +410,19 @@
                     showView('loginView');
                 }
             });
+
+            // 初始狀態檢查
+            toggleOfflineMode(!navigator.onLine);
         });
+
+        function toggleOfflineMode(isOffline) {
+            state.isOffline = isOffline;
+            const indicator = document.getElementById('offlineIndicator');
+            if (indicator) {
+                indicator.classList.toggle('hidden', !isOffline);
+                if (!isOffline) syncOfflineQueue();
+            }
+        }
 
         function hasOpenEdits() {
             return state.notes.some(n => n.isEditing);
@@ -509,7 +584,10 @@
                     card.innerHTML = `
                         <div class="flex justify-between items-start">
                             <div class="flex items-baseline flex-wrap overflow-hidden pr-2 flex-grow">
-                                <h3 class="text-base font-bold text-primary truncate">${escapeHtml(note.title || '未命名')}</h3>
+                                <h3 class="text-base font-bold text-primary truncate">
+                                    ${note.isPendingSync ? '<span class="material-symbols-rounded text-[16px] text-amber-400 mr-1 align-middle" title="等待同步">wifi_off</span>' : ''}
+                                    ${escapeHtml(note.title || '未命名')}
+                                </h3>
                                 <div class="flex flex-wrap">${tagsMarkup}</div>
                             </div>
                             <div class="flex gap-1 shrink-0 -mt-2 -mr-2">
@@ -691,15 +769,23 @@
 
             if (res.success) {
                 if (isNew) {
-                    state.notes[noteIndex] = { ...res.note, isEditing: false, isNew: false };
-                    showToast("筆記已新增", "verified");
+                    // 如果是離線模式，我們可能沒有伺服器回傳的真實 id，先用 uuid 頂替
+                    const finalNote = res.isOfflineMode ?
+                        { uuid, title, content, tags: JSON.stringify(tags), updated_at: new Date().toISOString(), isEditing: false, isNew: false, isPendingSync: true } :
+                        { ...res.note, isEditing: false, isNew: false };
+
+                    state.notes[noteIndex] = finalNote;
+                    showToast(res.isOfflineMode ? "已暫存 (離線)" : "筆記已新增", "verified");
                 } else {
-                    state.notes[noteIndex] = { ...state.notes[noteIndex], title, content, tags: JSON.stringify(tags), updated_at: new Date().toISOString(), isEditing: false };
-                    showToast("筆記已儲存", "save");
+                    state.notes[noteIndex] = { ...state.notes[noteIndex], title, content, tags: JSON.stringify(tags), updated_at: new Date().toISOString(), isEditing: false, isPendingSync: res.isOfflineMode };
+                    showToast(res.isOfflineMode ? "已暫存 (離線)" : "筆記已儲存", "save");
                 }
 
                 if (!isDirect) closeDiffModal();
                 state.pendingEdit = null;
+
+                // 持久化到本地快取
+                localStorage.setItem('cached_notes', JSON.stringify(state.notes));
                 renderNotes();
             } else {
                 showToast("儲存失敗: " + res.error, "error");
