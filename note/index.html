@@ -62,13 +62,13 @@
             @apply transition-transform duration-75 active:scale-[0.96];
         }
 
-        /* Diff 強化標示 */
+        /* Diff 強化標示 - 移除紅色改為灰色調 */
         del {
-            @apply bg-red-50 text-red-500 no-underline px-1 rounded mx-0.5 font-bold;
+            @apply bg-gray-100 text-secondary no-underline px-1 rounded mx-0.5;
         }
 
         ins {
-            @apply bg-green-50 text-green-600 no-underline px-1 rounded mx-0.5 font-bold;
+            @apply bg-stone-100 text-primary no-underline px-1 rounded mx-0.5;
         }
 
         .note-card {
@@ -191,7 +191,7 @@
                         </svg>
                         使用 Google 帳戶登入
                     </button>
-                    <div id="loginStatus" class="text-xs text-red-400 font-medium"></div>
+                    <div id="loginStatus" class="text-xs text-secondary font-medium"></div>
                 </div>
             </div>
         </div>
@@ -288,7 +288,7 @@
         // --- 狀態管理 ---
         let state = {
             token: localStorage.getItem('device_token') || null,
-            notes: [],
+            notes: JSON.parse(localStorage.getItem('cached_notes') || '[]'),
             pendingEdit: null,
             isSyncing: false
         };
@@ -296,7 +296,7 @@
         // --- Config Check ---
         function checkConfig() {
             if (typeof GAS_API_URL === 'undefined' || !GAS_API_URL || GAS_API_URL.includes("YOUR_DEPLOYMENT_ID")) {
-                showToast("Config Error: API URL missing", "error");
+                showToast("配置錯誤: 缺少 API URL", "warning");
                 return false;
             }
             return true;
@@ -400,7 +400,7 @@
             } else {
                 auth.signOut();
                 showToast(result.message || "帳號不在允許清單中", "lock");
-                if (statusEl) statusEl.innerText = result.message || "存取被拒：請洽管理員";
+                if (statusEl) statusEl.innerText = result.message || "存取被拒：請聯絡管理員";
                 setLoading(btn, false);
             }
         }
@@ -428,15 +428,29 @@
         }
 
         async function fetchNotes() {
-            document.getElementById('loadingIndicator').classList.remove('hidden');
-            document.getElementById('emptyState').classList.add('hidden');
+            // 如果已有快取，先直接渲染
+            if (state.notes && state.notes.length > 0) {
+                renderNotes();
+            } else {
+                document.getElementById('loadingIndicator').classList.remove('hidden');
+                document.getElementById('emptyState').classList.add('hidden');
+            }
 
+            // 背景同步
             const res = await apiCall('get_notes');
             document.getElementById('loadingIndicator').classList.add('hidden');
 
             if (res.success) {
-                state.notes = res.notes; // Server order
-                renderNotes();
+                // 檢查資料是否有變動 (簡單字串比對)
+                const newNotesJson = JSON.stringify(res.notes);
+                const oldNotesJson = JSON.stringify(state.notes);
+
+                if (newNotesJson !== oldNotesJson) {
+                    state.notes = res.notes;
+                    localStorage.setItem('cached_notes', newNotesJson);
+                    renderNotes();
+                    if (oldNotesJson !== '[]') showToast("已同步最新內容", "cloud_done");
+                }
             } else if (res.error === "Unauthorized") {
                 logout();
             }

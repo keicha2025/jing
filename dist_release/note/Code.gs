@@ -90,7 +90,7 @@ function handleLogin(params) {
     tokenSheet.appendRow(["token", "created_at", "last_used_at"]);
   }
   
-  tokenSheet.appendRow([token, new Date(), new Date()]);
+  tokenSheet.appendRow(["'" + token, new Date(), new Date()]);
 
   return { success: true, token: token };
 }
@@ -184,7 +184,7 @@ function handleAddNote(params) {
   const now = new Date();
   
   // uuid, order, title, content, tags, updated_at
-  sheet.appendRow([uuid, newOrder, params.title || "", params.content, tags, now]);
+  sheet.appendRow(["'" + uuid, newOrder, "'" + (params.title || ""), "'" + params.content, "'" + tags, now]);
 
   return { success: true, note: { uuid, order: newOrder, title: params.title || "", content: params.content, tags: params.tags, updated_at: now } };
 }
@@ -202,9 +202,9 @@ function handleUpdateNote(params) {
   const now = new Date();
   
   // uuid(1), order(2), title(3), content(4), tags(5), updated_at(6)
-  sheet.getRange(rowNum, 3).setValue(params.title || "");
-  sheet.getRange(rowNum, 4).setValue(params.content);
-  sheet.getRange(rowNum, 5).setValue(JSON.stringify(params.tags || []));
+  sheet.getRange(rowNum, 3).setValue("'" + (params.title || ""));
+  sheet.getRange(rowNum, 4).setValue("'" + params.content);
+  sheet.getRange(rowNum, 5).setValue("'" + JSON.stringify(params.tags || []));
   sheet.getRange(rowNum, 6).setValue(now);
 
   return { success: true, updated_at: now };
