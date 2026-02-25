@@ -17,6 +17,9 @@
     const waveform = new NightWhisperWaveform('waveform-canvas');
     const ui = new NightWhisperUI();
 
+    // 初始化靈敏度 (從設定 Slider 讀取)
+    analyzer.setSensitivity(document.getElementById('sensitivity-slider')?.value || 3);
+
     // ── DOM 元素 ──
     const allViews = document.querySelectorAll('.view-panel');
 
@@ -62,6 +65,13 @@
         btnUpdate: document.getElementById('btn-update'),
         appVersionText: document.getElementById('app-version-text'),
         appInfoTitle: document.getElementById('app-info-title'),
+        sessionSelector: document.getElementById('btn-session-selector'),
+        sessionDropdown: document.getElementById('session-dropdown'),
+        sessionDropdownList: document.getElementById('session-dropdown-list'),
+        currentSessionLabel: document.getElementById('current-session-label'),
+        analysisSensitivitySlider: document.getElementById('analysis-sensitivity-slider'),
+        analysisSensitivityLabel: document.getElementById('analysis-sensitivity-label'),
+        btnReanalyze: document.getElementById('btn-reanalyze'),
     };
 
     // ── 狀態 ──
@@ -177,7 +187,8 @@
 
         // 分析頁載入資料
         if (viewId === 'analysis') {
-            loadAnalysisView();
+            loadAnalysisView(currentSessionId);
+            renderSessionDropdown();
         }
 
         // 設定頁更新資訊
@@ -352,11 +363,25 @@
     }
 
     // ── 分析畫面 ──
-    async function loadAnalysisView() {
-        const session = await storage.getLatestSession();
+    async function loadAnalysisView(sessionId = null) {
+        let session;
+        if (sessionId) {
+            session = await storage.getSession(sessionId);
+        } else {
+            session = await storage.getLatestSession();
+        }
+
         if (!session) {
             waveform.render([], [], 0, 0);
+            if (els.sessionDate) els.sessionDate.innerText = '尚無紀錄';
             return;
+        }
+
+        currentSessionId = session.id;
+
+        if (els.currentSessionLabel) {
+            const date = new Date(session.startTime);
+            els.currentSessionLabel.innerText = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
         }
 
         if (els.sessionDate) {
@@ -403,6 +428,112 @@
         const minutes = Math.floor((ms % 3600000) / 60000);
         return `${hours}小時 ${minutes}分`;
     }
+
+    // ── 下拉選單邏輯 ──
+    async function renderSessionDropdown() {
+        if (!els.sessionDropdownList) return;
+        const sessions = await storage.getAllSessions();
+        sessions.sort((a, b) => b.startTime - a.startTime);
+
+        if (sessions.length === 0) {
+            els.sessionDropdownList.innerHTML = '<div class="px-4 py-3 text-zinc-500 text-xs text-center">尚無錄音紀錄</div>';
+            return;
+        }
+
+        els.sessionDropdownList.innerHTML = '';
+        sessions.forEach(session => {
+            const date = new Date(session.startTime);
+            const label = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+            const dur = session.endTime ? formatDuration(session.endTime - session.startTime) : '未完成';
+
+            const item = document.createElement('div');
+            item.className = `px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5 last:border-0 ${session.id === currentSessionId ? 'bg-violet-600/10' : ''}`;
+            item.innerHTML = `
+                <div class="text-sm font-medium ${session.id === currentSessionId ? 'text-violet-400' : 'text-zinc-200'}">${label}</div>
+                <div class="text-[10px] text-zinc-500">${dur}</div>
+            `;
+            item.addEventListener('click', () => {
+                loadAnalysisView(session.id);
+                toggleSessionDropdown(false);
+            });
+            els.sessionDropdownList.appendChild(item);
+        });
+    }
+
+    function toggleSessionDropdown(show) {
+        if (!els.sessionDropdown) return;
+        if (show) {
+            els.sessionDropdown.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-2');
+        } else {
+            els.sessionDropdown.classList.add('opacity-0', 'pointer-events-none', '-translate-y-2');
+        }
+    }
+
+    els.sessionSelector?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = els.sessionDropdown.classList.contains('opacity-0');
+        toggleSessionDropdown(isHidden);
+    });
+
+    document.addEventListener('click', () => toggleSessionDropdown(false));
+
+    // ── 重新分析邏輯 ──
+    els.btnReanalyze?.addEventListener('click', async () => {
+        if (!currentSessionId || !els.btnReanalyze) return;
+
+        const originalText = els.btnReanalyze.innerHTML;
+        els.btnReanalyze.disabled = true;
+        els.btnReanalyze.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> 分析中...';
+
+        try {
+            const recordings = await storage.getRecordingsBySession(currentSessionId);
+            if (recordings.length === 0) {
+                alert('找不到該次錄音的音檔資料。');
+                return;
+            }
+
+            // 1. 清除舊事件
+            await storage.clearSessionData(currentSessionId);
+
+            // 2. 解碼音檔
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const buffers = await Promise.all(recordings.sort((a, b) => a.segmentIndex - b.segmentIndex).map(async r => {
+                const ab = await r.blob.arrayBuffer();
+                return await audioCtx.decodeAudioData(ab);
+            }));
+
+            // 合併 Buffer
+            const totalSamples = buffers.reduce((acc, b) => acc + b.length, 0);
+            const combinedBuffer = audioCtx.createBuffer(1, totalSamples, buffers[0].sampleRate);
+            let offset = 0;
+            buffers.forEach(b => {
+                combinedBuffer.copyToChannel(b.getChannelData(0), 0, offset);
+                offset += b.length;
+            });
+
+            // 3. 執行分析
+            const sensitivity = els.analysisSensitivitySlider ? els.analysisSensitivitySlider.value : 3;
+            const session = await storage.getSession(currentSessionId);
+
+            await analyzer.analyzeBuffer(combinedBuffer, currentSessionId, {
+                sensitivity: sensitivity,
+                startTimestamp: session.startTime,
+                onProgress: (p) => {
+                    els.btnReanalyze.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin">sync</span> 分析中 ${Math.round(p * 100)}%`;
+                }
+            });
+
+            // 4. 重新載入 View
+            await loadAnalysisView(currentSessionId);
+
+        } catch (err) {
+            console.error('Re-analysis failed:', err);
+            alert('分析失敗：' + err.message);
+        } finally {
+            els.btnReanalyze.disabled = false;
+            els.btnReanalyze.innerHTML = originalText;
+        }
+    });
 
     // ── 設定頁 ──
     async function updateStorageUsage() {
@@ -715,9 +846,31 @@
 
     // 敏感度 slider
     if (els.sensitivitySlider) {
-        const labels = { 1: '低', 2: '中', 3: '高' };
+        const labels = { 1: '極低', 2: '低', 3: '中', 4: '高', 5: '極高' };
         els.sensitivitySlider.addEventListener('input', (e) => {
-            if (els.sensitivityValue) els.sensitivityValue.innerText = labels[e.target.value] || '中';
+            const val = e.target.value;
+            if (els.sensitivityValue) els.sensitivityValue.innerText = labels[val] || '中';
+            // 同步到分析頁 Slider
+            if (els.analysisSensitivitySlider) {
+                els.analysisSensitivitySlider.value = val;
+                if (els.analysisSensitivityLabel) els.analysisSensitivityLabel.innerText = labels[val];
+            }
+            analyzer.setSensitivity(val);
+        });
+    }
+
+    // 分析頁敏感度 slider
+    if (els.analysisSensitivitySlider) {
+        const labels = { 1: '極低', 2: '低', 3: '中', 4: '高', 5: '極高' };
+        els.analysisSensitivitySlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            if (els.analysisSensitivityLabel) els.analysisSensitivityLabel.innerText = labels[val] || '中';
+            // 同步回設定頁 Slider
+            if (els.sensitivitySlider) {
+                els.sensitivitySlider.value = val;
+                if (els.sensitivityValue) els.sensitivityValue.innerText = labels[val];
+            }
+            analyzer.setSensitivity(val);
         });
     }
 

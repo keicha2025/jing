@@ -78,4 +78,14 @@
 
 升級 Android 環境至 SDK 35 (Android 15) 以解決套件衝突與常數找不到的問題。同時同步升級 Gradle 與 AGP 版本，確保在 Java 21 環境下能穩定編譯。修正了 App Icon 的路徑引用錯誤並補全了遺失的顏色設定檔。
 
-## [2026-02-24] NightWhisper v2.5.0 — Synchronization & Native Updates
+## [2026-02-25] NightWhisper Analysis & Navigation Upgrades
+### Added
+- **5-Level Sensitivity Adjustment**: Expanded the sensitivity scale from 3 to 5 levels (Extremely Low to Extremely High) for more granular control over snore and talk detection.
+- **Session Selector Dropdown**: Implemented a custom stylized dropdown in the Analysis view to quickly switch between different recording sessions.
+- **Interactive Re-analysis**: Added a dedicated panel in the report view to re-analyze existing audio data with new sensitivity settings without re-recording.
+### Fixed
+- **Navigation Bar Structural Fix**: Resolved a critical issue where the bottom navigation bar buttons for "Report" and "History" were broken due to incorrect HTML tag nesting.
+- **Dependency Repair**: Fixed a 404 error for the `mp4-muxer` library by updating the CDN link to the latest stable version (v5.2.2).
+- **Audio Decoding Logic**: Improved the re-analysis workflow by implementing asynchronous buffer combination for seamless processing of multi-segment recordings.
+
+分析引擎全面升級！偵測靈敏度擴展為 5 階（極低至極高），並在報告頁面直接整合了「重新分析」與「場次切換選單」，讓使用者能針對現有錄音進行即時調整與對比。同步修復了底部選單失效的結構性 bug 與外部套件連結失效的問題。

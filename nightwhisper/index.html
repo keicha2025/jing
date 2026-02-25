@@ -150,7 +150,7 @@
                                 <span class="material-symbols-outlined text-zinc-400">info</span>
                                 <div>
                                     <p class="text-white font-medium" id="app-info-title">系統版本</p>
-                                    <p class="text-zinc-500 text-xs" id="app-version-text">目前版本: v2.5.0 (2026-02-24)</p>
+                                    <p class="text-zinc-500 text-xs" id="app-version-text">目前版本: v2.6.0 (2026-02-25)</p>
                                 </div>
                             </div>
                             <button id="btn-update"
@@ -235,14 +235,25 @@
 
             <div class="flex-1 overflow-y-auto no-scrollbar p-6 pb-24 flex flex-col gap-6">
                 <!-- Header -->
-                <header class="flex justify-between items-center">
+                <header class="flex justify-between items-center relative">
                     <div>
-                        <h1 class="text-2xl font-semibold text-white">睡眠分析</h1>
+                        <h1 class="text-2xl font-semibold text-white line-clamp-1">睡眠分析</h1>
                         <p id="session-date" class="text-zinc-400 text-sm">尚無資料</p>
                     </div>
-                    <button class="p-2 rounded-full bg-white/5 active:bg-white/10 text-white border border-white/10">
-                        <span class="material-symbols-outlined">share</span>
-                    </button>
+                    <div class="relative">
+                        <button id="btn-session-selector"
+                            class="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-2xl border border-white/10 active:bg-white/10 transition-colors">
+                            <span id="current-session-label" class="text-xs font-medium text-zinc-300">切換紀錄</span>
+                            <span class="material-symbols-outlined text-zinc-500 text-sm">expand_more</span>
+                        </button>
+                        <!-- 自定義下拉選單容器 -->
+                        <div id="session-dropdown"
+                            class="absolute top-12 right-0 w-64 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl py-2 z-[60] opacity-0 pointer-events-none transition-all -translate-y-2">
+                            <div id="session-dropdown-list" class="max-h-64 overflow-y-auto no-scrollbar">
+                                <!-- 由 JS 動態生成 -->
+                            </div>
+                        </div>
+                    </div>
                 </header>
 
                 <!-- 波形熱點圖 -->
@@ -266,6 +277,33 @@
                             <div class="w-2 h-2 rounded-full bg-blue-500/40"></div> 安靜
                         </div>
                     </div>
+                </div>
+
+                <!-- 重新分析控制面板 -->
+                <div class="bg-white/5 rounded-3xl p-5 border border-white/10 flex flex-col gap-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-violet-400 text-sm">tune</span>
+                            <span class="text-xs text-zinc-300">分析靈敏度</span>
+                        </div>
+                        <span id="analysis-sensitivity-label" class="text-xs font-bold text-violet-400">中</span>
+                    </div>
+                    <div class="px-2">
+                        <input type="range" id="analysis-sensitivity-slider" min="1" max="5" step="1" value="3"
+                            class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-violet-500">
+                    </div>
+                    <div class="flex justify-between px-1 text-[9px] text-zinc-600 font-medium">
+                        <span>極低</span>
+                        <span>低</span>
+                        <span>中</span>
+                        <span>高</span>
+                        <span>極高</span>
+                    </div>
+                    <button id="btn-reanalyze"
+                        class="w-full bg-violet-600/20 hover:bg-violet-600/30 text-violet-400 border border-violet-500/30 py-3 rounded-2xl text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+                        <span class="material-symbols-outlined text-sm">analytics</span>
+                        重新分析當前音檔
+                    </button>
                 </div>
 
                 <!-- 事件列表 -->
@@ -323,11 +361,13 @@
                         </div>
                         <span id="sensitivity-value" class="text-violet-400 font-bold">中</span>
                     </div>
-                    <input type="range" id="sensitivity-slider" min="1" max="3" step="1" value="2">
+                    <input type="range" id="sensitivity-slider" min="1" max="5" step="1" value="3">
                     <div class="flex justify-between mt-2 text-[10px] text-zinc-500 font-medium">
+                        <span>極低</span>
                         <span>低</span>
                         <span>中</span>
                         <span>高</span>
+                        <span>極高</span>
                     </div>
                 </div>
 
@@ -405,7 +445,7 @@
         <!-- 底部導覽列 (4 tabs) -->
         <!-- ============================================================ -->
         <nav id="bottom-nav"
-            class="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-xl border-t border-white/10 px-6 py-3 flex justify-around items-center z-40">
+            class="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-xl border-t border-white/10 px-6 py-3 flex justify-around items-center z-40 transition-opacity duration-300">
             <button id="nav-track" class="flex flex-col items-center gap-1 text-violet-400 transition-colors">
                 <span class="material-symbols-outlined text-xl">dark_mode</span>
                 <span class="text-[10px]">監測</span>
@@ -453,7 +493,7 @@
 
     <!-- JS Modules -->
     <script type="module">
-        import * as Mp4Muxer from 'https://cdn.jsdelivr.net/npm/mp4-muxer@1.1.0/build/mp4-muxer.mjs';
+        import * as Mp4Muxer from 'https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.mjs';
         window.Mp4Muxer = Mp4Muxer;
     </script>
     <script src="js/storage.js"></script>

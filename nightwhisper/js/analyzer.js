@@ -21,10 +21,20 @@ class NightWhisperAnalyzer {
             noise: { min: 50, max: 4000 },     // 底噪範圍
         };
 
-        // 閾值設定
+        // 閾值設定 (動態映射：1=極低, 2=低, 3=中, 4=高, 5=極高)
+        this.SENSITIVITY_MAP = {
+            1: { snore: -35, talk: -30 }, // 極低 (感應最遲鈍)
+            2: { snore: -40, talk: -35 }, // 低
+            3: { snore: -45, talk: -40 }, // 中
+            4: { snore: -50, talk: -45 }, // 高
+            5: { snore: -55, talk: -50 }, // 極高 (感應最靈敏)
+        };
+
+        this.currentSensitivity = 3;
+
         this.THRESHOLDS = {
-            snoreDb: -45,          // 打呼偵測閾值 (dB)
-            talkDb: -40,           // 夢話偵測閾值 (dB)
+            snoreDb: -45,          // 打呼偵測閾值 (dB) - 將會被動態更新
+            talkDb: -40,           // 夢話偵測閾值 (dB) - 將會被動態更新
             minDuration: 2,        // 最短事件持續時間 (秒)
             noiseVariance: 5,      // 底噪方差容忍度 (dB)
         };
@@ -48,6 +58,19 @@ class NightWhisperAnalyzer {
         this.onEvent = null;
         this.onCalibrationComplete = null;
         this.onLevelUpdate = null;
+    }
+
+    /**
+     * 更新靈敏度
+     */
+    setSensitivity(level) {
+        this.currentSensitivity = parseInt(level) || 3;
+        const mapped = this.SENSITIVITY_MAP[this.currentSensitivity];
+        if (mapped) {
+            this.THRESHOLDS.snoreDb = mapped.snore;
+            this.THRESHOLDS.talkDb = mapped.talk;
+        }
+        console.log(`[Analyzer] Sensitivity set to ${this.currentSensitivity} (Snore: ${this.THRESHOLDS.snoreDb}dB, Talk: ${this.THRESHOLDS.talkDb}dB)`);
     }
 
     /**
@@ -363,7 +386,8 @@ class NightWhisperAnalyzer {
      * 離線分析 AudioBuffer
      */
     async analyzeBuffer(audioBuffer, sessionId, options = {}) {
-        const { skipMinutes = 0, onProgress = null } = options;
+        const { skipMinutes = 0, onProgress = null, sensitivity = 3 } = options;
+        this.setSensitivity(sensitivity);
         this.sessionId = sessionId;
         this.sampleRate = audioBuffer.sampleRate;
         this.isAnalyzing = true;
