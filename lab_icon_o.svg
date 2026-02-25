@@ -1,0 +1,16 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1024" height="1024" rx="220" fill="#FAFAF9"/>
+    <!-- Floating Window with Shadow -->
+    <rect x="280" y="280" width="464" height="464" rx="40" fill="#FFFFFF" filter="url(#shadow)"/>
+    <defs>
+        <filter id="shadow" x="0" y="0" width="1024" height="1024" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+            <feGaussianBlur stdDeviation="10" result="blur"/>
+            <feOffset dx="0" dy="10"/>
+            <feComposite in2="blur" operator="in" in="SourceGraphic"/>
+        </filter>
+    </defs>
+    <!-- Sharp J Terminal -->
+    <path d="M480 440V580C480 602.091 462.091 620 440 620C417.909 620 400 602.091 400 580" stroke="#292524" stroke-width="40" stroke-linecap="round"/>
+    <path d="M520 620H600" stroke="#292524" stroke-width="20" stroke-linecap="round"/>
+    <rect x="280" y="280" width="464" height="60" rx="40" fill="#D6D3D1" fill-opacity="0.2"/>
+</svg>

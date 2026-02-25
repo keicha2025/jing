@@ -37,7 +37,7 @@ cp -r travel-planner/frontend/dist/* dist_release/travel-planner/
 echo "Copying static assets..."
 cp -r nightwhisper dist_release/
 cp -r note dist_release/
-cp index.html nagoya.html okinawa.html okinawa-1.html tesuuryo.html note.png manifest.json sw.js dist_release/
+cp index.html nagoya.html okinawa.html okinawa-1.html tesuuryo.html jing-lab-appicon.png manifest.json sw.js dist_release/
 
 echo "Deploying to Firebase..."
 npx -y firebase-tools deploy --only hosting --project gen-lang-client-0428297574

@@ -1,9 +1,9 @@
-const CACHE_NAME = 'jing-lab-v2';
+const CACHE_NAME = 'jing-lab-v3';
 const ASSETS = [
     './',
     './index.html',
     './manifest.json',
-    './note/note_appicon.png',
+    './jing-lab-appicon.png',
     'https://cdn.tailwindcss.com',
     'https://unpkg.com/lucide@latest',
     'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap',

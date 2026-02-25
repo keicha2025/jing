@@ -1,0 +1,11 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1024" height="1024" rx="220" fill="#F5F5F4"/>
+    <!-- Minimal Card Style J -->
+    <rect x="250" y="300" width="524" height="424" rx="40" fill="#FFFFFF" stroke="#D6D3D1" stroke-width="4"/>
+    <circle cx="310" cy="350" r="10" fill="#D6D3D1"/>
+    <circle cx="350" cy="350" r="10" fill="#D6D3D1"/>
+    <circle cx="390" cy="350" r="10" fill="#D6D3D1"/>
+    <!-- Centered Smaller J -->
+    <path d="M540 440V580C540 613.137 513.137 640 480 640C446.863 640 420 613.137 420 580" stroke="#57534E" stroke-width="50" stroke-linecap="round"/>
+    <rect x="580" y="580" width="60" height="60" rx="10" fill="#A8A29E" fill-opacity="0.3"/>
+</svg>

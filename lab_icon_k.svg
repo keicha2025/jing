@@ -1,0 +1,8 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1024" height="1024" rx="220" fill="#FAFAF9"/>
+    <!-- Code Brackets balance -->
+    <path d="M350 380L250 512L350 644" stroke="#44403C" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M674 380L774 512L674 644" stroke="#44403C" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Smaller Centered J -->
+    <path d="M560 400V620C560 664.183 524.183 700 480 700C435.817 700 400 664.183 400 620" stroke="#A8A29E" stroke-width="60" stroke-linecap="round"/>
+</svg>
