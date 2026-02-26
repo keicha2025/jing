@@ -398,66 +398,73 @@ class NightWhisperAnalyzer {
         const skipSeconds = skipMinutes * 60;
         const startTimestamp = options.startTimestamp || Date.now();
 
-        // 建立離線分析用的模擬環境
-        const offlineCtx = new OfflineAudioContext(1, 1, this.sampleRate);
-        const analyser = offlineCtx.createAnalyser();
-        analyser.fftSize = this.fftSize;
-        this.analyserNode = analyser;
+        const stepSeconds = 0.2; // 每 0.2 秒採樣一次，確保覆蓋率
+        const totalSteps = Math.floor((duration - skipSeconds) / stepSeconds);
 
-        const skipFrames = Math.floor(skipSeconds);
-        const totalFrames = Math.floor(duration);
-
-        // 每秒處理一次
-        for (let s = skipFrames; s < totalFrames; s++) {
+        for (let i = 0; i <= totalSteps; i++) {
             if (!this.isAnalyzing) break;
 
-            const offset = s * this.sampleRate;
-            const length = Math.min(this.fftSize, audioBuffer.length - offset);
-            if (length <= 0) break;
+            const s = skipSeconds + (i * stepSeconds);
+            const offset = Math.floor(s * this.sampleRate);
+
+            // 邊界檢查：如果剩餘長度小於 fftSize，則不處理該點
+            if (offset + this.fftSize > audioBuffer.length) break;
 
             const segment = new Float32Array(this.fftSize);
             audioBuffer.copyFromChannel(segment, 0, offset);
 
-            // 模擬 FFT 資料
-            const spectrum = this._simulateFFT(segment);
             const time = startTimestamp + (s * 1000);
 
+            // 執行局部 FFT 模擬
+            const spectrum = this._simulateFFT(segment);
             this._analyzeOfflineStep(spectrum, time);
 
-            if (s % 60 === 0 && onProgress) {
-                onProgress((s - skipFrames) / (totalFrames - skipFrames));
+            if (i % 50 === 0 && onProgress) {
+                onProgress(i / totalSteps);
             }
 
-            // 每 200 筆資料存一次 DB 避免過大
+            // 每 200 筆資料存一次 DB
             if (this._analysisBatch.length >= 200) {
                 await this._flushBatch();
             }
         }
 
-        this._finalizeCurrentEvent();
+        // 使用音檔結束時間關閉最後一個事件
+        this._finalizeCurrentEventAt(startTimestamp + (duration * 1000));
         await this._flushBatch();
         this.isAnalyzing = false;
     }
 
-    // 模擬 FFT：直接對時域訊號做簡易功率譜計算
+    // 模擬 FFT：計算全時域 dB 並根據零交越率 (Zero-Crossing Rate) 估算能量分佈
     _simulateFFT(timeData) {
         const freqData = new Float32Array(this.fftSize / 2);
-        // 這是一個極簡化的模擬，實際運作中我們會需要做更真實的 FFT
-        // 但由於瀏覽器 OfflineAudioContext 難以直接取得逐格 Analyser 資料，
-        // 我們這裡採用簡易的頻段能量估算
-        for (let i = 0; i < freqData.length; i++) {
-            // 隨機底噪 + 訊號強度模擬
-            freqData[i] = -100 + Math.random() * 5;
-        }
 
-        // 簡易 RMS 轉 dB
-        let sum = 0;
-        for (let i = 0; i < timeData.length; i++) sum += timeData[i] * timeData[i];
-        const rms = Math.sqrt(sum / timeData.length);
+        // 核心 dB 計算
+        let sumSq = 0;
+        let zeroCrossings = 0;
+        for (let i = 0; i < timeData.length; i++) {
+            sumSq += timeData[i] * timeData[i];
+            if (i > 0 && ((timeData[i] >= 0 && timeData[i - 1] < 0) || (timeData[i] < 0 && timeData[i - 1] >= 0))) {
+                zeroCrossings++;
+            }
+        }
+        const rms = Math.sqrt(sumSq / timeData.length);
         const db = 20 * Math.log10(rms + 1e-6);
 
-        // 充填整個頻譜為該整體 dB (極簡化模擬，後續可針對特定頻率優化)
-        freqData.fill(db);
+        // 估算估計頻率 (Hz)
+        const estFreq = (zeroCrossings * this.sampleRate) / (2 * timeData.length);
+
+        // 將 dB 依頻率特徵分配給不同的頻譜位置，讓判定邏輯能區分 snore/talk
+        for (let i = 0; i < freqData.length; i++) {
+            const freq = (i * this.sampleRate) / this.fftSize;
+
+            // 如果估計頻率落在該 bin 附近，則賦予較高能量，否則給予底噪
+            if (Math.abs(freq - estFreq) < 500) {
+                freqData[i] = db;
+            } else {
+                freqData[i] = -100;
+            }
+        }
         return freqData;
     }
 
@@ -513,6 +520,8 @@ class NightWhisperAnalyzer {
             if (this.onEvent) this.onEvent(event);
         }
         this._currentEvent = null;
+        this._consecutiveCount = 0;
+        this._eventPeakDb = -Infinity;
     }
 }
 

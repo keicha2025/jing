@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.0] - 2026-02-26
+
+### Fixed
+- **Re-analysis Engine Stability**: Fixed a critical `INDEX_SIZE_ERR` during offline analysis caused by improper boundary checking at the end of the audio buffer.
+  - 修正離線分析在音檔末端會因邊界檢查與 `copyFromChannel` 錯誤而導致分析失敗的問題。
+- **Missing Detection Events**: Improved re-analysis resolution from 1 second per step to 0.2 seconds, ensuring better data coverage and preventing missed short events.
+  - 將分析步進從 1 秒提升至 0.2 秒，解決因採樣解析度不足導致重新分析結果為 0 的問題。
+- **Timing Correctness**: Fixed a bug where the final detection event used `Date.now()` during re-analysis, causing incorrect durations.
+  - 修正離線分析結束時會誤用當前系統時間導致事件長度異常的錯誤。
+
+### Changed
+- **Enhanced Spectrum Simulation**: Improved `_simulateFFT` with zero-crossing rate estimation to differentiate frequency peaks between snore and talk during offline analysis.
+  - 強化離線分析模擬，導入零交越率偵測使其能大致分辨打呼與夢話。
+
+---
+本更新解決了「重新分析」功能的兩大核心痛點：分析中斷報錯，以及分析完整個音檔卻沒偵測到任何事件的情況。
+
 ## [2.6.0] - 2026-02-25
 
 ### Added
