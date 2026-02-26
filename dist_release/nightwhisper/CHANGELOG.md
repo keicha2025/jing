@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.0] - 2026-02-26
+
+### Added
+- **Pinch-to-zoom Support**: Implemented multi-touch gestures for the sleep analysis waveform. Users can now zoom in to inspect audio events with high granularity.
+  - 睡眠分析圖表新增雙指縮放功能，支援從 8 小時全貌縮放至 1 分鐘級別的細節。
+- **Timeline Panning**: Enabled smooth dragging and scrolling across the zoomed-in timeline for easier navigation through long recording sessions.
+  - 支援在縮放後的波形圖上左右拖拽捲動，方便檢視全時段數據。
+- **Granular View & Precise Seeking**: Zooming in allows for highly precise playback seeking and detailed amplitude inspection.
+  - 縮放後可進行「細粒度檢視 (Granular view)」，並在波形上實現「精確定位 (Precise seeking)」回放。
+- **Double-tap to Reset**: Added a quick shortcut - double-tap the waveform to instantly reset to the full session view.
+  - 新增快捷手勢：雙擊波形圖即可快速重設視角，回到全覽狀態。
+
+### Changed
+- Refactored `NightWhisperWaveform` rendering logic to use a dynamic viewport system for improved performance during high-zoom levels.
+  - 重新建構波形渲染引擎，導入動態視窗，大幅提升高倍縮放下的繪製效能。
+
+---
+本更新導入了行動裝置上最直覺的縮放手勢（Pinch-to-zoom），讓使用者能像操作地圖一樣，輕鬆定位並聽取睡眠中每個微小的聲響。
+
 ## [2.7.0] - 2026-02-26
 
 ### Fixed
