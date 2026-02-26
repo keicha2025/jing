@@ -1043,8 +1043,11 @@
 
     // ── Service Worker ──
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').then((reg) => {
+        // 使用相對路徑避免註冊到 root 的 sw.js
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
             console.log('[App] SW registered:', reg.scope);
+            // 每次載入時主動檢查是否有新版本
+            reg.update();
         }).catch((err) => console.log('[App] SW failed:', err));
     }
 
