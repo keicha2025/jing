@@ -3,18 +3,18 @@
 // 離線快取策略 (Cache First)
 // ============================================
 
-const CACHE_NAME = 'nightwhisper-v2.4';
+const CACHE_NAME = 'nightwhisper-v2.8';
 const ASSETS = [
     './',
     './index.html',
-    './css/design-tokens.css',
-    './css/style.css',
-    './js/app.js',
-    './js/recorder.js',
-    './js/analyzer.js',
-    './js/storage.js',
-    './js/waveform.js',
-    './js/ui.js',
+    './css/design-tokens.css?v=2.8.0',
+    './css/style.css?v=2.8.0',
+    './js/app.js?v=2.8.0',
+    './js/recorder.js?v=2.8.0',
+    './js/analyzer.js?v=2.8.0',
+    './js/storage.js?v=2.8.0',
+    './js/waveform.js?v=2.8.0',
+    './js/ui.js?v=2.8.0',
     './manifest.json',
     './icons/icon-192.png',
     './icons/icon-512.png',
