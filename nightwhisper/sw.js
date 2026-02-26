@@ -3,7 +3,7 @@
 // 離線快取策略 (Cache First)
 // ============================================
 
-const CACHE_NAME = 'nightwhisper-v2.8';
+const CACHE_NAME = 'nightwhisper-v2.9';
 const ASSETS = [
     './',
     './index.html',
@@ -26,7 +26,7 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(ASSETS);
         })
-    );
+    ).catch(err => console.log('SW install fail:', err));
     self.skipWaiting();
 });
 
@@ -46,29 +46,38 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// 攔截請求：Cache First + Network Fallback
+// 攔截請求：Network First (主要針對 HTML)，Static Assets 則用 Cache First
 self.addEventListener('fetch', (event) => {
-    // 跳過非 GET 請求
     if (event.request.method !== 'GET') return;
 
-    event.respondWith(
-        caches.match(event.request).then((cached) => {
-            if (cached) return cached;
+    const url = new URL(event.request.url);
+    const isHtml = event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/');
 
-            return fetch(event.request).then((response) => {
-                // 只快取同源的成功回應
-                if (!response || response.status !== 200 || response.type !== 'basic') {
+    if (isHtml) {
+        // HTML 或導航請求走 Network First，確保 index.html 永遠抓到最新
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    const resClone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
                     return response;
-                }
-                const responseClone = response.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, responseClone);
+                })
+                .catch(() => caches.match(event.request))
+        );
+    } else {
+        // 其他靜態資源 (帶版本號的 JS/CSS) 走 Cache First
+        event.respondWith(
+            caches.match(event.request).then((cached) => {
+                if (cached) return cached;
+                return fetch(event.request).then((response) => {
+                    // 只快取 200 回應
+                    if (response && response.status === 200) {
+                        const resClone = response.clone();
+                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
+                    }
+                    return response;
                 });
-                return response;
-            }).catch(() => {
-                // 離線 fallback — 回傳主頁面
-                return caches.match('./index.html');
-            });
-        })
-    );
+            })
+        );
+    }
 });
