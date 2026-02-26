@@ -936,13 +936,17 @@
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') await audioCtx.resume();
 
-            // 提示解碼中
-            els.monitoringStatus.innerText = '正在解碼音檔 (這可能需要一點時間)...';
+            // 提示解碼中 & 改良解碼流程 (使用更穩定的 Promise 包裝)
+            els.monitoringStatus.innerText = '正在解碼音檔 (0%)...';
 
-            // 部分瀏覽器不支援 Promise 版 decodeAudioData，使用回溯寫法
+            // Web Audio API 解碼
             const audioBuffer = await new Promise((resolve, reject) => {
-                audioCtx.decodeAudioData(arrayBuffer, resolve, (err) => {
-                    reject(err || new Error('不支援的音檔格式或檔案過大'));
+                // 部分瀏覽器 decodeAudioData 的進度偵測不穩定，這裡用文字模擬或直接處理
+                audioCtx.decodeAudioData(arrayBuffer, (buffer) => {
+                    resolve(buffer);
+                }, (err) => {
+                    console.error('Decode internal error:', err);
+                    reject(new Error('瀏覽器無法解碼此音檔。請確認檔案格式（推薦 .wav 或 .m4a）且檔案未損毀。'));
                 });
             });
 
@@ -969,12 +973,14 @@
                 duration: audioBuffer.duration * 1000
             });
 
-            els.monitoringStatus.innerText = '分析進行中...';
+            els.monitoringStatus.innerText = '正在進行睡眠分析 (0%)...';
             await analyzer.analyzeBuffer(audioBuffer, currentSessionId, {
                 skipMinutes: skipMinutes,
                 startTimestamp: startTime,
                 onProgress: (p) => {
-                    els.monitoringStatus.innerText = `分析進度: ${Math.round(p * 100)}%`;
+                    const percent = Math.round(p * 100);
+                    els.monitoringStatus.innerText = `深度分析中: ${percent}%`;
+                    // 如果有進度條元素也可以同步
                 }
             });
 
