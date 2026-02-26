@@ -117,17 +117,49 @@
         }
     } else if (els.btnUpdate) {
         els.btnUpdate.addEventListener('click', async () => {
-            els.btnUpdate.innerText = '檢查中...';
-            els.btnUpdate.classList.add('opacity-50');
+            const originalText = els.btnUpdate.innerText;
+            els.btnUpdate.innerText = '正在檢查...';
+            els.btnUpdate.disabled = true;
 
             if ('serviceWorker' in navigator) {
                 try {
                     const registrations = await navigator.serviceWorker.getRegistrations();
-                    for (let registration of registrations) {
-                        await registration.update();
+                    let updateFound = false;
+
+                    for (let reg of registrations) {
+                        // 強制向伺服器檢查 sw.js 是否有變動
+                        await reg.update();
+
+                        // 如果有正在等待安裝的 SW，則強制啟動
+                        if (reg.waiting) {
+                            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                            updateFound = true;
+                        }
                     }
-                    window.location.reload();
+
+                    // 同時清理瀏覽器的 Cache Storage (針對靜態資源)
+                    const cacheKeys = await caches.keys();
+                    for (const key of cacheKeys) {
+                        await caches.delete(key);
+                    }
+
+                    if (updateFound) {
+                        await showModal({
+                            title: '偵測到更新',
+                            message: '已成功下載新版本，即將重啟應用程式。',
+                            icon: 'update',
+                            confirmText: '立即重啟'
+                        });
+                        window.location.reload();
+                    } else {
+                        // 雖然沒有 SW 更新，但為了保險（處理 ?v= 版本變更），仍執行強制重新整理
+                        els.btnUpdate.innerText = '已是最新版';
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 800);
+                    }
                 } catch (err) {
+                    console.error('[Update] Error:', err);
                     window.location.reload();
                 }
             } else {
@@ -136,10 +168,12 @@
         });
     }
 
-    // ── 自動偵測更新提示 ──
+    // ── 自動偵測更新提示 (主動推播模式) ──
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-            console.log('[PWA] New version detected');
+            // 當 SW 接管控制權變更時，通常代表新版本已就緒
+            console.log('[PWA] Controller changed, reloading...');
+            window.location.reload();
         });
     }
 
