@@ -61,6 +61,25 @@ All notable changes to this project will be documented in this file.
 **Added Multi-View and resizable split layouts, optimized mobile touch previews and gestures for better usability.**
 
 ---
+## [1.2.0] - 2026-02-27
+
+### Added
+- **Media Library Previews**: Integrated a dynamic thumbnail generation system. When new videos are uploaded, the app now automatically captures a preview frame and displays it in the sidebar.
+- **Improved Visual Feedback**: The current playing video is highlighted with an indigo overlay on its thumbnail in the library for easier identification.
+
+### Technical Details
+- Implemented `generateThumbnail` utility using HTML5 Canvas and Offscreen video rendering.
+- Modified IndexedDB schema to store thumbnail blobs.
+- Updated initialization logic to regenerate object URLs for stored thumbnails.
+
+### Affected Files
+- `src/App.jsx`
+
+---
+**本版本在媒體庫加入了影片預覽功能。現在您在上傳影片後，系統會自動截取影片畫面並顯示在側欄清單中，同時正在播放的影片也會有明顯的標示，讓選片過程更加直觀。**
+**Added automatic thumbnail generation for videos in the media library, providing a visual preview for all uploaded media.**
+
+---
 ## [1.1.9] - 2026-02-27
 
 ### Added

@@ -462,7 +462,8 @@ const App = () => {
                 if (storedFiles.length > 0) {
                     const filesWithUrls = storedFiles.map(f => ({
                         ...f,
-                        url: URL.createObjectURL(f.blob)
+                        url: URL.createObjectURL(f.blob),
+                        thumbnailUrl: f.thumbnail ? URL.createObjectURL(f.thumbnail) : null
                     }));
                     setVideoFiles(filesWithUrls);
                     setSlotVideos([filesWithUrls[0], null]);
@@ -476,14 +477,49 @@ const App = () => {
         init();
     }, []);
 
+    const generateThumbnail = (file) => {
+        return new Promise((resolve) => {
+            const video = document.createElement('video');
+            video.preload = 'metadata';
+            video.src = URL.createObjectURL(file);
+            video.muted = true;
+
+            video.onloadedmetadata = () => {
+                video.currentTime = Math.min(1, video.duration / 2);
+            };
+
+            video.onseeked = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 320;
+                canvas.height = 180;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob((blob) => {
+                    URL.revokeObjectURL(video.src);
+                    resolve(blob);
+                }, 'image/jpeg', 0.8);
+            };
+
+            video.onerror = () => {
+                URL.revokeObjectURL(video.src);
+                resolve(null);
+            };
+        });
+    };
+
     const handleFileUpload = async (e) => {
         const uploadedFiles = Array.from(e.target.files).filter(file => file.type.startsWith('video/'));
         const newVideos = await Promise.all(uploadedFiles.map(async (file) => {
             const id = Math.random().toString(36).substr(2, 9);
             const name = file.name.replace(/\.[^/.]+$/, "");
-            const fileObj = { id, name, blob: file, type: file.type };
+            const thumbnailBlob = await generateThumbnail(file);
+            const fileObj = { id, name, blob: file, type: file.type, thumbnail: thumbnailBlob };
             await saveFileToDB(fileObj);
-            return { ...fileObj, url: URL.createObjectURL(file) };
+            return {
+                ...fileObj,
+                url: URL.createObjectURL(file),
+                thumbnailUrl: thumbnailBlob ? URL.createObjectURL(thumbnailBlob) : null
+            };
         }));
         setVideoFiles(prev => [...prev, ...newVideos]);
         if (slotVideos[0] === null && newVideos.length > 0) {
@@ -638,8 +674,15 @@ const App = () => {
                                 onClick={() => selectingSlot !== null ? selectVideoForSlot(video, selectingSlot) : selectVideoForSlot(video, 0)}
                                 className={`group flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all border ${slotVideos.some(v => v?.id === video.id) ? 'bg-indigo-600/20 border-indigo-500/50 active:scale-95' : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'}`}
                             >
-                                <div className="w-12 h-12 bg-black/40 rounded-xl flex items-center justify-center shrink-0 border border-white/10">
-                                    <Play size={14} fill="currentColor" className={slotVideos.some(v => v?.id === video.id) ? 'text-indigo-400' : 'text-neutral-600'} />
+                                <div className="w-16 h-10 bg-black/60 rounded-lg flex items-center justify-center shrink-0 border border-white/10 overflow-hidden relative">
+                                    {video.thumbnailUrl ? (
+                                        <img src={video.thumbnailUrl} className="w-full h-full object-cover" alt="" />
+                                    ) : (
+                                        <Play size={14} fill="currentColor" className={slotVideos.some(v => v?.id === video.id) ? 'text-indigo-400' : 'text-neutral-600'} />
+                                    )}
+                                    {slotVideos.some(v => v?.id === video.id) && (
+                                        <div className="absolute inset-0 bg-indigo-600/20 ring-1 ring-inset ring-indigo-500/50" />
+                                    )}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="font-bold text-sm truncate">{video.name}</p>
