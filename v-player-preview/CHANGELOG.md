@@ -59,3 +59,27 @@ All notable changes to this project will be documented in this file.
 ---
 **本版本新增「多視窗模式」與「可調分割比例」功能，並針對手機版優化了進度條預覽與手勢操作，顯著提升操作便利性。**
 **Added Multi-View and resizable split layouts, optimized mobile touch previews and gestures for better usability.**
+
+---
+## [1.1.1] - 2026-02-27
+
+### Added
+- **Adaptive Layout**: Split view now automatically switches between vertical (mobile) and horizontal (desktop) modes.
+- **Viewport Panning**: Users can now drag the video content within a slot to adjust the focus area (zoom factor 1.5x).
+- **Responsive Splitter**: The resizable divider now handles both vertical and horizontal resizing depending on the screen size.
+
+### Changed
+- **Color Consistency**: Removed all red elements; replaced with project-standard indigo/neutral colors for better aesthetic harmony.
+- **Interaction Logic**: Differentiated between "drag to pan" and "click to play" to prevent accidental playback toggling.
+
+### Technical Details
+- Added `isMobile` state based on `window.innerWidth`.
+- Implemented `panningOffset` logic in `PlayerSlot` using `transform: translate`.
+- Updated `splitRatio` calculation to handle Y-axis resizing in vertical mode.
+
+### Affected Files
+- `src/App.jsx`
+
+---
+**本版本新增了「垂直/水平自適應佈局」與「畫面拖拽平移」功能，並全面移除了紅色元素以符合專案色調，大幅提升了行動裝置的操作體驗。**
+**Added adaptive vertical/horizontal layouts and viewport panning, removed red elements for visual consistency, significantly improving mobile UX.**

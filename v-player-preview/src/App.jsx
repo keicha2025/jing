@@ -38,6 +38,10 @@ const PlayerSlot = ({
     const [hoverTime, setHoverTime] = useState(null);
     const [hoverPosition, setHoverPosition] = useState(0);
     const [lastTap, setLastTap] = useState(0);
+    const [isPanning, setIsPanning] = useState(false);
+    const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+    const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+    const [hasMoved, setHasMoved] = useState(false);
 
     const videoRef = useRef(null);
     const previewVideoRef = useRef(null);
@@ -131,6 +135,47 @@ const PlayerSlot = ({
         setLastTap(now);
     };
 
+    const handlePanStart = (e) => {
+        if (e.button !== 0 && !e.touches) return;
+        setIsPanning(true);
+        setHasMoved(false);
+        const clientX = e.clientX || e.touches[0].clientX;
+        const clientY = e.clientY || e.touches[0].clientY;
+        setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
+    };
+
+    const handlePanMove = useCallback((e) => {
+        if (!isPanning) return;
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        if (clientX === undefined || clientY === undefined) return;
+
+        setHasMoved(true);
+        setPanOffset({
+            x: clientX - panStart.x,
+            y: clientY - panStart.y
+        });
+    }, [isPanning, panStart]);
+
+    const handlePanEnd = () => {
+        setIsPanning(false);
+    };
+
+    useEffect(() => {
+        if (isPanning) {
+            window.addEventListener('mousemove', handlePanMove);
+            window.addEventListener('mouseup', handlePanEnd);
+            window.addEventListener('touchmove', handlePanMove, { passive: false });
+            window.addEventListener('touchend', handlePanEnd);
+        }
+        return () => {
+            window.removeEventListener('mousemove', handlePanMove);
+            window.removeEventListener('mouseup', handlePanEnd);
+            window.removeEventListener('touchmove', handlePanMove);
+            window.removeEventListener('touchend', handlePanEnd);
+        };
+    }, [isPanning, handlePanMove]);
+
     const toggleFullscreen = () => {
         const elem = slotContainerRef.current;
         if (!document.fullscreenElement) {
@@ -215,8 +260,13 @@ const PlayerSlot = ({
             <video
                 ref={videoRef}
                 src={videoFile.url}
-                className="w-full h-full object-contain"
-                onClick={togglePlay}
+                className={`w-full h-full object-cover transition-transform duration-75 select-none pointer-events-auto ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+                style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(1.5)` }}
+                onMouseDown={handlePanStart}
+                onTouchStart={handlePanStart}
+                onClick={(e) => {
+                    if (!hasMoved) togglePlay(e);
+                }}
                 playsInline
             />
 
@@ -225,7 +275,7 @@ const PlayerSlot = ({
                     <h2 className="text-sm font-semibold truncate max-w-[70%]">{videoFile.name}</h2>
                     <div className="flex gap-2">
                         {isSplitMode && (
-                            <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg transition-all">
+                            <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="p-2 bg-white/10 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-white/10 rounded-lg transition-all">
                                 <X size={14} />
                             </button>
                         )}
@@ -336,9 +386,16 @@ const App = () => {
     const [playbackSpeed, setPlaybackSpeed] = useState(1);
     const [isDbLoading, setIsDbLoading] = useState(true);
     const [isResizing, setIsResizing] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     const fileInputRef = useRef(null);
     const containerRef = useRef(null);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // IndexedDB Boilerplate
     const openDB = () => {
@@ -413,10 +470,17 @@ const App = () => {
         const container = containerRef.current;
         if (!container) return;
         const rect = container.getBoundingClientRect();
-        const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
-        const percentage = (x / rect.width) * 100;
-        setSplitRatio(Math.max(15, Math.min(85, percentage)));
-    }, [isResizing]);
+
+        if (isMobile) {
+            const y = (e.clientY || e.touches?.[0]?.clientY) - rect.top;
+            const percentage = (y / rect.height) * 100;
+            setSplitRatio(Math.max(15, Math.min(85, percentage)));
+        } else {
+            const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left;
+            const percentage = (x / rect.width) * 100;
+            setSplitRatio(Math.max(15, Math.min(85, percentage)));
+        }
+    }, [isResizing, isMobile]);
 
     useEffect(() => {
         if (isResizing) {
@@ -478,11 +542,11 @@ const App = () => {
             <main className="relative z-10 flex-1 flex flex-col p-4 md:p-6 lg:p-10 select-none">
                 <div
                     ref={containerRef}
-                    className="flex-1 flex gap-4 relative overflow-hidden h-full"
+                    className={`flex-1 flex gap-4 relative overflow-hidden h-full ${isMobile ? 'flex-col' : 'flex-row'}`}
                 >
                     <div
-                        style={{ width: viewMode === 'dual' ? `${splitRatio}%` : '100%' }}
-                        className="h-full flex transition-[width] duration-300 ease-out"
+                        style={isMobile ? { height: viewMode === 'dual' ? `${splitRatio}%` : '100%', width: '100%' } : { width: viewMode === 'dual' ? `${splitRatio}%` : '100%', height: '100%' }}
+                        className="flex transition-all duration-300 ease-out shrink-0"
                     >
                         <PlayerSlot
                             id={1}
@@ -499,14 +563,14 @@ const App = () => {
                     {viewMode === 'dual' && (
                         <>
                             <div
-                                className="absolute top-0 bottom-0 z-30 cursor-col-resize group flex items-center justify-center w-4 -translate-x-2"
-                                style={{ left: `${splitRatio}%` }}
+                                className={`absolute z-30 group flex items-center justify-center cursor-pointer transition-all ${isMobile ? 'left-0 right-0 h-4 -translate-y-2' : 'top-0 bottom-0 w-4 -translate-x-2'}`}
+                                style={isMobile ? { top: `${splitRatio}%`, left: 0, right: 0 } : { left: `${splitRatio}%`, top: 0, bottom: 0 }}
                                 onMouseDown={() => setIsResizing(true)}
                                 onTouchStart={() => setIsResizing(true)}
                             >
-                                <div className="w-1 h-32 bg-indigo-600/30 group-hover:bg-indigo-500 rounded-full transition-all group-hover:scale-x-150"></div>
+                                <div className={`${isMobile ? 'w-32 h-1' : 'w-1 h-32'} bg-indigo-600/30 group-hover:bg-indigo-500 rounded-full transition-all group-hover:scale-150`}></div>
                             </div>
-                            <div className="flex-1 h-full flex">
+                            <div className="flex-1 h-full w-full flex min-h-0 min-w-0">
                                 <PlayerSlot
                                     id={2}
                                     videoFile={slotVideos[1]}
@@ -590,7 +654,7 @@ const App = () => {
                                             setSlotVideos(prev => prev.map(v => v?.id === video.id ? null : v));
                                         }
                                     }}
-                                    className="p-2 text-neutral-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                    className="p-2 text-neutral-500 hover:text-indigo-400 hover:bg-indigo-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                                 >
                                     <Trash2 size={16} />
                                 </button>
