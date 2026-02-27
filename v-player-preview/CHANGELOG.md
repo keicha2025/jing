@@ -61,6 +61,30 @@ All notable changes to this project will be documented in this file.
 **Added Multi-View and resizable split layouts, optimized mobile touch previews and gestures for better usability.**
 
 ---
+## [1.1.5] - 2026-02-27
+
+### Added
+- **Per-Slot Video Zoom**: New zoom controls (+/-) added to each player slot, allowing users to magnify specific video areas (1x to 3x).
+- **Global Data Management**: Brought back the "Clear Local Data" feature in the library sidebar using a neutral/indigo design, allowing users to wipe the entire IndexedDB store.
+- **Panning Activation Guard**: Implemented a safety check to prevent dragging movement when interacting with the progress bar or playback controls, eliminating accidental seeking during viewport adjustments.
+
+### Changed
+- **Touch-Action Locking**: Reinforced viewport meta tags and CSS properties to lock systemic browser zooming, ensuring only the intended video areas scale.
+- **Enhanced Contrast UI**: Zoom indicators use the project's indigo accent for clear readability against dark backgrounds.
+
+### Technical Details
+- Added `zoom` state and `scale` transform to `PlayerSlot`.
+- Integrated `e.target.closest` logic in `handlePanStart` to selectively ignore gesture initiations.
+
+### Affected Files
+- `src/App.jsx`
+- `index.html`
+
+---
+**本版本新增了影片區域的「獨立放大」功能，並加入了播放控制區的拖拽保護，避免在調整視角時誤觸進度條。同時恢復了清空本地資料的功能。**
+**Added independent video zoom and panning guards to prevent seeking errors, while restoring the "Clear Local Data" feature with refined styling.**
+
+---
 ## [1.1.4] - 2026-02-27
 
 ### Added

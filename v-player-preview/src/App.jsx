@@ -35,6 +35,7 @@ const PlayerSlot = ({
     const [showSettings, setShowSettings] = useState(false);
     const [slotSpeed, setSlotSpeed] = useState(playbackSpeed);
     const [slotMuted, setSlotMuted] = useState(false);
+    const [zoom, setZoom] = useState(1);
     const [hoverTime, setHoverTime] = useState(null);
     const [hoverPosition, setHoverPosition] = useState(0);
     const [lastTap, setLastTap] = useState(0);
@@ -137,10 +138,13 @@ const PlayerSlot = ({
 
     const handlePanStart = (e) => {
         if (e.button !== 0 && !e.touches) return;
+        // Prevent panning when clicking controls or progress bar area
+        if (e.target.closest('.pointer-events-auto') || e.target.closest('input[type="range"]')) return;
+
         setIsPanning(true);
         setHasMoved(false);
-        const clientX = e.clientX || e.touches[0].clientX;
-        const clientY = e.clientY || e.touches[0].clientY;
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
         setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
     };
 
@@ -265,7 +269,7 @@ const PlayerSlot = ({
                 src={videoFile.url}
                 className={`h-full max-w-none select-none pointer-events-none ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
                 style={{
-                    transform: `translateX(${panOffset.x}px)`,
+                    transform: `translateX(${panOffset.x}px) scale(${zoom})`,
                     objectFit: 'cover'
                 }}
                 playsInline
@@ -275,6 +279,23 @@ const PlayerSlot = ({
                 <div className="p-4 flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent">
                     <h2 className="text-sm font-semibold truncate max-w-[70%]">{videoFile.name}</h2>
                     <div className="flex gap-2">
+                        <div className="flex bg-black/40 backdrop-blur-md rounded-lg overflow-hidden border border-white/10 p-1">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setZoom(prev => Math.max(1, prev - 0.1)); }}
+                                className="p-1.5 text-neutral-400 hover:text-white hover:bg-white/10 rounded-md transition-all"
+                            >
+                                <span className="text-xs font-bold">-</span>
+                            </button>
+                            <div className="px-2 flex items-center justify-center min-w-[36px]">
+                                <span className="text-[10px] font-bold text-indigo-400">{Math.round(zoom * 100)}%</span>
+                            </div>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setZoom(prev => Math.min(3, prev + 0.1)); }}
+                                className="p-1.5 text-neutral-400 hover:text-white hover:bg-white/10 rounded-md transition-all"
+                            >
+                                <span className="text-xs font-bold">+</span>
+                            </button>
+                        </div>
                         {isSplitMode && (
                             <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="p-2 bg-white/10 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-white/10 rounded-lg transition-all">
                                 <X size={14} />
@@ -678,7 +699,24 @@ const App = () => {
                         )}
                     </div>
 
-                    <div className="p-8 mt-auto">
+                    <div className="p-8 mt-auto space-y-3">
+                        <button
+                            onClick={async () => {
+                                if (window.confirm("確定要清空媒體庫所有資料嗎？")) {
+                                    const db = await openDB();
+                                    const tx = db.transaction('videos', 'readwrite');
+                                    const store = tx.objectStore('videos');
+                                    await store.clear();
+                                    setVideoFiles([]);
+                                    setSlotVideos([null, null]);
+                                    setShowPlaylist(false);
+                                }
+                            }}
+                            className="w-full py-4 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white rounded-2xl font-bold transition-all text-sm flex items-center justify-center gap-2 border border-white/5"
+                        >
+                            <Trash2 size={16} />
+                            清空本地資料
+                        </button>
                         <button
                             onClick={() => fileInputRef.current.click()}
                             className="w-full py-4 bg-white text-black font-black rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-white/10"
