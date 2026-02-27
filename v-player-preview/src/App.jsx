@@ -561,10 +561,10 @@ const App = () => {
                 </div>
             </header>
 
-            <main className="relative z-10 flex-1 flex flex-col p-4 md:p-6 lg:p-10 select-none">
+            <main className="relative z-10 flex-1 flex flex-col p-2 md:p-6 lg:p-10 select-none min-h-0 overflow-hidden">
                 <div
                     ref={containerRef}
-                    className={`flex-1 flex gap-4 relative overflow-hidden h-full items-center justify-center ${isMobile ? 'flex-col' : 'flex-row'}`}
+                    className={`flex-1 flex gap-4 relative overflow-hidden min-h-0 items-center justify-center ${isMobile ? 'flex-col' : 'flex-row'}`}
                 >
                     <div
                         style={isMobile ? {
@@ -576,7 +576,7 @@ const App = () => {
                             height: '100%',
                             aspectRatio: viewMode === 'dual' ? 'auto' : '16/9'
                         }}
-                        className={`flex transition-all duration-300 ease-out shrink-0 ${viewMode === 'single' ? 'max-w-full max-h-full min-h-0' : 'min-h-0'}`}
+                        className={`flex mb-1 transition-all duration-300 ease-out shrink-0 min-h-0 ${viewMode === 'single' ? 'max-w-full max-h-full' : 'max-h-full'}`}
                     >
                         <PlayerSlot
                             id={1}
@@ -600,7 +600,7 @@ const App = () => {
                             >
                                 <div className={`${isMobile ? 'w-32 h-1' : 'w-1 h-32'} bg-indigo-600/30 group-hover:bg-indigo-500 rounded-full transition-all group-hover:scale-150`}></div>
                             </div>
-                            <div className="flex-1 h-full w-full flex min-h-0 min-w-0">
+                            <div className="flex-1 w-full flex min-h-0 min-w-0" style={isMobile ? { aspectRatio: viewMode === 'dual' ? '16/9' : 'auto' } : {}}>
                                 <PlayerSlot
                                     id={2}
                                     videoFile={slotVideos[1]}

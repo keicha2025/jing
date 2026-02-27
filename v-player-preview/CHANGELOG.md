@@ -61,6 +61,29 @@ All notable changes to this project will be documented in this file.
 **Added Multi-View and resizable split layouts, optimized mobile touch previews and gestures for better usability.**
 
 ---
+## [1.1.7] - 2026-02-27
+
+### Added
+- **Full-Container Visibility Priority**: Redesigned the layout hierarchy to ensure player controls and settings are never cut off, regardless of device orientation.
+- **Improved Mobile Proportions**: In portrait dual-view mode, both player slots now default to a landscape (16:9) aspect ratio, ensuring two horizontal videos can be viewed comfortably within the screen boundaries.
+
+### Changed
+- **Optimized Main Padding**: Reduced inner padding on mobile devices to provide more vertical space for video content.
+- **Strict Viewport Containment**: Applied `min-h-0` and refined flexbox constraints to ensure the entire application remains displayable without scrolling.
+
+### Technical Details
+- Added `aspectRatio: '16/9'` to slot wrappers in mobile dual view.
+- Removed conflicting `h-full` constraints from flexible slot containers.
+- Reduced `p-4` to `p-2` on mobile `main` container.
+
+### Affected Files
+- `src/App.jsx`
+
+---
+**本版本優先優化了影片容器的完整性，解決了下方工具列被遮擋的問題。在手機直立播放兩部影片時，預設會以橫式比例配置，確保兩者皆能完整顯示。**
+**Prioritized full container visibility and optimized mobile proportions to ensure controls are never cut off and horizontal videos fit perfectly in portrait mode.**
+
+---
 ## [1.1.6] - 2026-02-27
 
 ### Added
