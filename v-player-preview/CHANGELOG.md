@@ -61,6 +61,28 @@ All notable changes to this project will be documented in this file.
 **Added Multi-View and resizable split layouts, optimized mobile touch previews and gestures for better usability.**
 
 ---
+## [1.1.3] - 2026-02-27
+
+### Added
+- **Full-Height Slots**: Video slots now occupy the maximum available vertical space for a true "full-screen split" experience.
+- **Horizontal Focused Panning**: Optimized dragging logic specifically for horizontal movement, allowing users to scroll through wide-format videos within the split window.
+
+### Changed
+- **Visual Scale**: Removed forced scaling in favor of `h-full max-w-none` strategy, ensuring natural aspect ratios while allowing content overflow for panning.
+- **Layout Stability**: Removed previously implemented height constraints (`75vh`) to allow full expansion.
+
+### Technical Details
+- Switched from `translate(x, y)` to `translateX` for more precise horizontal panning control.
+- Updated `video` element CSS to `h-full max-w-none` to support horizontal scrolling via panning.
+
+### Affected Files
+- `src/App.jsx`
+
+---
+**本版本實作了「全高滿版視窗」，並優化了左右拖拽的平移邏輯，讓使用者在分割畫面時能更專注於水平方向的視角對齊。**
+**Implemented full-height slots and optimized horizontal panning for better focused viewing in split mode.**
+
+---
 ## [1.1.2] - 2026-02-27
 
 ### Added

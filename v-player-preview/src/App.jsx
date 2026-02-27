@@ -260,8 +260,11 @@ const PlayerSlot = ({
             <video
                 ref={videoRef}
                 src={videoFile.url}
-                className={`w-full h-full object-cover transition-transform duration-75 select-none pointer-events-auto ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
-                style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(1.5)` }}
+                className={`h-full max-w-none transition-transform duration-75 select-none pointer-events-auto ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+                style={{
+                    transform: `translateX(${panOffset.x}px)`,
+                    objectFit: 'cover'
+                }}
                 onMouseDown={handlePanStart}
                 onTouchStart={handlePanStart}
                 onClick={(e) => {
@@ -542,7 +545,7 @@ const App = () => {
             <main className="relative z-10 flex-1 flex flex-col p-4 md:p-6 lg:p-10 select-none">
                 <div
                     ref={containerRef}
-                    className={`flex-1 flex gap-4 relative overflow-hidden h-full max-h-[75vh] md:max-h-none ${isMobile ? 'flex-col' : 'flex-row'}`}
+                    className={`flex-1 flex gap-4 relative overflow-hidden h-full ${isMobile ? 'flex-col' : 'flex-row'}`}
                 >
                     <div
                         style={isMobile ? { height: viewMode === 'dual' ? `${splitRatio}%` : '100%', width: '100%' } : { width: viewMode === 'dual' ? `${splitRatio}%` : '100%', height: '100%' }}
