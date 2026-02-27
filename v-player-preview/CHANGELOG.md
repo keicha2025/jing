@@ -61,6 +61,29 @@ All notable changes to this project will be documented in this file.
 **Added Multi-View and resizable split layouts, optimized mobile touch previews and gestures for better usability.**
 
 ---
+## [1.1.6] - 2026-02-27
+
+### Added
+- **Viewport-Locked Layout**: The entire application now strictly fits within the displayable viewport height using `100dvh`, preventing unwanted page scrolling on mobile devices.
+- **Adaptive Slot Scaling**: Video slots in dual-view mode now dynamically scale to fit the remaining space regardless of device orientation, ensuring both videos are always fully visible on-screen.
+
+### Changed
+- **Mobile Vertical Constraint**: Specifically optimized mobile portrait mode to ensure the sum of top and bottom video heights stays within the system boundaries.
+- **Reduced UI Footprint**: Tightened spacing around the controls bar and removed minimum height constraints to maximize the active video area.
+
+### Technical Details
+- Replaced `min-h-screen` with `h-[100dvh]` at the root level.
+- Removed `min-h-[150px]` from `PlayerSlot` containers to enable full collapse/expansion within viewport limits.
+- Optimized `flex` properties to prioritize video visibility.
+
+### Affected Files
+- `src/App.jsx`
+
+---
+**本版本鎖定了網頁高度，確保在手機直立模式下，上下兩部影片不論比例如何調整，都會維持在螢幕顯示範圍內，不會產生多餘的捲軸。**
+**Locked application height to ensure all videos fit within the viewport in both portrait and landscape modes, eliminating page scrolling.**
+
+---
 ## [1.1.5] - 2026-02-27
 
 ### Added

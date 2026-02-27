@@ -530,7 +530,7 @@ const App = () => {
     }
 
     return (
-        <div className="min-h-screen bg-black text-white font-sans overflow-hidden flex flex-col relative">
+        <div className="h-[100dvh] bg-black text-white font-sans overflow-hidden flex flex-col relative">
             <div className="fixed inset-0 z-0 opacity-20 pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-indigo-900 rounded-full blur-[150px]"></div>
                 <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-purple-900 rounded-full blur-[150px]"></div>
@@ -576,7 +576,7 @@ const App = () => {
                             height: '100%',
                             aspectRatio: viewMode === 'dual' ? 'auto' : '16/9'
                         }}
-                        className={`flex transition-all duration-300 ease-out shrink-0 ${viewMode === 'single' ? 'max-w-full max-h-full min-h-0' : 'min-h-[150px]'}`}
+                        className={`flex transition-all duration-300 ease-out shrink-0 ${viewMode === 'single' ? 'max-w-full max-h-full min-h-0' : 'min-h-0'}`}
                     >
                         <PlayerSlot
                             id={1}
@@ -600,7 +600,7 @@ const App = () => {
                             >
                                 <div className={`${isMobile ? 'w-32 h-1' : 'w-1 h-32'} bg-indigo-600/30 group-hover:bg-indigo-500 rounded-full transition-all group-hover:scale-150`}></div>
                             </div>
-                            <div className="flex-1 h-full w-full flex min-h-[150px] min-w-0">
+                            <div className="flex-1 h-full w-full flex min-h-0 min-w-0">
                                 <PlayerSlot
                                     id={2}
                                     videoFile={slotVideos[1]}
@@ -616,7 +616,7 @@ const App = () => {
                     )}
                 </div>
 
-                <div className="mt-8 flex items-center justify-center gap-8 bg-white/5 backdrop-blur-xl p-4 rounded-3xl border border-white/10 max-w-lg mx-auto w-full">
+                <div className="mt-4 md:mt-6 flex items-center justify-center gap-4 md:gap-8 bg-white/5 backdrop-blur-xl p-3 md:p-4 rounded-3xl border border-white/10 max-w-lg mx-auto w-full shrink-0">
                     <div className="flex items-center gap-4">
                         <button onClick={() => setIsMuted(!isMuted)} className="text-neutral-400 hover:text-white transition-colors">
                             {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
