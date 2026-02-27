@@ -61,6 +61,29 @@ All notable changes to this project will be documented in this file.
 **Added Multi-View and resizable split layouts, optimized mobile touch previews and gestures for better usability.**
 
 ---
+## [1.1.8] - 2026-02-27
+
+### Added
+- **Decentralized Volume Control**: Removed the global volume bar and added independent volume sliders to each player slot's settings menu, allowing for granular audio management.
+- **Improved Settings Menu**: Integrated volume and mute controls directly into the player-specific settings for better contextual access.
+
+### Changed
+- **UI Streamlining**: Removed the global speed and volume bar from the bottom of the screen to maximize video viewing area.
+- **Control Visibility Fixes**: Resolved an issue where the second player's controls could become hidden or inaccessible in dual-view mode.
+
+### Technical Details
+- Added `slotVolume` state to `PlayerSlot`.
+- Refactored `App` level `volume` and `playbackSpeed` to be purely informational or removed where redundant.
+- Fixed JSX structural errors in the main container.
+
+### Affected Files
+- `src/App.jsx`
+
+---
+**本版本移除了底部的全局控制列，改為每個影片獨立調節音量。您可以點擊影片右下角的設定圖示來調整該影片的音量與速度，讓每個視窗的控制更加直覺且不互相干擾。**
+**Removed global controls and implemented per-player volume management within each slot's settings menu for better independent control.**
+
+---
 ## [1.1.7] - 2026-02-27
 
 ### Added

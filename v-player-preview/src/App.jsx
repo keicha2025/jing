@@ -39,6 +39,7 @@ const PlayerSlot = ({
     const [hoverTime, setHoverTime] = useState(null);
     const [hoverPosition, setHoverPosition] = useState(0);
     const [lastTap, setLastTap] = useState(0);
+    const [slotVolume, setSlotVolume] = useState(1);
     const [isPanning, setIsPanning] = useState(false);
     const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
     const [panStart, setPanStart] = useState({ x: 0, y: 0 });
@@ -83,9 +84,9 @@ const PlayerSlot = ({
     useEffect(() => {
         if (videoRef.current) {
             videoRef.current.muted = slotMuted || globalMuted;
-            videoRef.current.volume = globalVolume;
+            videoRef.current.volume = slotVolume;
         }
-    }, [slotMuted, globalMuted, globalVolume]);
+    }, [slotMuted, globalMuted, slotVolume]);
 
     const handleMouseMove = () => {
         setShowControls(true);
@@ -333,6 +334,19 @@ const PlayerSlot = ({
                                         {speed}x
                                     </button>
                                 ))}
+                            </div>
+                            <div className="h-px bg-white/10 my-2"></div>
+                            <h3 className="text-[10px] font-bold text-neutral-400 mb-2 uppercase tracking-wider">音量</h3>
+                            <div className="flex items-center gap-2 px-1">
+                                <button onClick={(e) => { e.stopPropagation(); setSlotMuted(!slotMuted); }} className="text-neutral-400">
+                                    {slotMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                                </button>
+                                <input
+                                    type="range" min="0" max="1" step="0.05"
+                                    value={slotMuted ? 0 : slotVolume}
+                                    onChange={(e) => { e.stopPropagation(); setSlotVolume(parseFloat(e.target.value)); setSlotMuted(false); }}
+                                    className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                />
                             </div>
                         </div>
                     )}
@@ -615,31 +629,6 @@ const App = () => {
                         </>
                     )}
                 </div>
-
-                <div className="mt-4 md:mt-6 flex items-center justify-center gap-4 md:gap-8 bg-white/5 backdrop-blur-xl p-3 md:p-4 rounded-3xl border border-white/10 max-w-lg mx-auto w-full shrink-0">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => setIsMuted(!isMuted)} className="text-neutral-400 hover:text-white transition-colors">
-                            {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
-                        </button>
-                        <input
-                            type="range" min="0" max="1" step="0.05"
-                            value={isMuted ? 0 : volume}
-                            onChange={(e) => setVolume(parseFloat(e.target.value))}
-                            className="w-24 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-                        />
-                    </div>
-                    <div className="h-6 w-px bg-white/10"></div>
-                    <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">全局速度</span>
-                        <select
-                            value={playbackSpeed}
-                            onChange={(e) => setPlaybackSpeed(parseFloat(e.target.value))}
-                            className="bg-transparent text-sm font-bold border-none focus:ring-0 cursor-pointer"
-                        >
-                            {[0.5, 0.75, 1, 1.25, 1.5, 2].map(s => <option key={s} value={s}>{s}x</option>)}
-                        </select>
-                    </div>
-                </div>
             </main>
 
             <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="video/*" multiple className="hidden" />
@@ -743,7 +732,7 @@ const App = () => {
                     box-shadow: 0 0 10px rgba(0,0,0,0.5);
                 }
             `}</style>
-        </div>
+        </div >
     );
 };
 
