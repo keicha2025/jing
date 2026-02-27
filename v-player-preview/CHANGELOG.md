@@ -69,19 +69,21 @@ All notable changes to this project will be documented in this file.
 - **Improved Visual Feedback**: The current playing video is highlighted with an indigo overlay on its thumbnail in the library for easier identification.
 
 ### Fixed
+- **Player Controls Refinement**: Fixed an issue where individual player volume sliders and playback speed settings were unresponsive.
+- **Event Propagation Fix**: Resolved a bug where interacting with the settings menu would inadvertently trigger playback or panning gestures.
 - **Thumbnail Loading Robustness**: Refined the capture logic to work more reliably across different video formats and mobile devices by ensuring a proper seek trigger.
 
 ### Technical Details
 - Implemented `generateThumbnail` utility using HTML5 Canvas and Offscreen video rendering.
 - Modified initialization logic to detect and backfill missing thumbnail blobs in IndexedDB.
-- Added timeout safety and improved event handling (`onloadeddata` -> `onseeked`) for capture.
+- Added `stopPropagation` and `z-index` layering to the settings popup to ensure touch/click target accuracy.
 
 ### Affected Files
 - `src/App.jsx`
 
 ---
-**本版本在媒體庫加入了影片預覽功能。系統現在不僅會為新上傳的影片生成縮圖，也會在您開啟 App 時自動為「已存在」的影片補抓預覽畫面。同時優化了縮圖抓取的穩定性，確保各類影片格式都能正確顯示預覽。**
-**Added automatic thumbnail generation for all videos, including those already in your library, with improved capture reliability.**
+**本版本除了加入影片預覽功能外，還修復了個別視窗音量與速度設定失效的問題。現在點擊齒輪選單後，您可以流暢地調整每個影片的獨立音量與倍速，不會再誤觸到背後的撥放控制或拖移功能。**
+**Fixed unresponsive individual player controls and refined the settings menu interaction for better accuracy.**
 
 ---
 ## [1.1.9] - 2026-02-27

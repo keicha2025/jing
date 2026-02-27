@@ -79,7 +79,7 @@ const PlayerSlot = ({
             videoRef.current.muted = slotMuted;
             videoRef.current.volume = slotVolume;
         }
-    }, [slotMuted, slotVolume]);
+    }, [slotMuted, slotVolume, videoFile]);
 
     const handleMouseMove = () => {
         setShowControls(true);
@@ -315,14 +315,17 @@ const PlayerSlot = ({
 
                 <div className="p-4 bg-gradient-to-t from-black/80 to-transparent space-y-3 pointer-events-auto">
                     {showSettings && (
-                        <div className="absolute bottom-[100%] right-4 mb-2 bg-neutral-900/95 backdrop-blur-xl border border-white/10 rounded-xl p-3 shadow-2xl min-w-[100px] animate-in slide-in-from-bottom-2 fade-in">
+                        <div
+                            className="absolute bottom-[100%] right-4 mb-2 bg-neutral-900/95 backdrop-blur-xl border border-white/10 rounded-xl p-3 shadow-2xl min-w-[140px] animate-in slide-in-from-bottom-2 fade-in z-[60]"
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <h3 className="text-[10px] font-bold text-neutral-400 mb-2 uppercase tracking-wider">速度</h3>
-                            <div className="flex flex-col gap-1">
+                            <div className="grid grid-cols-3 gap-1">
                                 {speeds.map(speed => (
                                     <button
                                         key={speed}
-                                        onClick={(e) => { e.stopPropagation(); setSlotSpeed(speed); setShowSettings(false); }}
-                                        className={`text-left px-2 py-1.5 rounded-lg text-xs font-semibold ${slotSpeed === speed ? 'bg-indigo-600 text-white' : 'hover:bg-white/10 text-neutral-300'}`}
+                                        onClick={() => { setSlotSpeed(speed); setShowSettings(false); }}
+                                        className={`px-1 py-1.5 rounded-lg text-[10px] font-semibold text-center ${slotSpeed === speed ? 'bg-indigo-600 text-white' : 'hover:bg-white/10 text-neutral-300'}`}
                                     >
                                         {speed}x
                                     </button>
@@ -331,13 +334,17 @@ const PlayerSlot = ({
                             <div className="h-px bg-white/10 my-2"></div>
                             <h3 className="text-[10px] font-bold text-neutral-400 mb-2 uppercase tracking-wider">音量</h3>
                             <div className="flex items-center gap-2 px-1">
-                                <button onClick={(e) => { e.stopPropagation(); setSlotMuted(!slotMuted); }} className="text-neutral-400">
+                                <button onClick={() => setSlotMuted(!slotMuted)} className="text-neutral-400 hover:text-white transition-colors">
                                     {slotMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
                                 </button>
                                 <input
                                     type="range" min="0" max="1" step="0.05"
                                     value={slotMuted ? 0 : slotVolume}
-                                    onChange={(e) => { e.stopPropagation(); setSlotVolume(parseFloat(e.target.value)); setSlotMuted(false); }}
+                                    onChange={(e) => {
+                                        const val = parseFloat(e.target.value);
+                                        setSlotVolume(val);
+                                        if (val > 0) setSlotMuted(false);
+                                    }}
                                     className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                                 />
                             </div>
