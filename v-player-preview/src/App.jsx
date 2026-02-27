@@ -542,11 +542,11 @@ const App = () => {
             <main className="relative z-10 flex-1 flex flex-col p-4 md:p-6 lg:p-10 select-none">
                 <div
                     ref={containerRef}
-                    className={`flex-1 flex gap-4 relative overflow-hidden h-full ${isMobile ? 'flex-col' : 'flex-row'}`}
+                    className={`flex-1 flex gap-4 relative overflow-hidden h-full max-h-[75vh] md:max-h-none ${isMobile ? 'flex-col' : 'flex-row'}`}
                 >
                     <div
                         style={isMobile ? { height: viewMode === 'dual' ? `${splitRatio}%` : '100%', width: '100%' } : { width: viewMode === 'dual' ? `${splitRatio}%` : '100%', height: '100%' }}
-                        className="flex transition-all duration-300 ease-out shrink-0"
+                        className="flex transition-all duration-300 ease-out shrink-0 min-h-[150px]"
                     >
                         <PlayerSlot
                             id={1}
@@ -570,7 +570,7 @@ const App = () => {
                             >
                                 <div className={`${isMobile ? 'w-32 h-1' : 'w-1 h-32'} bg-indigo-600/30 group-hover:bg-indigo-500 rounded-full transition-all group-hover:scale-150`}></div>
                             </div>
-                            <div className="flex-1 h-full w-full flex min-h-0 min-w-0">
+                            <div className="flex-1 h-full w-full flex min-h-[150px] min-w-0">
                                 <PlayerSlot
                                     id={2}
                                     videoFile={slotVideos[1]}

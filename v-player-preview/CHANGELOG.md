@@ -61,6 +61,28 @@ All notable changes to this project will be documented in this file.
 **Added Multi-View and resizable split layouts, optimized mobile touch previews and gestures for better usability.**
 
 ---
+## [1.1.2] - 2026-02-27
+
+### Added
+- **Locked Frame Height**: In dual-view mode, slot heights are now constrained to prevent layout jumping and ensure a stable viewing experience.
+- **Improved Panning Stability**: Content dragging logic refined to work seamlessly within fixed-height containers.
+
+### Changed
+- **Mobile Constraints**: Added minimum and maximum height limits for video slots in vertical mode to maintain interface usability.
+- **Layout Refinement**: Optimized flex container properties for smoother split-ratio transitions.
+
+### Technical Details
+- Applied `max-h-[75vh]` to main video container on mobile.
+- Added `min-h-[150px]` to individual slots to prevent excessive collapsing.
+
+### Affected Files
+- `src/App.jsx`
+
+---
+**本版本鎖定了分割模式下的視窗高度，避免在調整比例或拖動畫面時產生跳動，確保了結構的穩定性與專業感。**
+**Locked slot heights in split mode to ensure structural stability and prevent layout jumping during viewport adjustments.**
+
+---
 ## [1.1.1] - 2026-02-27
 
 ### Added
