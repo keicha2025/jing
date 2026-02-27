@@ -35,5 +35,27 @@ All notable changes to this project will be documented in this file.
 - `index.html`
 
 ---
-**本版本為 V-Player 的初始上線版本，完整支援本地影片播放、IndexedDB 快取以及進度條預覽。**
-**Initial release of V-Player with full local video support, IndexedDB caching, and progress preview.**
+## [1.1.0] - 2026-02-27
+
+### Added
+- **Multi-View System**: Support for simultaneously watching two videos in split-screen mode.
+- **Resizable Layout**: Interactive divider allows users to adjust the split ratio between videos.
+- **Gesture Support**: Added double-tap on video container to toggle fullscreen.
+- **Mobile Optimizations**: Enhanced touch support for progress bar previews.
+
+### Changed
+- Refactored monolithic player into a modular `PlayerSlot` component.
+- Significantly enlarged skip (10s) buttons for better accessibility and touch targets.
+- Updated playlist/media library to serve as a video selector for specific slots.
+
+### Technical Details
+- Implemented `useCallback` for optimized resize event handling.
+- Integrated `onTouchStart/Move/End` events for smoother mobile timeline scrubbing.
+- Enhanced CSS transitions for layout switching.
+
+### Affected Files
+- `src/App.jsx`
+
+---
+**本版本新增「多視窗模式」與「可調分割比例」功能，並針對手機版優化了進度條預覽與手勢操作，顯著提升操作便利性。**
+**Added Multi-View and resizable split layouts, optimized mobile touch previews and gestures for better usability.**
