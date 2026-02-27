@@ -23,9 +23,6 @@ const PlayerSlot = ({
     isActive,
     onSelect,
     onRemove,
-    playbackSpeed,
-    isMuted: globalMuted,
-    volume: globalVolume,
     isSplitMode
 }) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -33,7 +30,7 @@ const PlayerSlot = ({
     const [duration, setDuration] = useState(0);
     const [showControls, setShowControls] = useState(true);
     const [showSettings, setShowSettings] = useState(false);
-    const [slotSpeed, setSlotSpeed] = useState(playbackSpeed);
+    const [slotSpeed, setSlotSpeed] = useState(1);
     const [slotMuted, setSlotMuted] = useState(false);
     const [zoom, setZoom] = useState(1);
     const [hoverTime, setHoverTime] = useState(null);
@@ -51,10 +48,6 @@ const PlayerSlot = ({
     const slotContainerRef = useRef(null);
 
     const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
-
-    useEffect(() => {
-        setSlotSpeed(playbackSpeed);
-    }, [playbackSpeed]);
 
     useEffect(() => {
         const video = videoRef.current;
@@ -83,10 +76,10 @@ const PlayerSlot = ({
 
     useEffect(() => {
         if (videoRef.current) {
-            videoRef.current.muted = slotMuted || globalMuted;
+            videoRef.current.muted = slotMuted;
             videoRef.current.volume = slotVolume;
         }
-    }, [slotMuted, globalMuted, slotVolume]);
+    }, [slotMuted, slotVolume]);
 
     const handleMouseMove = () => {
         setShowControls(true);
@@ -396,7 +389,7 @@ const PlayerSlot = ({
                         </div>
                         <div className="flex items-center gap-2">
                             <button onClick={(e) => { e.stopPropagation(); setSlotMuted(!slotMuted); }} className="p-1.5 text-neutral-400 hover:text-white transition-colors">
-                                {slotMuted || globalMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                                {slotMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
                             </button>
                             <button onClick={(e) => { e.stopPropagation(); setShowSettings(!showSettings); }} className={`p-1.5 rounded-lg ${showSettings ? 'bg-indigo-500/20 text-white' : 'text-neutral-400 hover:text-white'}`}>
                                 <Settings size={16} />
@@ -416,10 +409,7 @@ const App = () => {
     const [slotVideos, setSlotVideos] = useState([null, null]);
     const [selectingSlot, setSelectingSlot] = useState(null);
 
-    const [volume, setVolume] = useState(1);
-    const [isMuted, setIsMuted] = useState(false);
     const [showPlaylist, setShowPlaylist] = useState(false);
-    const [playbackSpeed, setPlaybackSpeed] = useState(1);
     const [isDbLoading, setIsDbLoading] = useState(true);
     const [isResizing, setIsResizing] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -590,16 +580,13 @@ const App = () => {
                             height: '100%',
                             aspectRatio: viewMode === 'dual' ? 'auto' : '16/9'
                         }}
-                        className={`flex mb-1 transition-all duration-300 ease-out shrink-0 min-h-0 ${viewMode === 'single' ? 'max-w-full max-h-full' : 'max-h-full'}`}
+                        className={`flex transition-all duration-300 ease-out shrink-0 min-h-0 ${viewMode === 'single' ? 'max-w-full max-h-full' : 'max-h-full'}`}
                     >
                         <PlayerSlot
                             id={1}
                             videoFile={slotVideos[0]}
                             onSelect={() => { setSelectingSlot(0); setShowPlaylist(true); }}
                             onRemove={() => setSlotVideos([null, slotVideos[1]])}
-                            playbackSpeed={playbackSpeed}
-                            isMuted={isMuted}
-                            volume={volume}
                             isSplitMode={viewMode === 'dual'}
                         />
                     </div>
@@ -614,15 +601,12 @@ const App = () => {
                             >
                                 <div className={`${isMobile ? 'w-32 h-1' : 'w-1 h-32'} bg-indigo-600/30 group-hover:bg-indigo-500 rounded-full transition-all group-hover:scale-150`}></div>
                             </div>
-                            <div className="flex-1 w-full flex min-h-0 min-w-0" style={isMobile ? { aspectRatio: viewMode === 'dual' ? '16/9' : 'auto' } : {}}>
+                            <div className="flex-1 h-full w-full flex min-h-0 min-w-0" style={isMobile ? { aspectRatio: viewMode === 'dual' ? '16/9' : 'auto' } : {}}>
                                 <PlayerSlot
                                     id={2}
                                     videoFile={slotVideos[1]}
                                     onSelect={() => { setSelectingSlot(1); setShowPlaylist(true); }}
                                     onRemove={() => setSlotVideos([slotVideos[0], null])}
-                                    playbackSpeed={playbackSpeed}
-                                    isMuted={isMuted}
-                                    volume={volume}
                                     isSplitMode={true}
                                 />
                             </div>

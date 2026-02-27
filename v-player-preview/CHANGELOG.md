@@ -61,6 +61,28 @@ All notable changes to this project will be documented in this file.
 **Added Multi-View and resizable split layouts, optimized mobile touch previews and gestures for better usability.**
 
 ---
+## [1.1.9] - 2026-02-27
+
+### Added
+- **True Decentralized control**: Completely removed all shared playback states (global speed/volume) to ensure absolute independence for each video slot.
+
+### Fixed
+- **Secondary Slot Visibility**: Corrected a layout bug where the second player container lacked a height height constraint in desktop view, causing UI tools to be hidden or clipped.
+- **Improved Alignment**: Standardized slot wrappers to ensure both players occupy equivalent and visible space in all view modes.
+
+### Technical Details
+- Re-added `h-full` to the second slot flex wrapper.
+- Cleaned up unused props (`globalMuted`, `globalVolume`) and state references.
+- Optimized mobile `aspect-video` defaults to prevent vertical overflow.
+
+### Affected Files
+- `src/App.jsx`
+
+---
+**本版本徹底解決了第二個影片視窗工具列消失的問題，並完成了全域控制項的完全移除。現在每個影片都擁有完全獨立的狀態，互不干涉，且在桌機模式下高度也能正確填滿。**
+**Fixed second player visibility issues and completed the full migration to independent player states by adding missing height constraints.**
+
+---
 ## [1.1.8] - 2026-02-27
 
 ### Added
