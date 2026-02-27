@@ -460,10 +460,20 @@ const App = () => {
             try {
                 const storedFiles = await loadFilesFromDB();
                 if (storedFiles.length > 0) {
-                    const filesWithUrls = storedFiles.map(f => ({
-                        ...f,
-                        url: URL.createObjectURL(f.blob),
-                        thumbnailUrl: f.thumbnail ? URL.createObjectURL(f.thumbnail) : null
+                    const filesWithUrls = await Promise.all(storedFiles.map(async (f) => {
+                        let thumbnailBlob = f.thumbnail;
+                        if (!thumbnailBlob) {
+                            thumbnailBlob = await generateThumbnail(f.blob);
+                            if (thumbnailBlob) {
+                                await saveFileToDB({ ...f, thumbnail: thumbnailBlob });
+                            }
+                        }
+                        return {
+                            ...f,
+                            thumbnail: thumbnailBlob,
+                            url: URL.createObjectURL(f.blob),
+                            thumbnailUrl: thumbnailBlob ? URL.createObjectURL(thumbnailBlob) : null
+                        };
                     }));
                     setVideoFiles(filesWithUrls);
                     setSlotVideos([filesWithUrls[0], null]);
@@ -480,28 +490,45 @@ const App = () => {
     const generateThumbnail = (file) => {
         return new Promise((resolve) => {
             const video = document.createElement('video');
-            video.preload = 'metadata';
-            video.src = URL.createObjectURL(file);
+            video.preload = 'auto';
+            const url = URL.createObjectURL(file);
+            video.src = url;
             video.muted = true;
+            video.playsInline = true;
 
-            video.onloadedmetadata = () => {
-                video.currentTime = Math.min(1, video.duration / 2);
+            let isResolved = false;
+            const timeout = setTimeout(() => {
+                if (!isResolved) {
+                    isResolved = true;
+                    URL.revokeObjectURL(url);
+                    resolve(null);
+                }
+            }, 5000);
+
+            video.onloadeddata = () => {
+                video.currentTime = 0.5; // Always seek a small amount to trigger seeked
             };
 
             video.onseeked = () => {
+                if (isResolved) return;
                 const canvas = document.createElement('canvas');
                 canvas.width = 320;
                 canvas.height = 180;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 canvas.toBlob((blob) => {
-                    URL.revokeObjectURL(video.src);
+                    isResolved = true;
+                    clearTimeout(timeout);
+                    URL.revokeObjectURL(url);
                     resolve(blob);
                 }, 'image/jpeg', 0.8);
             };
 
             video.onerror = () => {
-                URL.revokeObjectURL(video.src);
+                if (isResolved) return;
+                isResolved = true;
+                clearTimeout(timeout);
+                URL.revokeObjectURL(url);
                 resolve(null);
             };
         });
