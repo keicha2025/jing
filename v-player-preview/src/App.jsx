@@ -250,25 +250,23 @@ const PlayerSlot = ({
         <div
             ref={slotContainerRef}
             className={`relative flex-1 bg-black rounded-[32px] overflow-hidden shadow-2xl group transition-all duration-500 ${isSplitMode ? 'border border-white/10' : ''}`}
-            onMouseMove={handleMouseMove}
-            onTouchStart={handleMouseMove}
+            onMouseDown={handlePanStart}
+            onTouchStart={(e) => {
+                handleMouseMove();
+                handlePanStart(e);
+            }}
             onClick={(e) => {
                 handleMouseMove();
-                handleDoubleTap(e);
+                if (!hasMoved) handleDoubleTap(e);
             }}
         >
             <video
                 ref={videoRef}
                 src={videoFile.url}
-                className={`h-full max-w-none transition-transform duration-75 select-none pointer-events-auto ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+                className={`h-full max-w-none select-none pointer-events-none ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
                 style={{
                     transform: `translateX(${panOffset.x}px)`,
                     objectFit: 'cover'
-                }}
-                onMouseDown={handlePanStart}
-                onTouchStart={handlePanStart}
-                onClick={(e) => {
-                    if (!hasMoved) togglePlay(e);
                 }}
                 playsInline
             />
@@ -545,11 +543,19 @@ const App = () => {
             <main className="relative z-10 flex-1 flex flex-col p-4 md:p-6 lg:p-10 select-none">
                 <div
                     ref={containerRef}
-                    className={`flex-1 flex gap-4 relative overflow-hidden h-full ${isMobile ? 'flex-col' : 'flex-row'}`}
+                    className={`flex-1 flex gap-4 relative overflow-hidden h-full items-center justify-center ${isMobile ? 'flex-col' : 'flex-row'}`}
                 >
                     <div
-                        style={isMobile ? { height: viewMode === 'dual' ? `${splitRatio}%` : '100%', width: '100%' } : { width: viewMode === 'dual' ? `${splitRatio}%` : '100%', height: '100%' }}
-                        className="flex transition-all duration-300 ease-out shrink-0 min-h-[150px]"
+                        style={isMobile ? {
+                            height: viewMode === 'dual' ? `${splitRatio}%` : 'auto',
+                            width: '100%',
+                            aspectRatio: viewMode === 'dual' ? 'auto' : '16/9'
+                        } : {
+                            width: viewMode === 'dual' ? `${splitRatio}%` : 'auto',
+                            height: '100%',
+                            aspectRatio: viewMode === 'dual' ? 'auto' : '16/9'
+                        }}
+                        className={`flex transition-all duration-300 ease-out shrink-0 ${viewMode === 'single' ? 'max-w-full max-h-full min-h-0' : 'min-h-[150px]'}`}
                     >
                         <PlayerSlot
                             id={1}

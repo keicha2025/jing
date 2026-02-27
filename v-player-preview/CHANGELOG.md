@@ -61,6 +61,28 @@ All notable changes to this project will be documented in this file.
 **Added Multi-View and resizable split layouts, optimized mobile touch previews and gestures for better usability.**
 
 ---
+## [1.1.4] - 2026-02-27
+
+### Added
+- **Optimized Panning Interaction**: Moved gesture listeners to the parent container, ensuring the video "focus area" can be adjusted even when the UI controls are visible.
+- **Aspect-Fit Single Player**: In single-view mode, the video container now automatically adjusts its size to match the video's aspect ratio (16:9), eliminating unnecessary black borders.
+
+### Changed
+- **Zero-Latency Panning**: Removed CSS transitions from the `transform` property during dragging for an instantaneous, responsive feel.
+- **Event Pass-Through**: Set `pointer-events-none` on the video element itself to allow the container to capture all dragging gestures without interference.
+
+### Technical Details
+- Implemented `aspectRatio` and `justify-center` on the main layout for better single-player centering.
+- Refactored `PlayerSlot` event handlers to capture clicks and drags at the highest level.
+
+### Affected Files
+- `src/App.jsx`
+
+---
+**本版本修正了拖拽無反應的問題，並讓單視窗模式下的容器貼合影片比例，消除了多餘黑邊，大幅提升視覺精緻度。**
+**Fixed panning responsiveness and optimized single-view container sizing to fit video aspect ratio, removing unnecessary black bars.**
+
+---
 ## [1.1.3] - 2026-02-27
 
 ### Added
