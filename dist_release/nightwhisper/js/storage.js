@@ -176,6 +176,21 @@ class NightWhisperStorage {
         });
     }
 
+    /**
+     * 僅清除特定 Session 的事件 (保留分析數據，用於快速重新分析)
+     */
+    async clearSessionEvents(sessionId) {
+        const events = await this.getEventsBySession(sessionId);
+
+        const tx = this.db.transaction(STORES.EVENTS, 'readwrite');
+        for (const e of events) tx.objectStore(STORES.EVENTS).delete(e.id);
+
+        return new Promise((resolve, reject) => {
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
     async deleteSession(sessionId) {
         // 刪除 session 及其所有錄音、事件、分析資料
         const recordings = await this.getRecordingsBySession(sessionId);

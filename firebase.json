@@ -25,9 +25,19 @@
                 "destination": "/travel-planner/index.html"
             },
             {
+                "source": "/finance/**",
+                "destination": "/finance/index.html"
+            },
+            {
                 "source": "/**",
                 "destination": "/index.html"
             }
         ]
-    }
+    },
+    "firestore": [
+        {
+            "database": "jing-finance",
+            "rules": "strategy-box/firestore.rules"
+        }
+    ]
 }

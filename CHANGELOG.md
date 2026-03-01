@@ -153,3 +153,17 @@
 **Affected files:** `index.html`, `full_deploy.sh`
 
 為了確保專案索引頁面在不同網域及瀏覽器環境下皆能正確顯示圖標，新增了 `.ico` 格式的 Favicon 引用與發布流程。
+
+## [2026-03-02] LoopDashcam: High-Performance Recording & UI Interaction
+### Added
+- **Approach A Recording Infrastructure**: Created `VideoEncoder.kt` using `MediaCodec` and `LoopManager.kt` for FIFO storage management (5GB limit).
+- **Camera Switching**: Implemented multi-lens support (Back/Front/Wide) in `CameraManagerHelper.kt`.
+- **Interactive UI**: Bound hardware buttons in `MainActivity.kt` for recording start/stop (with timer and shutter animation), GPS speed toggling, and camera switching.
+- **Resolution Control**: Added `btnQuality` UI placeholders in `activity_main.xml` for future resolution switching.
+### Fixed
+- **Overlay Orientation**: Flipped OpenGL texture coordinates in `CameraGLRenderer.kt` to fix upside-down timestamp and speed overlays.
+- **Permission Flow**: Streamlined the multi-permission request (Camera, Audio, Location) at app startup.
+
+**Affected files:** `LoopDashcam/app/src/main/java/com/jing/loopdashcam/` (MainActivity, CameraGLRenderer, CameraManagerHelper, VideoEncoder, LoopManager), `activity_main.xml`, `CHANGELOG.md`
+
+實作「方案 A」高效能錄影架構，包含 MediaCodec 硬體編碼器與自動循環刪補空間管理 (LoopManager)。修正了 OpenGL 浮水印上下顛倒的問題，並全面啟用介面互動功能：現在點擊紅色快門會觸發錄影狀態切換與計時器，且支援主鏡頭與前鏡頭的即時切換。新增了儲存空間狀態顯示與解析度選單預留位。

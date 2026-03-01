@@ -21,9 +21,10 @@ class NightWhisperWaveform {
         this.maxZoom = 480;
         this.scrollOffset = 0;     // 0 (左) ~ 1 (右) (相對於可滾動範圍)
 
-        // 觸控手勢紀錄
+        // 觸控與導航狀態
         this._touchState = {
-            isDragging: false,
+            isDragging: false, // 拖曳畫布 (Panning)
+            isScrubbing: false, // 拖曳播放頭 (Scrubbing)
             lastX: 0,
             lastDist: 0,
             isPinching: false
@@ -91,6 +92,19 @@ class NightWhisperWaveform {
      */
     setPlayheadElement(el) {
         this.playheadElement = el;
+        if (this.playheadElement) {
+            this.playheadElement.style.pointerEvents = 'auto';
+            this.playheadElement.style.cursor = 'grab';
+
+            // 播放頭拖曳開始
+            const startScrub = (e) => {
+                this._touchState.isScrubbing = true;
+                this.playheadElement.style.cursor = 'grabbing';
+                e.stopPropagation();
+            };
+            this.playheadElement.addEventListener('mousedown', startScrub);
+            this.playheadElement.addEventListener('touchstart', startScrub, { passive: false });
+        }
     }
 
     /**
@@ -218,6 +232,23 @@ class NightWhisperWaveform {
 
         // 觸控手勢
         this.canvas.addEventListener('touchstart', (e) => {
+            // 首先檢查是否在播放頭附近 (Scrubbing 優先)
+            const rect = this.canvas.getBoundingClientRect();
+            const clientX = e.touches[0].clientX;
+            const localX = clientX - rect.left;
+
+            // 計算目前播放頭在畫面的像素位置
+            const viewWidthRatio = 1 / this.zoomLevel;
+            const viewStartRatio = this.scrollOffset * (1 - viewWidthRatio);
+            const playheadLocalRatio = (this.playheadPosition - viewStartRatio) / viewWidthRatio;
+            const playheadX = playheadLocalRatio * rect.width;
+
+            // 如果點擊位置距離播放頭 20px 以內
+            if (Math.abs(localX - playheadX) < 25) {
+                this._touchState.isScrubbing = true;
+                return;
+            }
+
             if (e.touches.length === 1) {
                 this._touchState.isDragging = true;
                 this._touchState.lastX = e.touches[0].clientX;
@@ -228,7 +259,10 @@ class NightWhisperWaveform {
         }, { passive: false });
 
         this.canvas.addEventListener('touchmove', (e) => {
-            if (this._touchState.isPinching && e.touches.length === 2) {
+            if (this._touchState.isScrubbing) {
+                e.preventDefault();
+                this._handleInteraction(e.touches[0].clientX);
+            } else if (this._touchState.isPinching && e.touches.length === 2) {
                 e.preventDefault();
                 const dist = this._getDist(e.touches);
                 const factor = dist / this._touchState.lastDist;
@@ -242,12 +276,25 @@ class NightWhisperWaveform {
             }
         }, { passive: false });
 
-        this.canvas.addEventListener('touchend', () => {
+        // 全域放開監聽
+        const handleEnd = () => {
+            if (this._touchState.isScrubbing && this.playheadElement) {
+                this.playheadElement.style.cursor = 'grab';
+            }
             // 延遲重置拖拽狀態避開 click 誤觸
             setTimeout(() => {
                 this._touchState.isDragging = false;
                 this._touchState.isPinching = false;
+                this._touchState.isScrubbing = false;
             }, 50);
+        };
+
+        this.canvas.addEventListener('touchend', handleEnd);
+        window.addEventListener('mouseup', handleEnd);
+        window.addEventListener('mousemove', (e) => {
+            if (this._touchState.isScrubbing) {
+                this._handleInteraction(e.clientX);
+            }
         });
 
         // 滑鼠滾輪縮放 (Optionl)

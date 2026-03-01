@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>淺色極簡錄影 App (Loop Dashcam)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #f8fafc;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        /* 定義全域變數以即時控制組件 */
+        :root {
+            --overlay-opacity: 0.85;
+            --overlay-scale: 1;
+        }
+
+        /* 模擬相機取景窗背景 (使用較明亮的戶外場景測試淺色 UI 寬容度) */
+        .camera-bg {
+            background-image: url('https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=1080&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+
+        @keyframes pulse-red-light {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+
+        .recording-pulse {
+            animation: pulse-red-light 2s infinite;
+        }
+    </style>
+</head>
+
+<body class="text-slate-800 h-[100dvh] w-full relative select-none">
+
+    <!-- 背景：相機畫面 -->
+    <div class="absolute inset-0 camera-bg filter brightness-105"></div>
+
+    <!-- 頂部漸層白角，確保頂部資訊在複雜背景中清晰 -->
+    <div class="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-white/50 to-transparent pointer-events-none"></div>
+
+    <!-- UI 頂部：狀態列與設定 -->
+    <div class="absolute top-12 left-0 w-full px-5 flex justify-between items-start z-10">
+        <!-- 空間配額與循環錄影提示 (白色毛玻璃膠囊) -->
+        <div
+            class="bg-white/80 backdrop-blur-md rounded-full px-4 py-2 border border-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
+            <i data-lucide="hard-drive" class="w-4 h-4 text-slate-500"></i>
+            <span class="text-xs font-semibold tracking-wide text-slate-700">剩餘 8.2 GB <span
+                    class="text-slate-300 mx-1">|</span> 循環開</span>
+        </div>
+
+        <!-- 右上角操作區：畫質切換 + 設定按鈕 -->
+        <div class="flex items-center gap-3">
+            <button
+                class="bg-white/80 backdrop-blur-md rounded-full px-4 py-2 border border-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] flex items-center gap-1.5 active:scale-95 transition-transform">
+                <span class="text-xs font-bold tracking-wider text-slate-800">1080P</span>
+                <div class="w-1 h-1 rounded-full bg-slate-300 mx-0.5"></div>
+                <span class="text-xs font-bold text-amber-600">60FPS</span>
+            </button>
+
+            <!-- 新增：專屬設定按鈕 -->
+            <button id="settings-btn"
+                class="w-9 h-9 bg-white/80 backdrop-blur-md rounded-full border border-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] flex items-center justify-center active:scale-95 transition-transform hover:bg-white">
+                <i data-lucide="settings" class="w-4 h-4 text-slate-700"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- UI 畫面浮水印 (Burn-in 預覽區域) -->
+    <!-- 加上統一的縮放變數控制 -->
+    <div class="absolute bottom-40 left-5 pointer-events-none z-10"
+        style="transform: scale(var(--overlay-scale)); transform-origin: left bottom;">
+
+        <!-- 整合為單一容器：上下縮小 (h-[36px])、左右加寬 (px-6, gap-8) -->
+        <div class="backdrop-blur-md rounded-full px-6 h-[36px] border border-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] flex items-center justify-center gap-8 transition-all duration-300 w-max"
+            style="background-color: rgba(255, 255, 255, var(--overlay-opacity));">
+
+            <!-- 時間戳區塊 -->
+            <div class="flex items-center gap-2 shrink-0">
+                <div class="w-2 h-2 rounded-full bg-red-500 hidden shadow-[0_0_6px_rgba(239,68,68,0.6)]" id="rec-dot">
+                </div>
+                <span id="timestamp" class="font-mono text-sm font-bold tracking-widest text-slate-800"></span>
+            </div>
+
+            <!-- 分隔線 (增添 UI 精緻度) -->
+            <div id="speed-divider" class="w-px h-3 bg-slate-300 transition-opacity duration-300"></div>
+
+            <!-- 速度與 GPS 狀態 -->
+            <div id="speed-container" class="flex items-center gap-2 shrink-0 transition-opacity duration-300">
+                <i data-lucide="navigation-2" class="w-[14px] h-[14px] text-emerald-600"></i>
+                <span class="font-mono text-base font-bold tracking-widest text-slate-800 flex items-baseline gap-1">
+                    <span id="speed-value">0</span> <span
+                        class="text-[10px] text-slate-500 font-sans tracking-normal font-semibold">km/h</span>
+                </span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 底部漸層白角 -->
+    <div
+        class="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-white/60 via-white/20 to-transparent pointer-events-none">
+    </div>
+
+    <!-- UI 底部：核心控制區 -->
+    <div class="absolute bottom-10 left-0 w-full px-8 flex justify-between items-center z-10">
+
+        <!-- 隱藏/顯示速度按鈕 -->
+        <button id="toggle-speed-btn"
+            class="w-12 h-12 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center border border-white shadow-sm active:scale-90 transition-all">
+            <i data-lucide="eye-off" class="w-5 h-5 text-slate-600" id="speed-icon"></i>
+        </button>
+
+        <!-- 錄影快門鍵 (淺色版調整為外圈半透明白，內圈紅) -->
+        <button id="shutter-btn"
+            class="relative flex items-center justify-center w-20 h-20 rounded-full border-4 border-white/90 bg-white/30 backdrop-blur-sm shadow-lg active:scale-95 transition-transform">
+            <!-- 內部紅色核心 -->
+            <div id="shutter-inner"
+                class="w-12 h-12 bg-red-500 rounded-full transition-all duration-300 ease-out shadow-sm"></div>
+
+            <!-- 錄影時間計時器 -->
+            <div id="rec-timer"
+                class="absolute -top-10 font-mono text-sm tracking-widest text-red-600 font-bold opacity-0 transition-opacity duration-300 bg-white/80 px-2 py-0.5 rounded-md shadow-sm border border-white">
+                00:00
+            </div>
+        </button>
+
+        <!-- 翻轉鏡頭與自訂選單 -->
+        <div class="relative">
+            <!-- 鏡頭選擇選單 -->
+            <div id="camera-menu"
+                class="absolute bottom-16 right-0 bg-white/95 backdrop-blur-xl rounded-2xl p-2 flex flex-col gap-1 border border-white shadow-xl opacity-0 pointer-events-none transition-all duration-200 translate-y-2 origin-bottom-right">
+                <button
+                    class="px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-xl text-left whitespace-nowrap active:bg-slate-200 transition-colors">📸
+                    主鏡頭 (1x)</button>
+                <button
+                    class="px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-xl text-left whitespace-nowrap active:bg-slate-200 transition-colors">🏔️
+                    超廣角 (0.5x)</button>
+                <button
+                    class="px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-xl text-left whitespace-nowrap active:bg-slate-200 transition-colors">🔭
+                    望遠 (3x)</button>
+                <div class="h-px bg-slate-200 mx-2 my-1"></div>
+                <button
+                    class="px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-xl text-left whitespace-nowrap active:bg-slate-200 transition-colors flex items-center gap-2"><i
+                        data-lucide="user" class="w-4 h-4"></i> 前置鏡頭</button>
+            </div>
+
+            <!-- 翻轉鏡頭按鈕 -->
+            <button id="camera-switch-btn"
+                class="w-12 h-12 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center border border-white shadow-sm active:scale-90 transition-all hover:bg-white/90">
+                <i data-lucide="switch-camera" class="w-5 h-5 text-slate-600"></i>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- 設定選單 Modal (全螢幕覆蓋) -->
+    <div id="settings-modal"
+        class="absolute inset-0 bg-slate-900/20 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white/95 backdrop-blur-md rounded-3xl w-80 p-6 border border-white shadow-2xl transform scale-95 transition-transform duration-300"
+            id="settings-panel">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold text-slate-800">顯示設定</h3>
+                <button id="close-settings"
+                    class="p-1.5 rounded-full hover:bg-slate-100 active:scale-90 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5 text-slate-500"></i>
+                </button>
+            </div>
+
+            <div class="flex flex-col gap-6">
+                <!-- 透明度滑桿 -->
+                <div class="flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-semibold text-slate-700">背景透明度</label>
+                        <span id="opacity-val"
+                            class="text-xs text-slate-500 font-mono bg-slate-100 px-2 py-1 rounded-md">85%</span>
+                    </div>
+                    <input type="range" id="opacity-slider" min="0" max="100" value="85"
+                        class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-700">
+                </div>
+
+                <!-- 大小滑桿 -->
+                <div class="flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-semibold text-slate-700">浮水印大小</label>
+                        <span id="scale-val"
+                            class="text-xs text-slate-500 font-mono bg-slate-100 px-2 py-1 rounded-md">1.0x</span>
+                    </div>
+                    <input type="range" id="scale-slider" min="50" max="150" value="100"
+                        class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-slate-700">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        let isRecording = false;
+        let showSpeed = true;
+        let recSeconds = 0;
+        let recInterval = null;
+        let speedInterval = null;
+
+        const timestampEl = document.getElementById('timestamp');
+        const speedValueEl = document.getElementById('speed-value');
+        const speedContainer = document.getElementById('speed-container');
+        const speedDivider = document.getElementById('speed-divider');
+        const toggleSpeedBtn = document.getElementById('toggle-speed-btn');
+        const speedIcon = document.getElementById('speed-icon');
+        const shutterBtn = document.getElementById('shutter-btn');
+        const shutterInner = document.getElementById('shutter-inner');
+        const recTimer = document.getElementById('rec-timer');
+        const recDot = document.getElementById('rec-dot');
+
+        // 新增的 DOM 元素綁定
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const settingsPanel = document.getElementById('settings-panel');
+        const closeSettings = document.getElementById('close-settings');
+        const opacitySlider = document.getElementById('opacity-slider');
+        const opacityVal = document.getElementById('opacity-val');
+        const scaleSlider = document.getElementById('scale-slider');
+        const scaleVal = document.getElementById('scale-val');
+        const root = document.documentElement;
+
+        const cameraSwitchBtn = document.getElementById('camera-switch-btn');
+        const cameraMenu = document.getElementById('camera-menu');
+        let isCameraMenuOpen = false;
+
+        // --- 設定選單邏輯 ---
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.classList.remove('opacity-0', 'pointer-events-none');
+            settingsPanel.classList.remove('scale-95');
+            settingsPanel.classList.add('scale-100');
+        });
+
+        closeSettings.addEventListener('click', () => {
+            settingsModal.classList.add('opacity-0', 'pointer-events-none');
+            settingsPanel.classList.remove('scale-100');
+            settingsPanel.classList.add('scale-95');
+        });
+
+        // --- 透明度與大小即時連動邏輯 ---
+        opacitySlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            opacityVal.textContent = val + '%';
+            root.style.setProperty('--overlay-opacity', val / 100);
+        });
+
+        scaleSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            scaleVal.textContent = (val / 100).toFixed(1) + 'x';
+            root.style.setProperty('--overlay-scale', val / 100);
+        });
+
+        // --- 相機切換選單邏輯 ---
+        cameraSwitchBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // 防止點擊冒泡導致立刻觸發 Document 的關閉事件
+            isCameraMenuOpen = !isCameraMenuOpen;
+            if (isCameraMenuOpen) {
+                cameraMenu.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+            } else {
+                cameraMenu.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+            }
+        });
+
+        // 點擊畫面其他地方自動關閉相機選單
+        document.addEventListener('click', (e) => {
+            if (isCameraMenuOpen && !cameraMenu.contains(e.target)) {
+                isCameraMenuOpen = false;
+                cameraMenu.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+            }
+        });
+
+        function updateTimestamp() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            timestampEl.textContent = `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+        }
+        setInterval(updateTimestamp, 1000);
+        updateTimestamp();
+
+        function simulateSpeed() {
+            if (!isRecording) {
+                speedValueEl.textContent = "0";
+                return;
+            }
+            const currentSpeed = parseInt(speedValueEl.textContent);
+            const variation = Math.floor(Math.random() * 5) - 2;
+            let newSpeed = currentSpeed + variation;
+            if (newSpeed < 45) newSpeed = 45;
+            if (newSpeed > 75) newSpeed = 75;
+
+            if (currentSpeed < 45) newSpeed = currentSpeed + 5;
+
+            speedValueEl.textContent = newSpeed;
+        }
+
+        toggleSpeedBtn.addEventListener('click', () => {
+            showSpeed = !showSpeed;
+            if (showSpeed) {
+                speedContainer.style.opacity = '1';
+                if (speedDivider) speedDivider.style.opacity = '1';
+                speedIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                speedContainer.style.opacity = '0';
+                if (speedDivider) speedDivider.style.opacity = '0';
+                speedIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        });
+
+        function formatTimer(totalSeconds) {
+            const m = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+            const s = String(totalSeconds % 60).padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        shutterBtn.addEventListener('click', () => {
+            isRecording = !isRecording;
+
+            if (isRecording) {
+                shutterInner.classList.remove('rounded-full', 'w-12', 'h-12');
+                shutterInner.classList.add('rounded-[10px]', 'w-7', 'h-7');
+                shutterBtn.classList.add('recording-pulse');
+
+                recTimer.style.opacity = '1';
+                recDot.classList.remove('hidden');
+
+                recSeconds = 0;
+                recTimer.textContent = "00:00";
+                recInterval = setInterval(() => {
+                    recSeconds++;
+                    recTimer.textContent = formatTimer(recSeconds);
+                }, 1000);
+
+                speedInterval = setInterval(simulateSpeed, 1000);
+
+            } else {
+                shutterInner.classList.remove('rounded-[10px]', 'w-7', 'h-7');
+                shutterInner.classList.add('rounded-full', 'w-12', 'h-12');
+                shutterBtn.classList.remove('recording-pulse');
+
+                recTimer.style.opacity = '0';
+                recDot.classList.add('hidden');
+
+                clearInterval(recInterval);
+                clearInterval(speedInterval);
+                speedValueEl.textContent = "0";
+            }
+        });
+
+    </script>
+</body>
+
+</html>

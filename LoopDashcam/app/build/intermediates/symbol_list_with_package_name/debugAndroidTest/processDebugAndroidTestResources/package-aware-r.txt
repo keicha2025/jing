@@ -1,0 +1,3 @@
+com.jing.loopdashcam.test
+style WhiteBackgroundDialogTheme
+style WhiteBackgroundTheme

@@ -1,0 +1,25 @@
+R_DEF: Internal format may change without notice
+local
+drawable bg_glass_circle
+drawable bg_glass_pill
+drawable bg_shutter_inner
+drawable bg_shutter_outer
+drawable bg_timer
+drawable dot_gray
+id btnQuality
+id btnSettings
+id btnShutter
+id btnSwitchCamera
+id btnToggleSpeed
+id glSurfaceView
+id shutterInner
+id storageContainer
+id tvFPS
+id tvRecTimer
+id tvResolution
+id tvStorageInfo
+layout activity_main
+string app_name
+style Base.Theme.LoopDashcam
+style Theme.LoopDashcam
+style Theme.LoopDashcam.NoActionBar

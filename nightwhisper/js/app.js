@@ -1022,22 +1022,43 @@
                         }
                     });
 
+                    // 處理 Codec 字串：對於 AAC 來說，簡單的 mp4a.40.2 通常最穩定
+                    let codecStr = audioTrack.codec;
+                    if (codecStr.startsWith('mp4a.40.')) {
+                        codecStr = 'mp4a.40.2';
+                    }
+
                     const config = {
-                        codec: audioTrack.codec.startsWith('mp4a') ? audioTrack.codec : 'mp4a.40.2',
+                        codec: codecStr,
                         sampleRate: audioTrack.audio.sample_rate,
                         numberOfChannels: audioTrack.audio.channel_count
                     };
 
                     try {
                         const trak = mp4boxfile.getTrackById(audioTrack.id);
+                        let extracted = false;
                         if (trak && trak.mdia && trak.mdia.minf && trak.mdia.minf.stbl && trak.mdia.minf.stbl.stsd && trak.mdia.minf.stbl.stsd.entries[0].esds) {
-                            const configBytes = trak.mdia.minf.stbl.stsd.entries[0].esds.descs[0].decConfigDescr;
-                            if (configBytes) {
-                                config.description = new Uint8Array(configBytes).buffer;
+                            const dcd = trak.mdia.minf.stbl.stsd.entries[0].esds.descs[0].decConfigDescr;
+                            if (dcd && dcd.decSpecificInfo && dcd.decSpecificInfo.data) {
+                                config.description = new Uint8Array(dcd.decSpecificInfo.data).buffer;
+                                extracted = true;
+                                console.log("[Decoder] Extracted AudioSpecificConfig via MP4Box.");
                             }
                         }
-                    } catch (e) { console.warn("Cannot extract AudioSpecificConfig:", e); }
 
+                        // 若無法從檔案抽取，手動構造 AAC-LC 的 AudioSpecificConfig (Fallback)
+                        if (!extracted && config.codec.startsWith('mp4a')) {
+                            const srIndexes = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350];
+                            const srIdx = srIndexes.includes(config.sampleRate) ? srIndexes.indexOf(config.sampleRate) : 4;
+                            const asc = new Uint8Array(2);
+                            asc[0] = (2 << 3) | ((srIdx >> 1) & 0x7);
+                            asc[1] = ((srIdx & 0x1) << 7) | ((config.numberOfChannels & 0xF) << 3);
+                            config.description = asc.buffer;
+                            console.log("[Decoder] Using manual AudioSpecificConfig fallback.");
+                        }
+                    } catch (e) { console.warn("[Decoder] AudioSpecificConfig warn:", e); }
+
+                    console.log("[Decoder] Decoder.configure using:", config);
                     audioDecoder.configure(config);
 
                     // 開始提取 samples

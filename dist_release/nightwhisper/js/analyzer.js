@@ -383,6 +383,120 @@ class NightWhisperAnalyzer {
     }
 
     /**
+     * 快速從既有分析數據重新判定事件 (解耦與快取)
+     */
+    async reanalyzeFromData(sessionId, analysisData, sensitivity = 3) {
+        this.setSensitivity(sensitivity);
+        this.sessionId = sessionId;
+
+        // 設定平滑化視窗大小 (前後共 3 筆，用以輕度濾除短促雜訊)
+        const windowSize = 3;
+
+        let currentEvent = null;
+        let eventStartTime = 0;
+        let eventPeakDb = -Infinity;
+        let consecutiveCount = 0;
+        const newEvents = [];
+
+        // 輔助函式：取得平滑化的數值
+        const getSmoothed = (index, key) => {
+            let sum = 0;
+            let count = 0;
+            const start = Math.max(0, index - Math.floor(windowSize / 2));
+            const end = Math.min(analysisData.length - 1, index + Math.floor(windowSize / 2));
+            for (let i = start; i <= end; i++) {
+                sum += analysisData[i][key];
+                count++;
+            }
+            return count > 0 ? sum / count : -100;
+        };
+
+        for (let i = 0; i < analysisData.length; i++) {
+            const data = analysisData[i];
+            const time = data.time;
+
+            // 使用平滑化陣列數值
+            const snoreEnergy = getSmoothed(i, 'snoreEnergy');
+            const talkEnergy = getSmoothed(i, 'talkEnergy');
+            const overallDb = getSmoothed(i, 'overallDb');
+
+            let eventType = null;
+            if (snoreEnergy > this.THRESHOLDS.snoreDb && snoreEnergy > talkEnergy) {
+                eventType = 'snore';
+            } else if (talkEnergy > this.THRESHOLDS.talkDb) {
+                eventType = 'talk';
+            }
+
+            if (eventType) {
+                if (currentEvent === eventType) {
+                    // 持續中
+                    consecutiveCount++;
+                } else {
+                    // 結束上一段
+                    if (currentEvent) {
+                        const duration = (time - eventStartTime) / 1000;
+                        if (duration >= this.THRESHOLDS.minDuration) {
+                            newEvents.push({
+                                sessionId: this.sessionId,
+                                time: eventStartTime,
+                                type: currentEvent,
+                                dB: Math.round(eventPeakDb || 0),
+                                duration: Math.round(duration),
+                            });
+                        }
+                    }
+                    currentEvent = eventType;
+                    eventStartTime = time;
+                    eventPeakDb = overallDb;
+                    consecutiveCount = 1;
+                }
+                if (overallDb > eventPeakDb) eventPeakDb = overallDb;
+            } else {
+                if (currentEvent) {
+                    const duration = (time - eventStartTime) / 1000;
+                    if (duration >= this.THRESHOLDS.minDuration) {
+                        newEvents.push({
+                            sessionId: this.sessionId,
+                            time: eventStartTime,
+                            type: currentEvent,
+                            dB: Math.round(eventPeakDb || 0),
+                            duration: Math.round(duration),
+                        });
+                    }
+                    currentEvent = null;
+                    eventPeakDb = -Infinity;
+                    consecutiveCount = 0;
+                }
+            }
+        }
+
+        // 處理迴圈外最後一個未收尾的事件
+        if (currentEvent) {
+            const lastData = analysisData[analysisData.length - 1];
+            const duration = (lastData.time - eventStartTime) / 1000;
+            if (duration >= this.THRESHOLDS.minDuration) {
+                newEvents.push({
+                    sessionId: this.sessionId,
+                    time: eventStartTime,
+                    type: currentEvent,
+                    dB: Math.round(eventPeakDb || 0),
+                    duration: Math.round(duration),
+                });
+            }
+        }
+
+        // 批次儲存新事件到資料庫
+        for (const ev of newEvents) {
+            await this.storage.saveEvent(ev).catch((err) => {
+                console.error('[Analyzer] Failed to save reanalyzed event:', err);
+            });
+        }
+
+        console.log(`[Analyzer] Re-analysis completed, found ${newEvents.length} events.`);
+        return newEvents.length;
+    }
+
+    /**
      * 離線分析 AudioBuffer
      */
     async analyzeBuffer(audioBuffer, sessionId, options = {}) {
@@ -471,7 +585,9 @@ class NightWhisperAnalyzer {
     _analyzeOfflineStep(spectrum, time) {
         const snoreEnergy = this._getBandEnergy(spectrum, this.FREQ_BANDS.snore);
         const talkEnergy = this._getBandEnergy(spectrum, this.FREQ_BANDS.talk);
-        const overallDb = spectrum[0]; // 模擬中所有 bin 一樣
+
+        // 修正：在模擬模式下，所有 bin 的值都相同，直接取第一筆即可代表整體能量
+        const overallDb = spectrum[0];
 
         let eventType = null;
         if (snoreEnergy > this.THRESHOLDS.snoreDb && snoreEnergy > talkEnergy) {

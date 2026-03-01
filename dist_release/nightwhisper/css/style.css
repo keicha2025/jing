@@ -94,8 +94,18 @@ input[type=range]::-moz-range-thumb {
     width: 2px;
     background: #fff;
     box-shadow: 0 0 8px #fff;
-    pointer-events: none;
-    transition: left 0.1s linear;
+    z-index: 50;
+    /* 移除 transition 讓拖曳時更即時 */
+}
+
+/* 播放頭下方增加一個透明的觸控手柄 */
+.playhead-line::after {
+    content: '';
+    position: absolute;
+    left: -15px;
+    top: 0;
+    width: 30px;
+    height: 100%;
 }
 
 /* ── 波形容器 ── */

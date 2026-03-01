@@ -1,16 +1,9 @@
-const CACHE_NAME = 'jing-lab-v4';
+const CACHE_NAME = 'jing-lab-v5';
 const ASSETS = [
     './',
     './index.html',
     './manifest.json',
     './jing-lab-appicon.png',
-    'https://cdn.tailwindcss.com',
-    'https://unpkg.com/lucide@latest',
-    'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap',
-    'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js',
-    'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js',
-    'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js',
-    'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -33,21 +26,29 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    // 排除含有 googleapis.com/google.firestore 的請求，避免攔截 Firestore 動態資料
-    if (event.request.url.includes('firestore.googleapis.com')) {
+    // 僅處理 GET 請求，避免攔截 POST 或其他動態操作
+    if (event.request.method !== 'GET') return;
+
+    // 排除 Firestore 與 擴充功能等非標準請求
+    const url = event.request.url;
+    if (url.includes('firestore.googleapis.com') || url.startsWith('chrome-extension')) {
         return;
     }
 
     event.respondWith(
         fetch(event.request)
             .then((response) => {
-                const resClone = response.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, resClone);
-                });
+                // 如果回傳正常，則克隆一份存入快取
+                if (response && response.status === 200 && response.type === 'basic') {
+                    const resClone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, resClone);
+                    });
+                }
                 return response;
             })
             .catch(() => {
+                // 網路斷線時嘗試從快取讀取
                 return caches.match(event.request);
             })
     );
