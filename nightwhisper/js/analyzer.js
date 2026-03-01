@@ -395,6 +395,7 @@ class NightWhisperAnalyzer {
         let currentEvent = null;
         let eventStartTime = 0;
         let eventPeakDb = -Infinity;
+        let consecutiveCount = 0;
         const newEvents = [];
 
         // 輔助函式：取得平滑化的數值
@@ -429,7 +430,7 @@ class NightWhisperAnalyzer {
             if (eventType) {
                 if (currentEvent === eventType) {
                     // 持續中
-                    this._consecutiveCount++;
+                    consecutiveCount++;
                 } else {
                     // 結束上一段
                     if (currentEvent) {
@@ -447,7 +448,7 @@ class NightWhisperAnalyzer {
                     currentEvent = eventType;
                     eventStartTime = time;
                     eventPeakDb = overallDb;
-                    this._consecutiveCount = 1;
+                    consecutiveCount = 1;
                 }
                 if (overallDb > eventPeakDb) eventPeakDb = overallDb;
             } else {
@@ -464,7 +465,7 @@ class NightWhisperAnalyzer {
                     }
                     currentEvent = null;
                     eventPeakDb = -Infinity;
-                    this._consecutiveCount = 0;
+                    consecutiveCount = 0;
                 }
             }
         }

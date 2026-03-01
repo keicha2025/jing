@@ -934,71 +934,182 @@
 
         // 切換到 Tracking 畫面顯示進度
         switchView('tracking');
-        els.monitoringStatus.innerText = '正在讀取音檔...';
+        els.monitoringStatus.innerText = '正在載入串流解碼引擎...';
 
         try {
-            // 使用 FileReader 讀取 ArrayBuffer (更穩定的方式)
-            const reader = new FileReader();
-            const arrayBuffer = await new Promise((resolve, reject) => {
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = () => reject(new Error('讀取檔案失敗'));
-                reader.readAsArrayBuffer(file);
-            });
-
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') await audioCtx.resume();
-
-            // 提示解碼中 & 改良解碼流程 (使用更穩定的 Promise 包裝)
-            els.monitoringStatus.innerText = '正在解碼音檔 (0%)...';
-
-            // Web Audio API 解碼
-            const audioBuffer = await new Promise((resolve, reject) => {
-                // 部分瀏覽器 decodeAudioData 的進度偵測不穩定，這裡用文字模擬或直接處理
-                audioCtx.decodeAudioData(arrayBuffer, (buffer) => {
-                    resolve(buffer);
-                }, (err) => {
-                    console.error('Decode internal error:', err);
-                    reject(new Error('瀏覽器無法解碼此音檔。請確認檔案格式（推薦 .wav 或 .m4a）且檔案未損毀。'));
-                });
-            });
-
             currentSessionId = 'up_' + Date.now().toString(36);
-            const startTime = Date.now(); // 預設使用當前時間作為起始點
+            const startTimestamp = Date.now();
 
-            await storage.createSession({
-                id: currentSessionId,
-                startTime: startTime,
-                endTime: startTime + (audioBuffer.duration * 1000),
-                status: 'completed',
-                type: 'upload',
-                fileName: file.name
+            if (!window.MP4Box || !window.AudioDecoder) {
+                throw new Error("您的瀏覽器不支援 WebCodecs 或無法載入 MP4Box。請更新瀏覽器。");
+            }
+
+            els.monitoringStatus.innerText = '準備解碼環境...';
+
+            const mp4boxfile = MP4Box.createFile();
+            let audioTrack = null;
+            let audioDecoder = null;
+            let totalFrames = 0;
+            let decodedFramesCount = 0;
+            let durationSeconds = 0;
+
+            const decodePromise = new Promise((resolve, reject) => {
+                mp4boxfile.onError = (e) => reject(new Error("MP4 解析錯誤"));
+
+                mp4boxfile.onReady = (info) => {
+                    audioTrack = info.audioTracks[0];
+                    if (!audioTrack) return reject(new Error("找不到音訊軌道"));
+
+                    totalFrames = audioTrack.nb_samples;
+                    durationSeconds = info.duration / info.timescale;
+
+                    // 1. 初始化資料庫
+                    storage.createSession({
+                        id: currentSessionId,
+                        startTime: startTimestamp,
+                        endTime: startTimestamp + (durationSeconds * 1000),
+                        status: 'completed',
+                        type: 'upload',
+                        fileName: file.name
+                    }).then(() => {
+                        // 寫入原始 blob 用於回放
+                        storage.saveRecording({
+                            sessionId: currentSessionId,
+                            segmentIndex: 0,
+                            blob: file,
+                            mimeType: file.type,
+                            size: file.size,
+                            duration: durationSeconds * 1000
+                        });
+                    });
+
+                    // 2. 初始化分析器
+                    const skipSeconds = skipMinutes * 60;
+
+                    analyzer.setSensitivity(els.analysisSensitivitySlider ? els.analysisSensitivitySlider.value : 3);
+                    analyzer.sessionId = currentSessionId;
+                    analyzer.sampleRate = audioTrack.audio.sample_rate;
+                    analyzer.isAnalyzing = true;
+                    analyzer._analysisBatch = [];
+                    analyzer._currentEvent = null;
+
+                    // 3. 設定 WebCodecs 聲音解碼器
+                    audioDecoder = new AudioDecoder({
+                        error: (e) => reject(new Error("音訊解碼異常: " + e.message)),
+                        output: (audioData) => {
+                            const timeSeconds = audioData.timestamp / 1000000;
+
+                            // 忽略跳過的片段
+                            if (timeSeconds >= skipSeconds) {
+                                const options = { planeIndex: 0 };
+                                const size = audioData.allocationSize(options);
+                                const buffer = new ArrayBuffer(size);
+                                audioData.copyTo(buffer, options);
+                                const float32Data = new Float32Array(buffer);
+
+                                const timeMs = startTimestamp + (timeSeconds * 1000);
+                                const spectrum = analyzer._simulateFFT(float32Data);
+                                analyzer._analyzeOfflineStep(spectrum, timeMs);
+                            }
+
+                            decodedFramesCount++;
+                            if (totalFrames > 0 && decodedFramesCount % 100 === 0) {
+                                const percent = Math.round((decodedFramesCount / totalFrames) * 100);
+                                els.monitoringStatus.innerText = `串流解碼與分析中: ${percent}%`;
+                            }
+
+                            audioData.close();
+                        }
+                    });
+
+                    const config = {
+                        codec: audioTrack.codec.startsWith('mp4a') ? audioTrack.codec : 'mp4a.40.2',
+                        sampleRate: audioTrack.audio.sample_rate,
+                        numberOfChannels: audioTrack.audio.channel_count
+                    };
+
+                    try {
+                        const trak = mp4boxfile.getTrackById(audioTrack.id);
+                        if (trak && trak.mdia && trak.mdia.minf && trak.mdia.minf.stbl && trak.mdia.minf.stbl.stsd && trak.mdia.minf.stbl.stsd.entries[0].esds) {
+                            const configBytes = trak.mdia.minf.stbl.stsd.entries[0].esds.descs[0].decConfigDescr;
+                            if (configBytes) {
+                                config.description = new Uint8Array(configBytes).buffer;
+                            }
+                        }
+                    } catch (e) { console.warn("Cannot extract AudioSpecificConfig:", e); }
+
+                    audioDecoder.configure(config);
+
+                    // 開始提取 samples
+                    mp4boxfile.setExtractionOptions(audioTrack.id, null, { nbSamples: 1000 });
+                    mp4boxfile.start();
+                };
+
+                mp4boxfile.onSamples = (id, user, samples) => {
+                    for (let sample of samples) {
+                        if (audioDecoder.state === "configured") {
+                            audioDecoder.decode(new EncodedAudioChunk({
+                                type: sample.is_sync ? "key" : "delta",
+                                timestamp: (sample.cts / audioTrack.timescale) * 1000000,
+                                duration: (sample.duration / audioTrack.timescale) * 1000000,
+                                data: sample.data
+                            }));
+                        }
+                    }
+                };
+
+                mp4boxfile.onFlush = async () => {
+                    if (audioDecoder) {
+                        try {
+                            await audioDecoder.flush();
+                            audioDecoder.close();
+                        } catch (e) { }
+
+                        analyzer._finalizeCurrentEventAt(startTimestamp + (durationSeconds * 1000));
+                        await analyzer._flushBatch();
+                        analyzer.isAnalyzing = false;
+                        resolve();
+                    } else {
+                        reject(new Error("處理失敗: mp4box flush 但 audioDecoder 不存在"));
+                    }
+                };
             });
 
-            // 如果是上傳，我們把整個音檔存入 recordings 作為一個大段落（或可選不存，只存分析結果）
-            // 這裡為了讓播放功能正常，我們存入一筆
-            await storage.saveRecording({
-                sessionId: currentSessionId,
-                segmentIndex: 0,
-                blob: file,
-                mimeType: file.type,
-                size: file.size,
-                duration: audioBuffer.duration * 1000
-            });
+            // 實作串流分塊讀取器，避免 OOM
+            const chunkSize = 1024 * 1024 * 5; // 每次讀取 5MB
+            let offset = 0;
 
-            els.monitoringStatus.innerText = '正在進行睡眠分析 (0%)...';
-            await analyzer.analyzeBuffer(audioBuffer, currentSessionId, {
-                skipMinutes: skipMinutes,
-                startTimestamp: startTime,
-                onProgress: (p) => {
-                    const percent = Math.round(p * 100);
-                    els.monitoringStatus.innerText = `深度分析中: ${percent}%`;
-                    // 如果有進度條元素也可以同步
+            const readNextChunk = () => {
+                if (offset >= file.size) {
+                    mp4boxfile.flush();
+                    return;
                 }
-            });
+                const slice = file.slice(offset, offset + chunkSize);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const buffer = e.target.result;
+                    buffer.fileStart = offset;
+                    offset += buffer.byteLength;
+
+                    // 每讀一個 chunk 丟給 mp4box
+                    mp4boxfile.appendBuffer(buffer);
+
+                    // 釋放執行序，避免畫面凍結
+                    setTimeout(readNextChunk, 10);
+                };
+                reader.onerror = () => { throw new Error('檔案區塊讀取錯誤'); };
+                reader.readAsArrayBuffer(slice);
+            };
+
+            // 啟動串流讀取
+            readNextChunk();
+
+            // 等待全部分析完成
+            await decodePromise;
 
             await showModal({
                 title: '分析完成',
-                message: '音檔分析已結束。',
+                message: '音檔已透過串流引擎成功分析！',
                 icon: 'check_circle',
                 confirmText: '查看報告',
             });
@@ -1011,11 +1122,11 @@
 
             let errorMsg = err.message || '未知錯誤';
             if (err.name === 'EncodingError') errorMsg = '瀏覽器無法識別此音檔格式。';
-            if (err.name === 'QuotaExceededError') errorMsg = '瀏覽器儲存空間不足。';
+            if (err.name === 'QuotaExceededError') errorMsg = '儲存空間不足。';
 
             await showModal({
                 title: '分析失敗',
-                message: `錯誤原因：${errorMsg}\n\n請確認檔案是效的音檔，且長度不要超過數小時。`,
+                message: `錯誤原因：${errorMsg}\n\n這可能是由於瀏覽器不支援 WebCodecs，或檔案格式非 m4a/mp4 引起。`,
                 icon: 'error',
                 confirmText: '返回',
             });

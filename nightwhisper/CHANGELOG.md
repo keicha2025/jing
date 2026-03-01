@@ -94,3 +94,12 @@ All notable changes to this project will be documented in this file.
 ---
 本更新實現了核心分析邏輯的完全解耦，讓使用者在調整敏感度後，能瞬間得到重新判讀的結果，徹底解決了長音檔重新分析導致的時間浪費與記憶體崩潰問題。同時加入了平滑化處理，進一步提升偵測精準度。
  中文說明：將特徵提取與閾值判斷分離，大幅提升「再次分析」效能，並新增防呆過濾機制解決短促雜訊誤判的問題。
+
+## [2026-03-02T00:13:00Z]
+- Refactored audio upload logic to use WebCodecs (AudioDecoder) and mp4box.js chunk streaming for large files (300MB+).
+- Resolved OOM crashes during the audio upload process.
+- Fixed consecutive event count variable logic in analyzer to prevent interference during real-time re-analysis of audio.
+- Included mp4box.js library inside `index.html` headers.
+
+*改用 WebCodecs 與分塊讀取架構徹底避免大檔案上傳崩潰，同時消除重新分析時變數污染所造成的 bug。*
+
