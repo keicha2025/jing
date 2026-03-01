@@ -98,3 +98,58 @@
 - **Drag-and-Drop Sorting & Batch Saving**: Implemented native-feeling drag-and-drop sorting using `SortableJS` for the project index. Added a "Batch Save" mechanism with a floating Stone-styled button that appears only when changes (order or visibility) are pending, reducing database interaction and improving UX.
 
 分析引擎全面升級！內容包含 5 階靈敏度、重新分析面板與導覽列固定定位修復。同步解決了 V-Player 在 GitHub Pages 上的資源載入 (404) 錯誤，並將 `note` 筆記應用升級為 Firebase Google 登入驗證。此外，為「專案索引」首頁整合了 Firebase 管理機制，支援直覺的拖拉排序與隱藏功能，並採用批次儲存優化體驗。最後，應要求優化了 PDF 工具處理完成後的介面質感。
+
+## [2026-02-27] Minimalist Email Studio Migration & Integration
+### Added
+- Migrated "Minimalist Email Studio" to Firebase Hosting (web.app).
+- Integrated "Minimalist Email Studio" into the main project portal (`index.html`).
+- Added Google Sheets synchronization to the GAS backend for tracking sent emails.
+- Enhanced the GAS script with `doPost` to support cross-domain fetch requests from the web site.
+- Automated the deployment process for the `mail` project in `full_deploy.sh`.
+
+
+## [2026-02-28] Email Studio: Gmail API & Header Encoding Fix
+### Added
+- Migrated "Email Studio" to direct **Gmail API Integration** to resolve CORS limitations.
+- Preserved historical logging by asynchronously flushing to the original Google Sheet backend.
+- Automatically fetches and displays all user **Gmail Aliases** via the `settings.sendAs` endpoint.
+### Fixed
+- **RFC 2047 Header Encoding**: Fixed a critical bug where the email subject and sender's name would appear as Mojibake (corrupted encoding) when containing non-ASCII characters (e.g., Chinese).
+- **CORS Failure Fix**: Resolved the `Failed to fetch` error by migrating from GAS Web App calls to direct Google REST API calls.
+- **Improved UI Guidance**: Added clear visual indicators and re-authorization prompts for when the OAuth Access Token is missing or expired.
+
+**Affected files:** `mail/index.html`, `mail/code.gs`, `full_deploy.sh`
+
+將「Email Studio」郵件卡片工具全面切換至 Gmail API 寄件技術以解決跨網域 (CORS) 問題。針對中文主旨與寄件人名稱，實作了符合 RFC 2047 的 MIME 編碼機制，徹底收復亂碼錯誤。同時優化了別名抓取與授權失效時的重登引導。
+
+## [Design System Update] - 2026-02-28T15:46:46Z
+### Added
+- [DESIGN_LANGUAGE.md](file:///Users/jing/Downloads/jing/DESIGN_LANGUAGE.md): A comprehensive documentation of the project's design tokens, grid layout, and motion principles.
+- Included specifications for typography (Inter/Noto Sans TC), color palette (Stone series), and glassmorphism effects.
+
+*新增了設計語言手冊專用的 Markdown 檔案，將 UI 規範參數化。*
+
+## [2026-03-01] Jing Lab Portal Recovery & Favicon Fix
+### Added
+- Added `<link rel="icon">` to `index.html` referencing `jing-lab-appicon.png` to fix missing website icon.
+- Added explicit support for generic favicons in the portal page.
+
+### Fixed
+- Recovered the main portal page (Project Index) which was showing a 404 error on `jing-lab.web.app`.
+- Ensured consistent deployment by using `full_deploy.sh` to correctly include the root `index.html` in the `dist_release` directory.
+
+### Changed
+- Refined the "Full Deploy" process to consistently maintain the entry point of the entire workspace.
+
+**Affected files:** `index.html`, `CHANGELOG.md`, `dist_release/`
+
+修復了 Jing Lab 首頁 (jing-lab.web.app) 顯示 404 的問題，並補上網站圖標 (Favicon) 宣告。透過執行完整部署腳本重新同步所有專案與入口頁面。
+
+## [2026-03-01] Favicon Compatibility Enhancement
+### Added
+- Added `.ico` format favicon reference in `index.html` to improve cross-browser compatibility across all index pages.
+- Included `jing-lab-appicon.ico` in the static assets copy list within `full_deploy.sh` for Firebase hosting deployment.
+
+**Affected files:** `index.html`, `full_deploy.sh`
+
+為了確保專案索引頁面在不同網域及瀏覽器環境下皆能正確顯示圖標，新增了 `.ico` 格式的 Favicon 引用與發布流程。
