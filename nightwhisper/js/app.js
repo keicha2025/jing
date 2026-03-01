@@ -520,44 +520,22 @@
         els.btnReanalyze.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> 分析中...';
 
         try {
-            const recordings = await storage.getRecordingsBySession(currentSessionId);
-            if (recordings.length === 0) {
-                alert('找不到該次錄音的音檔資料。');
+            const analysisData = await storage.getAnalysisBySession(currentSessionId);
+            if (!analysisData || analysisData.length === 0) {
+                alert('找不到該次錄音的分析特徵資料，無法快速重新分析。');
                 return;
             }
 
-            // 1. 清除舊事件
-            await storage.clearSessionData(currentSessionId);
+            // 1. 僅清除舊事件，保留分析數據 (解耦)
+            await storage.clearSessionEvents(currentSessionId);
 
-            // 2. 解碼音檔
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const buffers = await Promise.all(recordings.sort((a, b) => a.segmentIndex - b.segmentIndex).map(async r => {
-                const ab = await r.blob.arrayBuffer();
-                return await audioCtx.decodeAudioData(ab);
-            }));
-
-            // 合併 Buffer
-            const totalSamples = buffers.reduce((acc, b) => acc + b.length, 0);
-            const combinedBuffer = audioCtx.createBuffer(1, totalSamples, buffers[0].sampleRate);
-            let offset = 0;
-            buffers.forEach(b => {
-                combinedBuffer.copyToChannel(b.getChannelData(0), 0, offset);
-                offset += b.length;
-            });
-
-            // 3. 執行分析
+            // 2. 獲取新敏感度並執行瞬間分析
             const sensitivity = els.analysisSensitivitySlider ? els.analysisSensitivitySlider.value : 3;
-            const session = await storage.getSession(currentSessionId);
 
-            await analyzer.analyzeBuffer(combinedBuffer, currentSessionId, {
-                sensitivity: sensitivity,
-                startTimestamp: session.startTime,
-                onProgress: (p) => {
-                    els.btnReanalyze.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin">sync</span> 分析中 ${Math.round(p * 100)}%`;
-                }
-            });
+            // 利用已存在的特徵資料重新計算事件 (包含平滑化處理)
+            await analyzer.reanalyzeFromData(currentSessionId, analysisData, sensitivity);
 
-            // 4. 重新載入 View
+            // 3. 重新載入 View
             await loadAnalysisView(currentSessionId);
 
         } catch (err) {

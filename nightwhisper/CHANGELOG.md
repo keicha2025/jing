@@ -60,5 +60,37 @@ All notable changes to this project will be documented in this file.
 - Synchronized sensitivity settings between the Settings view and the Analysis view.
 - Added custom backdrop-blur and transition effects for the session dropdown UI.
 
+
 ---
 本更新強化了分析引擎的靈活性與報告頁面的互動性，讓使用者能針對錄音進行精細調整與重新判讀。
+
+## [2.9.0] - 2026-02-27
+
+### Added
+- **Timeline Scrubbing**: Implemented smooth playhead dragging (scrubbing) on the analysis waveform. Users can now grab the white playhead line to quickly seek through the audio.
+  - 睡眠分析頁面新增「播放條拖曳 (Scrubbing)」功能，可按住白色播放線左右滑動，快速定位想要聽取的音訊片段。
+- **Interactive Playhead**: Added a touch-friendly handle for the playhead to improve usability on mobile devices.
+  - 為播放線增加透明觸控熱區，提升行動裝置上的操作順暢度。
+
+### Fixed
+- **Re-analysis Data Accuracy**: Fixed a critical bug in the offline analysis engine where frequency energy was incorrectly mapped, causing empty waveform data.
+  - 修正離線分析引擎的頻段映射錯誤，解決「重新分析」後波形圖顯示為空白或數據異常的問題。
+
+---
+本更新改善了數據導航的便利性並修復了核心分析引擎的邏輯錯誤。
+ 中文說明：本次更新實作了播放條拖曳功能，並修正了核心分析邏輯，確保數據顯示與互動均恢復正常。
+
+## [2.10.0] - 2026-03-01
+
+### Added
+- **Instant Re-analysis**: Decoupled feature extraction from event detection. Re-analysis now instantly processes cached energy arrays from IndexedDB instead of decoding large audio files.
+- **Smoothing Filter**: Applied a 3-second moving average during re-analysis to filter out short noise bursts and improve event detection accuracy.
+
+### Changed
+- `analyzer.js`: Added `reanalyzeFromData` method to handle instant array reprocessing.
+- `app.js`: Updated `btnReanalyze` event listener to fetch existing `analysisData` and map to the new decoupling logic.
+- `storage.js`: Added `clearSessionEvents` to allow isolated clearing of event data without erasing cached analysis feature arrays.
+
+---
+本更新實現了核心分析邏輯的完全解耦，讓使用者在調整敏感度後，能瞬間得到重新判讀的結果，徹底解決了長音檔重新分析導致的時間浪費與記憶體崩潰問題。同時加入了平滑化處理，進一步提升偵測精準度。
+ 中文說明：將特徵提取與閾值判斷分離，大幅提升「再次分析」效能，並新增防呆過濾機制解決短促雜訊誤判的問題。
