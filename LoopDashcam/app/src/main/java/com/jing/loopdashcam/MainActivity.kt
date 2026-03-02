@@ -33,6 +33,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var loopManager: LoopManager
     private var videoEncoder: VideoEncoder? = null
     private var isRecording = false
+    
+    // Quality Settings
+    private var currentVidWidth = 1920
+    private var currentVidHeight = 1080
+    private var currentFps = 60
+    private var currentBitrate = 8000000 // 8Mbps
 
     private var recordingStartTime = 0L
     private val timerHandler = android.os.Handler(android.os.Looper.getMainLooper())
@@ -70,46 +76,103 @@ class MainActivity : AppCompatActivity() {
         val btnShutter = findViewById<View>(R.id.btnShutter)
         val shutterInner = findViewById<View>(R.id.shutterInner)
         val tvRecTimer = findViewById<TextView>(R.id.tvRecTimer)
-        val btnToggleSpeed = findViewById<ImageButton>(R.id.btnToggleSpeed)
         val tvStorageInfo = findViewById<TextView>(R.id.tvStorageInfo)
-        val btnSwitchCamera = findViewById<ImageButton>(R.id.btnSwitchCamera)
+        
+        val btnQuality = findViewById<View>(R.id.btnQuality)
+        val menuQuality = findViewById<View>(R.id.menuQuality)
+        val menu4K = findViewById<View>(R.id.menu4K)
+        val menu1080P = findViewById<View>(R.id.menu1080P)
+        val menu720P = findViewById<View>(R.id.menu720P)
+
+        val btnSettings = findViewById<ImageButton>(R.id.btnSettings)
+        val menuSettings = findViewById<View>(R.id.menuSettings)
+        val menuToggleSpeed = findViewById<TextView>(R.id.menuToggleSpeed)
+        val menuSwitchCamera = findViewById<TextView>(R.id.menuSwitchCamera)
 
         tvStorageInfo.text = loopManager.getStorageInfo()
 
-        btnSwitchCamera.setOnClickListener {
-            cameraHelper.switchCamera()
+        btnSettings.setOnClickListener {
+            if (menuSettings.visibility == View.VISIBLE) {
+                menuSettings.visibility = View.GONE
+            } else {
+                menuSettings.visibility = View.VISIBLE
+            }
         }
+
+        menuToggleSpeed.setOnClickListener {
+            renderer.showSpeed = !renderer.showSpeed
+            menuSettings.visibility = View.GONE
+        }
+
+        menuSwitchCamera.setOnClickListener {
+            cameraHelper.switchCamera()
+            menuSettings.visibility = View.GONE
+        }
+        
+        btnQuality.setOnClickListener {
+            if (menuQuality.visibility == View.VISIBLE) {
+                menuQuality.visibility = View.GONE
+            } else {
+                menuQuality.visibility = View.VISIBLE
+            }
+        }
+
+        menu4K.setOnClickListener { changeQuality(3840, 2160, 30, 20000000, "4K") }
+        menu1080P.setOnClickListener { changeQuality(1920, 1080, 60, 8000000, "1080P") }
+        menu720P.setOnClickListener { changeQuality(1280, 720, 60, 4000000, "720P") }
+
+        val dpToPx = resources.displayMetrics.density
+        val sizeSmall = (24 * dpToPx).toInt()
+        val sizeLarge = (56 * dpToPx).toInt()
 
         btnShutter.setOnClickListener {
             if (!isRecording) {
+                // Ensure menu is closed before recording starts
+                menuQuality.visibility = View.GONE
+                menuSettings.visibility = View.GONE
                 startRecording()
                 shutterInner.layoutParams = shutterInner.layoutParams.apply {
-                    width = 40
-                    height = 40
+                    width = sizeSmall
+                    height = sizeSmall
                 }
                 tvRecTimer.visibility = View.VISIBLE
             } else {
                 stopRecording()
                 shutterInner.layoutParams = shutterInner.layoutParams.apply {
-                    width = 168
-                    height = 168
+                    width = sizeLarge
+                    height = sizeLarge
                 }
                 tvRecTimer.visibility = View.GONE
             }
             isRecording = !isRecording
         }
+    }
 
-        btnToggleSpeed.setOnClickListener {
-            renderer.showSpeed = !renderer.showSpeed
-            btnToggleSpeed.alpha = if (renderer.showSpeed) 1.0f else 0.5f
-        }
+    private fun changeQuality(width: Int, height: Int, fps: Int, bitrate: Int, resName: String) {
+        if (isRecording) return // Block changes while recording
+
+        currentVidWidth = width
+        currentVidHeight = height
+        currentFps = fps
+        currentBitrate = bitrate
+
+        renderer.recordingWidth = width
+        renderer.recordingHeight = height
+
+        findViewById<TextView>(R.id.tvResolution).text = resName
+        findViewById<TextView>(R.id.tvFPS).text = "${fps}FPS"
+        findViewById<View>(R.id.menuQuality).visibility = View.GONE
+
+        // Real-time camera restart with new setting
+        cameraHelper.changeResolution(width, height, fps)
     }
 
     private fun startRecording() {
         val videoFile = loopManager.createNewFile()
         videoEncoder = VideoEncoder().apply {
-            prepare(videoFile, 1920, 1080, 8000000, 60)
+            prepare(videoFile, currentVidWidth, currentVidHeight, currentBitrate, currentFps)
         }
+
         
         recordingStartTime = System.currentTimeMillis()
         timerHandler.post(timerRunnable)
@@ -168,7 +231,7 @@ class MainActivity : AppCompatActivity() {
                 glSurfaceView.requestRender()
             }
             // Open Camera 2 and lock to 60fps pointing to this Surface
-            cameraHelper.openCamera(surfaceTexture, 1920, 1080)
+            cameraHelper.openCamera(surfaceTexture, currentVidWidth, currentVidHeight, currentFps)
         }
         
         glSurfaceView.setRenderer(renderer)

@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getFunctions } from 'firebase/functions';
 
 // Note: In a real app, these would be in .env
 // Given the prompt project ID 'gen-lang-client-0428297574'
@@ -22,4 +23,5 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app, 'jing-finance');
+export const functions = getFunctions(app);
 export const googleProvider = new GoogleAuthProvider();

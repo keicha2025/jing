@@ -1,18 +1,7 @@
 {
-  "hosting": {
-    "site": "jing-lab",
-    "public": "deploy",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "/finance/**",
-        "destination": "/finance/index.html"
-      }
-    ]
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs22"
   },
   "firestore": {
     "rules": "firestore.rules"

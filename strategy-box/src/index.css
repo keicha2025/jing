@@ -1,16 +1,17 @@
 :root {
     --primary: #6366f1;
     --primary-hover: #4f46e5;
-    --secondary: #ec4899;
+    --secondary: #06b6d4;
     --accent: #8b5cf6;
-    --background: #0f172a;
-    --surface: rgba(30, 41, 59, 0.7);
-    --surface-border: rgba(255, 255, 255, 0.1);
+    --background: #0b1121;
+    --surface: rgba(15, 23, 42, 0.7);
+    --surface-border: rgba(255, 255, 255, 0.05);
     --text-main: #f8fafc;
-    --text-muted: #94a3b8;
+    --text-muted: #64748b;
     --success: #10b981;
     --warning: #f59e0b;
-    --error: #ef4444;
+    --error: #64748b;
+    /* Removed red, using slate for neutral/caution */
 
     --glass-bg: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.05);
@@ -33,8 +34,8 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
     background-image:
-        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
 }
 
 #root {
@@ -50,7 +51,8 @@ body {
     border: 1px solid var(--surface-border);
     border-radius: 1.5rem;
     padding: 1.5rem;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+    /* Deep but non-vibrant shadow */
 }
 
 h1,
@@ -80,12 +82,12 @@ button {
     padding: 0.75rem 1.5rem;
     border-radius: 0.75rem;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .input-field {
@@ -100,7 +102,7 @@ button {
 
 .input-field:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
 }
 
 /* Animations */
@@ -129,6 +131,27 @@ button {
 
 .text-gradient {
     background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+}
+
+.danger,
+.error {
+    color: var(--error) !important;
+}
+
+.icon-btn-ghost.danger:hover {
+    background: rgba(100, 116, 139, 0.1) !important;
+    color: var(--text-main) !important;
+}
+
+select.input-field {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
 }

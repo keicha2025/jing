@@ -1013,8 +1013,8 @@
                             }
 
                             decodedFramesCount++;
-                            if (totalFrames > 0 && decodedFramesCount % 100 === 0) {
-                                const percent = Math.round((decodedFramesCount / totalFrames) * 100);
+                            if (durationSeconds > 0 && decodedFramesCount % 50 === 0) {
+                                const percent = Math.min(100, Math.round((timeSeconds / durationSeconds) * 100));
                                 els.monitoringStatus.innerText = `串流解碼與分析中: ${percent}%`;
                             }
 
@@ -1079,7 +1079,11 @@
                     }
                 };
 
-                mp4boxfile.onFlush = async () => {
+                const checkAndFinish = async () => {
+                    if (audioDecoder && audioDecoder.decodeQueueSize > 0) {
+                        setTimeout(checkAndFinish, 100);
+                        return;
+                    }
                     if (audioDecoder) {
                         try {
                             await audioDecoder.flush();
@@ -1091,39 +1095,46 @@
                         analyzer.isAnalyzing = false;
                         resolve();
                     } else {
-                        reject(new Error("處理失敗: mp4box flush 但 audioDecoder 不存在"));
+                        reject(new Error("處理失敗: audioDecoder 不存在"));
                     }
                 };
-            });
 
-            // 實作串流分塊讀取器，避免 OOM
-            const chunkSize = 1024 * 1024 * 5; // 每次讀取 5MB
-            let offset = 0;
+                // 實作串流分塊讀取器，避免 OOM
+                const chunkSize = 1024 * 1024 * 5; // 每次讀取 5MB
+                let offset = 0;
 
-            const readNextChunk = () => {
-                if (offset >= file.size) {
-                    mp4boxfile.flush();
-                    return;
-                }
-                const slice = file.slice(offset, offset + chunkSize);
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const buffer = e.target.result;
-                    buffer.fileStart = offset;
-                    offset += buffer.byteLength;
+                const readNextChunk = () => {
+                    // 節流：如果解碼佇列累積太多，暫停餵食檔案以避免解碼器死鎖或記憶體爆炸
+                    if (audioDecoder && audioDecoder.decodeQueueSize > 200) {
+                        setTimeout(readNextChunk, 50);
+                        return;
+                    }
 
-                    // 每讀一個 chunk 丟給 mp4box
-                    mp4boxfile.appendBuffer(buffer);
+                    if (offset >= file.size) {
+                        mp4boxfile.flush();
+                        checkAndFinish();
+                        return;
+                    }
+                    const slice = file.slice(offset, offset + chunkSize);
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const buffer = e.target.result;
+                        buffer.fileStart = offset;
+                        offset += buffer.byteLength;
 
-                    // 釋放執行序，避免畫面凍結
-                    setTimeout(readNextChunk, 10);
+                        // 每讀一個 chunk 丟給 mp4box
+                        mp4boxfile.appendBuffer(buffer);
+
+                        // 釋放執行序，避免畫面凍結
+                        setTimeout(readNextChunk, 10);
+                    };
+                    reader.onerror = () => { reject(new Error('檔案區塊讀取錯誤')); };
+                    reader.readAsArrayBuffer(slice);
                 };
-                reader.onerror = () => { throw new Error('檔案區塊讀取錯誤'); };
-                reader.readAsArrayBuffer(slice);
-            };
 
-            // 啟動串流讀取
-            readNextChunk();
+                // 啟動串流讀取
+                readNextChunk();
+            }); // End of decodePromise
 
             // 等待全部分析完成
             await decodePromise;

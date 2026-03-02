@@ -5,4 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
     plugins: [react()],
     base: '/finance/', // Based on the requirement to deploy at /finance
+    build: {
+        outDir: 'dist/finance'
+    }
 })

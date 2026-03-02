@@ -167,3 +167,35 @@
 **Affected files:** `LoopDashcam/app/src/main/java/com/jing/loopdashcam/` (MainActivity, CameraGLRenderer, CameraManagerHelper, VideoEncoder, LoopManager), `activity_main.xml`, `CHANGELOG.md`
 
 實作「方案 A」高效能錄影架構，包含 MediaCodec 硬體編碼器與自動循環刪補空間管理 (LoopManager)。修正了 OpenGL 浮水印上下顛倒的問題，並全面啟用介面互動功能：現在點擊紅色快門會觸發錄影狀態切換與計時器，且支援主鏡頭與前鏡頭的即時切換。新增了儲存空間狀態顯示與解析度選單預留位。
+
+## [2026-03-02] Portal Recovery & Deployment Architecture Fix
+### Fixed
+- **Root cause of portal overwrite**: Removed the `hosting` block from `strategy-box/firebase.json` which was deploying `dist/index.html` (JING Finance) to the root path `/`, overwriting the Project Index portal page.
+- **Portal blank screen**: Restored `jing-lab.web.app` by executing `full_deploy.sh` which correctly deploys the root `index.html` from the project root to `dist_release/`.
+- **Sub-project 404 errors**: All sub-projects (pdf-tool, preview, v-player-preview, travel-planner, nightwhisper, note, mail) were missing due to the overwrite. Full deploy restores all of them.
+- **GitHub Pages pdf-tool redirect chain**: `keicha2025.github.io/jing/pdf-tool/` redirects to `jing-lab.web.app/pdf-tool/` which was returning 404 due to the overwrite.
+
+### Changed
+- **Deployment isolation**: `strategy-box/firebase.json` no longer contains a `hosting` block, preventing future accidental overwrites of the entire site when deploying only Cloud Functions or Firestore rules from the `strategy-box` directory.
+
+**Affected files:** `strategy-box/firebase.json`, `CHANGELOG.md`, `dist_release/`
+
+修復了 strategy-box 部署時覆蓋整站入口頁面的根本原因（移除了該子目錄中的 hosting 設定），並透過完整部署恢復了入口頁面與所有子工具。GitHub Pages 上的 pdf-tool 重定向鏈也因此修復。
+
+## [2026-03-02] PDF Flattener: True Rasterization Engine
+### Fixed
+- **Font rasterization failure**: The previous Ghostscript `pdfwrite` device only restructured PDFs without actually rasterizing text/fonts, causing font styles to break when the PDF didn't embed all fonts.
+- **Rewrote flatten endpoint** in `backend/main.py` to use **PyMuPDF (fitz)** for true pixel-level rasterization:
+  1. Each page is rendered to a high-DPI PNG image (respects quality/DPI settings)
+  2. Images are reassembled into a clean PDF with proper compression
+- This guarantees all text, vectors, and fonts are converted to pixels — zero dependency on font embedding.
+
+### Technical Details
+- Engine changed from Ghostscript `pdfwrite` → PyMuPDF `page.get_pixmap()` + `page.insert_image()`
+- DPI presets: Low (72), Medium (150), High/Ultra (300-600)
+- Output uses `garbage=4, deflate=True, deflate_images=True` for optimal file size
+- Redeployed to Cloud Run as revision `pdf-flattener-00006-7bh`
+
+**Affected files:** `pdf-tool/backend/main.py`
+
+修復了 PDF 扁平化工具無法真正點陣化字體的問題。原先使用 Ghostscript pdfwrite 僅重構 PDF 結構，未將文字轉為圖片，導致未嵌入字體的樣式會跑掉。改用 PyMuPDF 逐頁渲染為高解析度圖片後重組，確保所有文字與向量完全轉為像素。

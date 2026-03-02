@@ -190,7 +190,7 @@ export default function MonthlyConfigPage() {
                                     <option>JPY</option>
                                 </select>
                             </div>
-                            <button onClick={() => handleRemoveItem(index)} style={{ color: 'var(--error)', padding: '0.75rem' }}>
+                            <button onClick={() => handleRemoveItem(index)} style={{ color: 'var(--text-muted)', padding: '0.75rem' }}>
                                 <Trash2 size={18} />
                             </button>
                         </div>

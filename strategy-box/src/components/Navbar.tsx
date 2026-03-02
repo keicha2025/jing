@@ -18,7 +18,6 @@ export default function Navbar({ user }: NavbarProps) {
             <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
                 <NavLink to="/" icon={<Home size={20} />} label="首頁" active={location.pathname === '/'} />
                 <NavLink to="/config" icon={<PenTool size={20} />} label="配置" active={location.pathname === '/config'} />
-                <NavLink to="/holdings" icon={<Database size={20} />} label="庫存" active={location.pathname === '/holdings'} />
                 <NavLink to="/ai" icon={<PieChart size={20} />} label="分析" active={location.pathname === '/ai'} />
             </div>
 

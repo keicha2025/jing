@@ -51,6 +51,7 @@
 
     <!-- Top Right: Quality & Settings -->
     <LinearLayout
+        android:id="@+id/topRightContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
@@ -102,6 +103,130 @@
             android:tint="#334155" />
     </LinearLayout>
 
+    <!-- Resolution Dropdown Menu -->
+    <LinearLayout
+        android:id="@+id/menuQuality"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="24dp"
+        android:background="@drawable/bg_glass_dropdown"
+        android:elevation="8dp"
+        android:orientation="vertical"
+        android:paddingVertical="8dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/topRightContainer">
+
+        <TextView
+            android:id="@+id/menu4K"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp"
+            android:text="4K / 30FPS"
+            android:textColor="#1E293B"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="8dp"
+            android:background="#1A000000" />
+
+        <TextView
+            android:id="@+id/menu1080P"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp"
+            android:text="1080P / 60FPS"
+            android:textColor="#1E293B"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+            
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="8dp"
+            android:background="#1A000000" />
+
+        <TextView
+            android:id="@+id/menu720P"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp"
+            android:text="720P / 60FPS"
+            android:textColor="#1E293B"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Settings Dropdown Menu -->
+    <LinearLayout
+        android:id="@+id/menuSettings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="24dp"
+        android:background="@drawable/bg_glass_dropdown"
+        android:elevation="8dp"
+        android:orientation="vertical"
+        android:paddingVertical="8dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/topRightContainer">
+
+        <TextView
+            android:id="@+id/menuToggleSpeed"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp"
+            android:text="顯示/隱藏速度"
+            android:textColor="#1E293B"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="8dp"
+            android:background="#1A000000" />
+
+        <TextView
+            android:id="@+id/menuSwitchCamera"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp"
+            android:text="切換主鏡頭"
+            android:textColor="#1E293B"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Top Center: Floating Timer -->
+    <TextView
+        android:id="@+id/tvRecTimer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/bg_timer"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:text="00:00"
+        android:textColor="#DC2626"
+        android:textStyle="bold"
+        android:fontFamily="monospace"
+        android:textSize="18sp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <!-- Bottom Center: Shutter Button -->
     <FrameLayout
         android:id="@+id/btnShutter"
@@ -120,47 +245,6 @@
             android:layout_gravity="center"
             android:background="@drawable/bg_shutter_inner" />
             
-        <TextView
-            android:id="@+id/tvRecTimer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|center_horizontal"
-            android:layout_marginTop="-24dp"
-            android:background="@drawable/bg_timer"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="2dp"
-            android:text="00:00"
-            android:textColor="#DC2626"
-            android:textStyle="bold"
-            android:fontFamily="monospace"
-            android:textSize="14sp"
-            android:visibility="gone" />
     </FrameLayout>
-    
-    <!-- Bottom Left: Speed Toggle -->
-    <ImageButton
-        android:id="@+id/btnToggleSpeed"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="32dp"
-        android:background="@drawable/bg_glass_circle"
-        android:src="@android:drawable/ic_menu_view"
-        android:tint="#475569"
-        app:layout_constraintBottom_toBottomOf="@+id/btnShutter"
-        app:layout_constraintTop_toTopOf="@+id/btnShutter"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <!-- Bottom Right: Switch Camera -->
-    <ImageButton
-        android:id="@+id/btnSwitchCamera"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="32dp"
-        android:background="@drawable/bg_glass_circle"
-        android:src="@android:drawable/ic_menu_camera"
-        android:tint="#475569"
-        app:layout_constraintBottom_toBottomOf="@+id/btnShutter"
-        app:layout_constraintTop_toTopOf="@+id/btnShutter"
-        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

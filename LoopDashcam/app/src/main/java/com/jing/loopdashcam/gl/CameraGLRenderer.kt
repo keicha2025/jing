@@ -7,12 +7,12 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.SurfaceTexture
 import android.graphics.Typeface
-import android.opengl.*
 import android.opengl.EGL14
-import android.opengl.EGLConfig
-import android.opengl.EGLContext
-import android.opengl.EGLDisplay
-import android.opengl.EGLSurface
+import android.opengl.EGLExt
+import android.opengl.GLES11Ext
+import android.opengl.GLES20
+import android.opengl.GLSurfaceView
+import android.opengl.GLUtils
 import android.view.Surface
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -31,6 +31,8 @@ class CameraGLRenderer(
 
     // For Recording
     @Volatile var recordingSurface: Surface? = null
+    @Volatile var recordingWidth: Int = 1920
+    @Volatile var recordingHeight: Int = 1080
     private var encoderTextureReady = false
 
     @Volatile var currentSpeed: Float = -1f
@@ -43,8 +45,10 @@ class CameraGLRenderer(
         setShadowLayer(4f, 0f, 0f, Color.parseColor("#99000000"))
     }
     
-    private val overlayBitmap = Bitmap.createBitmap(1920, 1080, Bitmap.Config.ARGB_8888)
-    private val overlayCanvas = Canvas(overlayBitmap)
+    // Dynamically sized overlay to match resolution if needed
+    // For now we assume a standard relative coordinate system, or we re-scale manually
+    private var overlayBitmap = Bitmap.createBitmap(1920, 1080, Bitmap.Config.ARGB_8888)
+    private var overlayCanvas = Canvas(overlayBitmap)
 
     private val vertexShaderCode = """
         attribute vec4 position;
@@ -162,7 +166,6 @@ class CameraGLRenderer(
     }
 
     private var encoderEglSurface = EGL14.EGL_NO_SURFACE
-    private var screenEglSurface = EGL14.EGL_NO_SURFACE
     private var eglDisplay = EGL14.EGL_NO_DISPLAY
     private var eglContext = EGL14.EGL_NO_CONTEXT
     
@@ -185,19 +188,21 @@ class CameraGLRenderer(
         // Render 2: Optionally to RecordingSurface (Encoder)
         val recordSurface = recordingSurface
         if (recordSurface != null) {
+            val currentDrawSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW)
+            val currentReadSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_READ)
+
             if (encoderEglSurface == EGL14.EGL_NO_SURFACE) {
                 // Create EGLSurface for the encoder
                 val config = getEGLConfig()
                 val surfaceAttribs = intArrayOf(EGL14.EGL_NONE)
                 encoderEglSurface = EGL14.eglCreateWindowSurface(eglDisplay, config, recordSurface, surfaceAttribs, 0)
-                screenEglSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW)
             }
 
             // Switch to Encoder Surface
             EGL14.eglMakeCurrent(eglDisplay, encoderEglSurface, encoderEglSurface, eglContext)
             
-            // Set output size for video (usually match preview or encoder config)
-            GLES20.glViewport(0, 0, 1920, 1080)
+            // Set output size for video
+            GLES20.glViewport(0, 0, recordingWidth, recordingHeight)
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
             
             drawFullFrame()
@@ -208,8 +213,8 @@ class CameraGLRenderer(
             
             EGL14.eglSwapBuffers(eglDisplay, encoderEglSurface)
 
-            // Restore Screen Surface
-            EGL14.eglMakeCurrent(eglDisplay, screenEglSurface, screenEglSurface, eglContext)
+            // Restore Screen Surface properly
+            EGL14.eglMakeCurrent(eglDisplay, currentDrawSurface, currentReadSurface, eglContext)
             // Restore Viewport for screen
             GLES20.glViewport(0, 0, screenWidth, screenHeight)
         } else if (encoderEglSurface != EGL14.EGL_NO_SURFACE) {

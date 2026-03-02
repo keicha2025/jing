@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.13.0] - 2026-03-02
+
+### Fixed
+- **Stream Decoding Death Loop**: Refactored the MP4 chunk streaming logic to gracefully check for EOF and flush the WebCodecs `AudioDecoder`. This resolves the issue where the parsing process stalled infinitely.
+  - 修正 mp4box 在大檔案結束後不會自動觸發完成事件，導致分析過程卡死的問題。
+- **Decoder Throttling**: Introduced a throttled buffer ingestion mechanism that checks `audioDecoder.decodeQueueSize`. This effectively prevents the buffer queue from exploding and causing mobile memory limits to be exceeded.
+  - 新增串流進度節流閥，避免解碼器陣列過度堆積導致 OOM。
+- **Progress Percentage Bug**: Fixed the visual glitch where the decoding percentage exceeded 100% (up to 5000%) by accurately mapping timestamps instead of frame counts.
+  - 修改進度條百分比的計算基準從「影格數」改為「音訊時長」，解決進度顯示會突破天際跑到好幾千％的問題。
+
+---
+
 ## [2.12.0] - 2026-03-02
 
 ### Added

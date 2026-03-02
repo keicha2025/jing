@@ -6,7 +6,6 @@ import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import MonthlyConfig from './pages/MonthlyConfig';
-import Holdings from './pages/Holdings';
 import AIAnalyst from './pages/AIAnalyst';
 import './index.css';
 
@@ -38,7 +37,6 @@ function App() {
                     <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
                     <Route path="/" element={user ? <Dashboard /> : <Navigate to="/login" />} />
                     <Route path="/config" element={user ? <MonthlyConfig /> : <Navigate to="/login" />} />
-                    <Route path="/holdings" element={user ? <Holdings /> : <Navigate to="/login" />} />
                     <Route path="/ai" element={user ? <AIAnalyst /> : <Navigate to="/login" />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>

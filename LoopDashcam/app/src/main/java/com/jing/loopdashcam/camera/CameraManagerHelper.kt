@@ -31,24 +31,32 @@ class CameraManagerHelper(private val context: Context) {
     private var currentSurfaceTexture: SurfaceTexture? = null
     private var currentWidth: Int = 0
     private var currentHeight: Int = 0
+    private var currentFps: Int = 60
+    private var currentLensFacing: Int = CameraCharacteristics.LENS_FACING_BACK
 
     @SuppressLint("MissingPermission")
-    fun openCamera(surfaceTexture: SurfaceTexture, width: Int, height: Int, lensFacing: Int = CameraCharacteristics.LENS_FACING_BACK) {
+    fun openCamera(surfaceTexture: SurfaceTexture, width: Int, height: Int, fps: Int = 60, lensFacing: Int = CameraCharacteristics.LENS_FACING_BACK) {
+        val cameraId = getCameraIdByLens(lensFacing)
+        if (cameraId == null) {
+            Log.e("CameraManager", "Could not find camera with specified lens facing: $lensFacing")
+            return
+        }
+
+        currentCameraId = cameraId
         currentSurfaceTexture = surfaceTexture
         currentWidth = width
         currentHeight = height
+        currentFps = fps
+        currentLensFacing = lensFacing
         
         try {
-            val cameraId = getCameraIdByLens(lensFacing) ?: return
-            currentCameraId = cameraId
-            
             surfaceTexture.setDefaultBufferSize(width, height)
             val surface = Surface(surfaceTexture)
 
             cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
                     cameraDevice = camera
-                    startPreview(surface)
+                    startPreview(surface, cameraId)
                 }
 
                 override fun onDisconnected(camera: CameraDevice) {
@@ -67,23 +75,40 @@ class CameraManagerHelper(private val context: Context) {
         }
     }
 
-    private fun startPreview(surface: Surface) {
+    private fun startPreview(surface: Surface, cameraId: String) {
         val device = cameraDevice ?: return
         try {
             val builder = device.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
             builder.addTarget(surface)
 
-            // Force 60FPS lock for smooth video 
-            // In a real device you MUST query supported ranges first to ensure 60fps is available
-            val fpsRange = Range(60, 60)
-            builder.set(android.hardware.camera2.CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange)
+            // Auto-fallback FPS Range
+            val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+            val fpsRanges = characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+            
+            var bestRange = fpsRanges?.firstOrNull() ?: Range(30, 30)
+            if (fpsRanges != null) {
+                for (range in fpsRanges) {
+                    if (range.upper == currentFps && range.lower == currentFps) {
+                        bestRange = range
+                        break
+                    } else if (range.upper >= currentFps) {
+                        bestRange = range // nearest high
+                    }
+                }
+            }
+            
+            builder.set(android.hardware.camera2.CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, bestRange)
             // Disable video stabilization to prevent conflict with 60fps 
             builder.set(android.hardware.camera2.CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, 0)
             
             device.createCaptureSession(listOf(surface), object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
                     captureSession = session
-                    session.setRepeatingRequest(builder.build(), null, backgroundHandler)
+                    try {
+                        session.setRepeatingRequest(builder.build(), null, backgroundHandler)
+                    } catch (e: Exception) {
+                        Log.e("CameraManager", "Ignored session config error (camera might be switching): ${e.message}")
+                    }
                 }
 
                 override fun onConfigureFailed(session: CameraCaptureSession) {
@@ -96,16 +121,38 @@ class CameraManagerHelper(private val context: Context) {
     }
 
     fun switchCamera() {
-        cameraDevice?.close()
-        cameraDevice = null
-        
-        // Simple toggle: if BACK, switch to FRONT. If FRONT, switch to BACK.
-        val characteristics = cameraManager.getCameraCharacteristics(currentCameraId ?: return)
-        val currentLens = characteristics.get(CameraCharacteristics.LENS_FACING)
-        val nextLens = if (currentLens == CameraCharacteristics.LENS_FACING_BACK) 
+        val nextLens = if (currentLensFacing == CameraCharacteristics.LENS_FACING_BACK)
                          CameraCharacteristics.LENS_FACING_FRONT else CameraCharacteristics.LENS_FACING_BACK
         
-        openCamera(currentSurfaceTexture!!, currentWidth, currentHeight, nextLens)
+        val st = currentSurfaceTexture
+        if (st == null) {
+            Log.e("CameraManager", "SurfaceTexture is null, cannot switch camera")
+            return
+        }
+        
+        try {
+            captureSession?.close()
+            cameraDevice?.close()
+            cameraDevice = null
+            openCamera(st, currentWidth, currentHeight, currentFps, nextLens)
+        } catch (e: Exception) { e.printStackTrace() }
+    }
+
+    fun changeResolution(width: Int, height: Int, fps: Int) {
+        if (currentWidth == width && currentHeight == height && currentFps == fps) return
+        
+        val st = currentSurfaceTexture
+        if (st == null) {
+            Log.e("CameraManager", "SurfaceTexture is null, cannot change resolution")
+            return
+        }
+        
+        try {
+            captureSession?.close()
+            cameraDevice?.close()
+            cameraDevice = null
+            openCamera(st, width, height, fps, currentLensFacing)
+        } catch (e: Exception) { e.printStackTrace() }
     }
 
     private fun getCameraIdByLens(lensFacing: Int): String? {
