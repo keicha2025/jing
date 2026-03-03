@@ -1,34 +1,34 @@
 [
     {
-        "merged": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-debug-33:/drawable_dot_gray.xml.flat",
-        "source": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-main-35:/drawable/dot_gray.xml"
+        "merged": "com.jing.loopdashcam.app-debug-33:/drawable_bg_shutter_inner.xml.flat",
+        "source": "com.jing.loopdashcam.app-main-35:/drawable/bg_shutter_inner.xml"
     },
     {
-        "merged": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-debug-33:/drawable_bg_shutter_outer.xml.flat",
-        "source": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-main-35:/drawable/bg_shutter_outer.xml"
+        "merged": "com.jing.loopdashcam.app-debug-33:/drawable_bg_glass_circle.xml.flat",
+        "source": "com.jing.loopdashcam.app-main-35:/drawable/bg_glass_circle.xml"
     },
     {
-        "merged": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-debug-33:/drawable_bg_glass_circle.xml.flat",
-        "source": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-main-35:/drawable/bg_glass_circle.xml"
+        "merged": "com.jing.loopdashcam.app-debug-33:/drawable_dot_gray.xml.flat",
+        "source": "com.jing.loopdashcam.app-main-35:/drawable/dot_gray.xml"
     },
     {
-        "merged": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-debug-33:/drawable_bg_shutter_inner.xml.flat",
-        "source": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-main-35:/drawable/bg_shutter_inner.xml"
+        "merged": "com.jing.loopdashcam.app-debug-33:/drawable_bg_glass_pill.xml.flat",
+        "source": "com.jing.loopdashcam.app-main-35:/drawable/bg_glass_pill.xml"
     },
     {
-        "merged": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-debug-33:/drawable_bg_glass_pill.xml.flat",
-        "source": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-main-35:/drawable/bg_glass_pill.xml"
+        "merged": "com.jing.loopdashcam.app-debug-33:/drawable_bg_shutter_outer.xml.flat",
+        "source": "com.jing.loopdashcam.app-main-35:/drawable/bg_shutter_outer.xml"
     },
     {
-        "merged": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-debug-33:/layout_activity_main.xml.flat",
-        "source": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-main-35:/layout/activity_main.xml"
-    },
-    {
-        "merged": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-debug-33:/drawable_bg_timer.xml.flat",
-        "source": "/Users/jing/.gradle/daemon/8.13/com.jing.loopdashcam.app-main-35:/drawable/bg_timer.xml"
+        "merged": "com.jing.loopdashcam.app-debug-33:/drawable_bg_glass_dropdown.xml.flat",
+        "source": "com.jing.loopdashcam.app-main-35:/drawable/bg_glass_dropdown.xml"
     },
     {
         "merged": "com.jing.loopdashcam.app-debug-33:/layout_activity_main.xml.flat",
         "source": "com.jing.loopdashcam.app-main-35:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.jing.loopdashcam.app-debug-33:/drawable_bg_timer.xml.flat",
+        "source": "com.jing.loopdashcam.app-main-35:/drawable/bg_timer.xml"
     }
 ]

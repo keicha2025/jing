@@ -1,0 +1,490 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Play, Square, Plus, CheckCircle2, Circle, Clock, 
+  ChevronRight, MoreHorizontal, Wallet, ArrowLeft, X,
+  Calendar, Check
+} from 'lucide-react';
+
+// --- 常數與顏色設定 (Wabi-sabi / Earth Tones) ---
+const COLORS = {
+  bg: 'bg-[#F9F8F6]',           // 溫潤紙白
+  card: 'bg-[#FFFFFF]',         // 卡片白
+  textPrimary: 'text-[#4A443C]',// 深木褐
+  textSecondary: 'text-[#8C857B]',// 灰褐
+  sageGreen: 'bg-[#8BA888]',    // 鼠尾草綠 (健康狀態)
+  terracotta: 'bg-[#C87965]',   // 陶土色 (超時警示)
+  wood: 'bg-[#D4C3B3]',         // 原木色 (中性按鈕)
+  border: 'border-[#EAE3DA]'    // 柔和邊框
+};
+
+// --- Mock Data ---
+const initialProjects = [
+  {
+    id: 'p1',
+    name: '品牌識別設計 (Brand ID)',
+    billingType: 'fixed',
+    totalBudget: 50000,
+    targetRate: 1000, // 預期時薪，代表總工時預期為 50 小時
+    status: 'ongoing',
+    payments: [{ amount: 15000, date: '2023-10-01', note: '訂金' }]
+  },
+  {
+    id: 'p2',
+    name: '官方網站開發 (Web Dev)',
+    billingType: 'fixed',
+    totalBudget: 80000,
+    targetRate: 1200, // 預期約 66.6 小時
+    status: 'ongoing',
+    payments: []
+  }
+];
+
+const initialTasks = [
+  { id: 't1', projectId: 'p1', title: 'Logo 概念草圖繪製', isCompleted: false },
+  { id: 't2', projectId: 'p1', title: '色彩計畫與字體定義', isCompleted: true },
+  { id: 't3', projectId: 'p2', title: '首頁 UI Mockup', isCompleted: false },
+];
+
+const initialTimeLogs = [
+  { id: 'l1', taskId: 't2', duration: 180 }, // 180 分鐘 (3 小時)
+  { id: 'l2', taskId: 't1', duration: 2500 }, // 故意設定較長時間以展示超時警告 (約 41 小時)
+];
+
+// --- 工具函式 ---
+const formatDuration = (minutes) => {
+  const h = Math.floor(minutes / 60);
+  const m = Math.floor(minutes % 60);
+  return `${h}h ${m}m`;
+};
+
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', minimumFractionDigits: 0 }).format(amount);
+};
+
+// --- 主元件 ---
+export default function App() {
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'project_detail'
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  
+  // 狀態管理
+  const [projects, setProjects] = useState(initialProjects);
+  const [tasks, setTasks] = useState(initialTasks);
+  const [timeLogs, setTimeLogs] = useState(initialTimeLogs);
+  
+  // 計時器狀態
+  const [activeTimer, setActiveTimer] = useState(null); // { taskId, startTime }
+  const [timerDisplay, setTimerDisplay] = useState('00:00:00');
+
+  // 底部抽屜狀態
+  const [bottomSheet, setBottomSheet] = useState({ isOpen: false, type: null, data: null }); // type: 'add_task' | 'log_time'
+
+  // --- 核心邏輯計算 ---
+  const getProjectStats = (projectId) => {
+    const project = projects.find(p => p.id === projectId);
+    const projectTasks = tasks.filter(t => t.projectId === projectId);
+    const taskIds = projectTasks.map(t => t.id);
+    const projectLogs = timeLogs.filter(l => taskIds.includes(l.taskId));
+    
+    const loggedMinutes = projectLogs.reduce((acc, log) => acc + log.duration, 0);
+    const loggedHours = loggedMinutes / 60;
+    
+    const expectedHours = project.totalBudget / project.targetRate;
+    const progressPercent = Math.min((loggedHours / expectedHours) * 100, 100);
+    const isOvertime = loggedHours > expectedHours;
+    const actualRate = loggedHours > 0 ? project.totalBudget / loggedHours : project.targetRate;
+
+    const totalPaid = project.payments.reduce((acc, p) => acc + p.amount, 0);
+    const remainingBalance = project.totalBudget - totalPaid;
+
+    return { loggedHours, expectedHours, progressPercent, isOvertime, actualRate, totalPaid, remainingBalance };
+  };
+
+  // --- 計時器邏輯 (背景持續跳動) ---
+  useEffect(() => {
+    let intervalId;
+    if (activeTimer) {
+      intervalId = setInterval(() => {
+        const diff = Date.now() - activeTimer.startTime;
+        const hours = Math.floor(diff / 3600000);
+        const minutes = Math.floor((diff % 3600000) / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        setTimerDisplay(
+          `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+        );
+      }, 1000);
+    } else {
+      setTimerDisplay('00:00:00');
+    }
+    return () => clearInterval(intervalId);
+  }, [activeTimer]);
+
+  const toggleTimer = (taskId) => {
+    if (activeTimer?.taskId === taskId) {
+      // 停止並儲存
+      const durationMinutes = (Date.now() - activeTimer.startTime) / 60000;
+      setTimeLogs([...timeLogs, { id: Date.now().toString(), taskId, duration: durationMinutes, isManual: false }]);
+      setActiveTimer(null);
+    } else {
+      // 開始新的 (若有舊的先不處理複雜切換，直接覆蓋或要求先停止)
+      if(activeTimer) {
+        alert("請先停止當前任務的計時。");
+        return;
+      }
+      setActiveTimer({ taskId, startTime: Date.now() });
+    }
+  };
+
+  // --- UI 元件 ---
+
+  const FloatingTimer = () => {
+    if (!activeTimer) return null;
+    const task = tasks.find(t => t.id === activeTimer.taskId);
+    return (
+      <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 w-11/12 max-w-sm bg-[#4A443C] text-[#F9F8F6] rounded-full px-5 py-3 flex items-center justify-between shadow-lg z-50 transition-all duration-300`}>
+        <div className="flex items-center space-x-3 truncate">
+          <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse"></div>
+          <span className="text-sm font-medium truncate w-32">{task?.title}</span>
+        </div>
+        <div className="flex items-center space-x-4">
+          <span className="font-mono text-sm tracking-wider">{timerDisplay}</span>
+          <button onClick={() => toggleTimer(activeTimer.taskId)} className="p-1.5 bg-[#C87965] rounded-full text-white hover:opacity-90">
+            <Square size={14} fill="currentColor" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const ProjectCard = ({ project }) => {
+    const stats = getProjectStats(project.id);
+    const progressColor = stats.isOvertime ? COLORS.terracotta : COLORS.sageGreen;
+    
+    return (
+      <div 
+        onClick={() => { setSelectedProjectId(project.id); setCurrentView('project_detail'); }}
+        className={`${COLORS.card} rounded-2xl p-5 mb-4 shadow-sm border ${COLORS.border} active:scale-[0.98] transition-transform cursor-pointer`}
+      >
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <h3 className={`${COLORS.textPrimary} font-medium text-lg tracking-wide`}>{project.name}</h3>
+            <p className={`${COLORS.textSecondary} text-xs mt-1 flex items-center`}>
+              <Wallet size={12} className="mr-1" />
+              {formatCurrency(project.totalBudget)} • 目標時薪 ${project.targetRate}
+            </p>
+          </div>
+          <div className={`px-2 py-1 rounded-md text-[10px] tracking-wider font-medium bg-[#F0EBE1] ${COLORS.textPrimary}`}>
+            {project.status.toUpperCase()}
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mt-4">
+          <div className="flex justify-between text-xs mb-1.5">
+            <span className={COLORS.textSecondary}>已投入 {stats.loggedHours.toFixed(1)}h</span>
+            <span className={stats.isOvertime ? 'text-[#C87965] font-medium' : COLORS.textSecondary}>
+              {stats.isOvertime ? '超時預警' : `剩餘 ${(stats.expectedHours - stats.loggedHours).toFixed(1)}h`}
+            </span>
+          </div>
+          <div className="h-1.5 w-full bg-[#EAE3DA] rounded-full overflow-hidden">
+            <div 
+              className={`h-full ${progressColor} transition-all duration-700 ease-out`} 
+              style={{ width: `${stats.progressPercent}%` }}
+            />
+          </div>
+          {stats.isOvertime && (
+            <p className="text-[10px] text-[#C87965] mt-1.5 text-right">
+              實際時薪已降至 ${Math.round(stats.actualRate)}/h
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const SwipeableTask = ({ task }) => {
+    const [touchStart, setTouchStart] = useState(null);
+    const [touchEnd, setTouchEnd] = useState(null);
+    const [swiped, setSwiped] = useState(0); // <0 left, >0 right
+    
+    // Minimum distance to be considered a swipe
+    const minSwipeDistance = 50;
+
+    const onTouchStart = (e) => {
+      setTouchEnd(null);
+      setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
+
+    const onTouchEnd = () => {
+      if (!touchStart || !touchEnd) return;
+      const distance = touchStart - touchEnd;
+      const isLeftSwipe = distance > minSwipeDistance;
+      const isRightSwipe = distance < -minSwipeDistance;
+
+      if (isLeftSwipe) setSwiped(-1); // Reveal right menu (Log Time)
+      else if (isRightSwipe) {
+         // Mark as complete immediately on right swipe (UX optimization)
+         toggleTaskStatus(task.id);
+         setSwiped(0);
+      }
+      else setSwiped(0);
+    };
+
+    const toggleTaskStatus = (id) => {
+      setTasks(tasks.map(t => t.id === id ? { ...t, isCompleted: !t.isCompleted } : t));
+    };
+
+    const taskLogs = timeLogs.filter(l => l.taskId === task.id);
+    const totalMinutes = taskLogs.reduce((acc, log) => acc + log.duration, 0);
+    const isTimerActive = activeTimer?.taskId === task.id;
+
+    return (
+      <div className="relative mb-3 rounded-xl overflow-hidden bg-[#EAE3DA]">
+        {/* Actions Background (Underneath) */}
+        <div className="absolute inset-0 flex justify-end items-center px-4">
+          <button 
+            onClick={() => { setBottomSheet({ isOpen: true, type: 'log_time', data: task }); setSwiped(0); }}
+            className="text-[#4A443C] text-xs font-medium flex flex-col items-center justify-center w-16"
+          >
+            <Clock size={16} className="mb-1" />
+            補登
+          </button>
+        </div>
+
+        {/* Main Card (Swipeable) */}
+        <div 
+          className={`${COLORS.card} rounded-xl p-4 flex items-center justify-between relative transition-transform duration-200 ease-out border ${COLORS.border}`}
+          style={{ transform: `translateX(${swiped === -1 ? '-80px' : '0'})` }}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          <div className="flex items-center space-x-3 overflow-hidden">
+            <button onClick={() => toggleTaskStatus(task.id)} className="flex-shrink-0 mt-0.5">
+              {task.isCompleted ? (
+                <CheckCircle2 size={20} className="text-[#8BA888]" />
+              ) : (
+                <Circle size={20} className={COLORS.textSecondary} />
+              )}
+            </button>
+            <div className="truncate">
+              <p className={`text-sm tracking-wide truncate ${task.isCompleted ? 'line-through text-[#B5AEA4]' : COLORS.textPrimary}`}>
+                {task.title}
+              </p>
+              {totalMinutes > 0 && (
+                <p className={`text-[10px] mt-0.5 ${COLORS.textSecondary}`}>
+                  已投入 {formatDuration(totalMinutes)}
+                </p>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2 flex-shrink-0">
+             <button 
+                onClick={() => toggleTimer(task.id)}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  isTimerActive 
+                    ? 'bg-[#4A443C] text-[#F9F8F6] animate-pulse' 
+                    : `bg-[#F0EBE1] ${COLORS.textPrimary} hover:bg-[#EAE3DA]`
+                }`}
+              >
+                {isTimerActive ? <Square size={12} fill="currentColor"/> : <Play size={12} fill="currentColor" className="ml-0.5"/>}
+              </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const BottomSheetComponent = () => {
+    if (!bottomSheet.isOpen) return null;
+
+    const closeSheet = () => setBottomSheet({ isOpen: false, type: null, data: null });
+    const isLogTime = bottomSheet.type === 'log_time';
+
+    const [inputVal, setInputVal] = useState('');
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      if (!inputVal.trim()) return;
+
+      if (isLogTime) {
+        // Simple manual log (assuming input is in minutes for prototype)
+        setTimeLogs([...timeLogs, { id: Date.now().toString(), taskId: bottomSheet.data.id, duration: parseInt(inputVal), isManual: true }]);
+      } else {
+        // Add task
+        setTasks([...tasks, { id: Date.now().toString(), projectId: selectedProjectId, title: inputVal, isCompleted: false }]);
+      }
+      closeSheet();
+    };
+
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col justify-end">
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-[#4A443C]/20 backdrop-blur-sm transition-opacity" onClick={closeSheet}></div>
+        
+        {/* Sheet Content */}
+        <div className="relative bg-[#F9F8F6] w-full max-w-md mx-auto rounded-t-3xl p-6 shadow-2xl animate-slide-up">
+          <div className="w-10 h-1 bg-[#D4C3B3] rounded-full mx-auto mb-6"></div>
+          
+          <h2 className={`text-lg font-medium mb-4 ${COLORS.textPrimary}`}>
+            {isLogTime ? `補登工時 - ${bottomSheet.data?.title}` : '新增子任務'}
+          </h2>
+          
+          <form onSubmit={handleSubmit}>
+            <div className="mb-6">
+              <label className={`block text-xs mb-2 ${COLORS.textSecondary}`}>
+                {isLogTime ? '投入時間 (分鐘)' : '任務名稱'}
+              </label>
+              <input 
+                type={isLogTime ? 'number' : 'text'}
+                autoFocus
+                value={inputVal}
+                onChange={(e) => setInputVal(e.target.value)}
+                placeholder={isLogTime ? '例如: 120' : '例如: 整理客戶回饋'}
+                className="w-full bg-[#FFFFFF] border border-[#EAE3DA] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#8BA888] transition-colors"
+              />
+            </div>
+            
+            <button 
+              type="submit"
+              className={`w-full py-3.5 rounded-xl text-white font-medium tracking-wide transition-colors ${COLORS.sageGreen} hover:opacity-90`}
+            >
+              儲存紀錄
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  // --- Views ---
+
+  const DashboardView = () => (
+    <div className="px-5 py-6 overflow-y-auto h-full pb-24">
+      <header className="mb-8 mt-2 flex justify-between items-end">
+        <div>
+          <p className={`${COLORS.textSecondary} text-xs tracking-widest uppercase mb-1`}>Wabi-sabi Workspace</p>
+          <h1 className={`${COLORS.textPrimary} text-2xl font-medium tracking-wide`}>專案總覽</h1>
+        </div>
+        <div className="w-10 h-10 rounded-full bg-[#EAE3DA] flex items-center justify-center text-[#4A443C]">
+          <span className="font-serif italic">J.</span>
+        </div>
+      </header>
+      
+      <div className="space-y-4">
+        {projects.map(p => (
+          <ProjectCard key={p.id} project={p} />
+        ))}
+      </div>
+    </div>
+  );
+
+  const ProjectDetailView = () => {
+    const project = projects.find(p => p.id === selectedProjectId);
+    const projectTasks = tasks.filter(t => t.projectId === selectedProjectId);
+    const stats = getProjectStats(project.id);
+    
+    return (
+      <div className="flex flex-col h-full bg-[#F9F8F6]">
+        {/* Header */}
+        <div className="px-5 py-4 bg-white/50 backdrop-blur-md sticky top-0 z-10 border-b border-[#EAE3DA] flex items-center justify-between">
+          <button onClick={() => setCurrentView('dashboard')} className="p-2 -ml-2 text-[#4A443C]">
+            <ArrowLeft size={20} />
+          </button>
+          <span className="text-sm font-medium text-[#4A443C] truncate w-48 text-center">{project.name}</span>
+          <button className="p-2 -mr-2 text-[#4A443C]">
+             <MoreHorizontal size={20} />
+          </button>
+        </div>
+
+        <div className="px-5 py-6 overflow-y-auto pb-32 flex-1">
+          {/* Financial Summary Widget */}
+          <div className="bg-[#FFFFFF] rounded-2xl p-5 mb-8 border border-[#EAE3DA] shadow-sm">
+            <div className="flex justify-between items-baseline mb-4">
+              <span className={`text-xs ${COLORS.textSecondary}`}>財務與工時進度</span>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded ${stats.remainingBalance === 0 ? 'bg-[#8BA888]/20 text-[#8BA888]' : 'bg-[#EAE3DA] text-[#4A443C]'}`}>
+                {stats.remainingBalance === 0 ? '已結清' : '款項進行中'}
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className={`text-[10px] ${COLORS.textSecondary} mb-1`}>總預算 (Fixed)</p>
+                <p className={`text-lg font-medium ${COLORS.textPrimary}`}>{formatCurrency(project.totalBudget)}</p>
+              </div>
+              <div>
+                <p className={`text-[10px] ${COLORS.textSecondary} mb-1`}>已收 / 待收</p>
+                <p className={`text-sm ${COLORS.textPrimary}`}>
+                  {formatCurrency(stats.totalPaid)} <span className="text-[#B5AEA4]">/ {formatCurrency(stats.remainingBalance)}</span>
+                </p>
+              </div>
+              <div>
+                 <p className={`text-[10px] ${COLORS.textSecondary} mb-1`}>累積投入工時</p>
+                 <p className={`text-sm ${stats.isOvertime ? 'text-[#C87965]' : COLORS.textPrimary}`}>
+                   {stats.loggedHours.toFixed(1)} <span className="text-xs">hrs</span>
+                 </p>
+              </div>
+              <div>
+                 <p className={`text-[10px] ${COLORS.textSecondary} mb-1`}>當前實際時薪</p>
+                 <p className={`text-sm ${stats.actualRate < project.targetRate ? 'text-[#C87965]' : COLORS.textPrimary}`}>
+                   ${Math.round(stats.actualRate)} <span className="text-xs text-[#B5AEA4]">/ ${project.targetRate}</span>
+                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Task List */}
+          <div className="flex justify-between items-center mb-4">
+            <h3 className={`text-sm font-medium ${COLORS.textPrimary}`}>子任務清單</h3>
+            <span className={`text-xs ${COLORS.textSecondary}`}>左滑補登 / 右滑完成</span>
+          </div>
+          
+          <div className="space-y-1">
+            {projectTasks.length === 0 ? (
+              <div className="text-center py-10 text-[#B5AEA4] text-sm">
+                無待辦事項，喝杯茶吧 🍵
+              </div>
+            ) : (
+              projectTasks.map(t => <SwipeableTask key={t.id} task={t} />)
+            )}
+          </div>
+        </div>
+
+        {/* Floating Add Task Button */}
+        <div className="absolute bottom-6 right-5 z-20">
+          <button 
+            onClick={() => setBottomSheet({ isOpen: true, type: 'add_task', data: null })}
+            className="w-14 h-14 bg-[#4A443C] text-[#F9F8F6] rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
+          >
+            <Plus size={24} />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className={`w-full h-screen ${COLORS.bg} font-sans overflow-hidden flex justify-center`}>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes slide-up {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        .animate-slide-up {
+          animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+      `}} />
+      
+      {/* 限制最大寬度以模擬手機視角 */}
+      <div className="w-full max-w-md h-full relative shadow-2xl bg-[#F9F8F6]">
+        <FloatingTimer />
+        
+        {currentView === 'dashboard' ? <DashboardView /> : <ProjectDetailView />}
+        
+        <BottomSheetComponent />
+      </div>
+    </div>
+  );
+}

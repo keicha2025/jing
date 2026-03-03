@@ -8,6 +8,7 @@ import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CaptureRequest
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
@@ -97,9 +98,29 @@ class CameraManagerHelper(private val context: Context) {
                 }
             }
             
-            builder.set(android.hardware.camera2.CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, bestRange)
-            // Disable video stabilization to prevent conflict with 60fps 
-            builder.set(android.hardware.camera2.CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, 0)
+            builder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, bestRange)
+
+            // --- 防手震優化 ---
+            val stabilizationModes = characteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
+            val previewStabilizationModes = characteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
+            
+            // 嘗試開啟 Android 13+ 的預覽防手震 (最強效果)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                val previewStabilization = characteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES)
+                if (previewStabilization?.contains(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION) == true) {
+                    builder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION)
+                    Log.d("CameraManager", "Enabled Preview Stabilization")
+                } else if (stabilizationModes?.contains(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) == true) {
+                    builder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON)
+                    Log.d("CameraManager", "Enabled Basic Video Stabilization")
+                }
+            } else {
+                // 舊版 Android 開啟標準防手震
+                if (stabilizationModes?.contains(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) == true) {
+                    builder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON)
+                    Log.d("CameraManager", "Enabled Basic Video Stabilization")
+                }
+            }
             
             device.createCaptureSession(listOf(surface), object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
@@ -107,7 +128,7 @@ class CameraManagerHelper(private val context: Context) {
                     try {
                         session.setRepeatingRequest(builder.build(), null, backgroundHandler)
                     } catch (e: Exception) {
-                        Log.e("CameraManager", "Ignored session config error (camera might be switching): ${e.message}")
+                        Log.e("CameraManager", "Ignored session config error: ${e.message}")
                     }
                 }
 

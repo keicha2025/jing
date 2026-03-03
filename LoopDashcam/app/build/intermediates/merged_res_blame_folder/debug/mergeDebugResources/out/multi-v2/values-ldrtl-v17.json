@@ -4,7 +4,7 @@
             "outputFile": "com.jing.loopdashcam.app-mergeDebugResources-31:/values-ldrtl-v17/values-ldrtl-v17.xml",
             "map": [
                 {
-                    "source": "/Users/jing/.gradle/caches/8.13/transforms/ebdf3553f3866109240a2f8f85ac82ac/transformed/material-1.11.0/res/values-ldrtl-v17/values-ldrtl-v17.xml",
+                    "source": "/Users/jing/.gradle/caches/9.2.1/transforms/b9e23dfa989cbcd3e2e2d0b78e58c4f5/transformed/material-1.11.0/res/values-ldrtl-v17/values-ldrtl-v17.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",

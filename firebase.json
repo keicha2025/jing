@@ -7,6 +7,19 @@
             "**/.*",
             "**/node_modules/**"
         ],
+        "headers": [
+            {
+                "source": "**/*.html",
+                "headers": [
+                    {
+                        "key": "Cache-Control",
+                        "value": "no-cache, no-store, must-revalidate"
+                    }
+                ]
+            }
+        ],
+        "cleanUrls": true,
+        "trailingSlash": false,
         "rewrites": [
             {
                 "source": "/pdf-tool/**",
@@ -29,6 +42,26 @@
                 "destination": "/finance/index.html"
             },
             {
+                "source": "/caselog/project",
+                "destination": "/caselog/project.html"
+            },
+            {
+                "source": "/caselog/projects",
+                "destination": "/caselog/projects.html"
+            },
+            {
+                "source": "/caselog/settings",
+                "destination": "/caselog/settings.html"
+            },
+            {
+                "source": "/caselog/timer",
+                "destination": "/caselog/timer.html"
+            },
+            {
+                "source": "/caselog/**",
+                "destination": "/caselog/index.html"
+            },
+            {
                 "source": "/**",
                 "destination": "/index.html"
             }
@@ -38,6 +71,10 @@
         {
             "database": "jing-finance",
             "rules": "strategy-box/firestore.rules"
+        },
+        {
+            "database": "case-log",
+            "rules": "caselog/firestore.rules"
         }
     ]
 }

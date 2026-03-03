@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.opengl.GLSurfaceView
 import android.os.Bundle
+import android.view.OrientationEventListener
+import android.view.Surface
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
@@ -54,6 +56,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private lateinit var orientationEventListener: OrientationEventListener
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -70,6 +74,24 @@ class MainActivity : AppCompatActivity() {
         } else {
             initApp()
         }
+
+        orientationEventListener = object : OrientationEventListener(this) {
+            override fun onOrientationChanged(orientation: Int) {
+                if (orientation == ORIENTATION_UNKNOWN) return
+                val rotation = when (orientation) {
+                    in 45..134 -> 90
+                    in 135..224 -> 180
+                    in 225..314 -> 270
+                    else -> 0
+                }
+                glSurfaceView.queueEvent {
+                    if (::renderer.isInitialized) {
+                        renderer.displayRotationDegrees = rotation
+                    }
+                }
+            }
+        }
+        orientationEventListener.enable()
     }
 
     private fun setupUI() {
@@ -92,11 +114,7 @@ class MainActivity : AppCompatActivity() {
         tvStorageInfo.text = loopManager.getStorageInfo()
 
         btnSettings.setOnClickListener {
-            if (menuSettings.visibility == View.VISIBLE) {
-                menuSettings.visibility = View.GONE
-            } else {
-                menuSettings.visibility = View.VISIBLE
-            }
+            menuSettings.visibility = if (menuSettings.visibility == View.VISIBLE) View.GONE else View.VISIBLE
         }
 
         menuToggleSpeed.setOnClickListener {
@@ -110,11 +128,7 @@ class MainActivity : AppCompatActivity() {
         }
         
         btnQuality.setOnClickListener {
-            if (menuQuality.visibility == View.VISIBLE) {
-                menuQuality.visibility = View.GONE
-            } else {
-                menuQuality.visibility = View.VISIBLE
-            }
+            menuQuality.visibility = if (menuQuality.visibility == View.VISIBLE) View.GONE else View.VISIBLE
         }
 
         menu4K.setOnClickListener { changeQuality(3840, 2160, 30, 20000000, "4K") }
@@ -127,7 +141,6 @@ class MainActivity : AppCompatActivity() {
 
         btnShutter.setOnClickListener {
             if (!isRecording) {
-                // Ensure menu is closed before recording starts
                 menuQuality.visibility = View.GONE
                 menuSettings.visibility = View.GONE
                 startRecording()
@@ -149,21 +162,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun changeQuality(width: Int, height: Int, fps: Int, bitrate: Int, resName: String) {
-        if (isRecording) return // Block changes while recording
-
+        if (isRecording) return
         currentVidWidth = width
         currentVidHeight = height
         currentFps = fps
         currentBitrate = bitrate
-
         renderer.recordingWidth = width
         renderer.recordingHeight = height
-
         findViewById<TextView>(R.id.tvResolution).text = resName
         findViewById<TextView>(R.id.tvFPS).text = "${fps}FPS"
         findViewById<View>(R.id.menuQuality).visibility = View.GONE
-
-        // Real-time camera restart with new setting
         cameraHelper.changeResolution(width, height, fps)
     }
 
@@ -172,34 +180,27 @@ class MainActivity : AppCompatActivity() {
         videoEncoder = VideoEncoder().apply {
             prepare(videoFile, currentVidWidth, currentVidHeight, currentBitrate, currentFps)
         }
-
-        
         recordingStartTime = System.currentTimeMillis()
         timerHandler.post(timerRunnable)
-        
-        // Pass the Surface from Encoder to GL Renderer for output
         val inputSurface = videoEncoder?.getInputSurface()
         glSurfaceView.queueEvent {
             renderer.recordingSurface = inputSurface
+            renderer.isRecording = true
         }
     }
 
     private fun stopRecording() {
         timerHandler.removeCallbacks(timerRunnable)
-        
-        // Signal GL renderer to stop sending frames to encoder surface
         glSurfaceView.queueEvent {
             renderer.recordingSurface = null
+            renderer.isRecording = false
         }
-        
-        // Wait a bit for the last frame to finish processing if needed
+        // Ensure encoder releases correctly to flush data to file
         videoEncoder?.drainEncoder(true)
         videoEncoder?.release()
         videoEncoder = null
-        
         findViewById<TextView>(R.id.tvStorageInfo).text = loopManager.getStorageInfo()
     }
-
 
     private fun hasPermissions() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
@@ -221,25 +222,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
         gpsManager.start()
-
         cameraHelper = CameraManagerHelper(this)
-
         glSurfaceView.setEGLContextClientVersion(2)
         renderer = CameraGLRenderer(this) { surfaceTexture ->
-            // SurfaceTexture is ready from GL Renderer
             surfaceTexture.setOnFrameAvailableListener {
                 glSurfaceView.requestRender()
             }
-            // Open Camera 2 and lock to 60fps pointing to this Surface
             cameraHelper.openCamera(surfaceTexture, currentVidWidth, currentVidHeight, currentFps)
         }
-        
         glSurfaceView.setRenderer(renderer)
         glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        orientationEventListener.disable()
         if (::gpsManager.isInitialized) gpsManager.stop()
         if (::cameraHelper.isInitialized) cameraHelper.closeCamera()
     }

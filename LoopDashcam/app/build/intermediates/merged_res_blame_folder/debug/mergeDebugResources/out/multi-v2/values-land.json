@@ -4,7 +4,7 @@
             "outputFile": "com.jing.loopdashcam.app-mergeDebugResources-31:/values-land/values-land.xml",
             "map": [
                 {
-                    "source": "/Users/jing/.gradle/caches/8.13/transforms/ebdf3553f3866109240a2f8f85ac82ac/transformed/material-1.11.0/res/values-land/values-land.xml",
+                    "source": "/Users/jing/.gradle/caches/9.2.1/transforms/b9e23dfa989cbcd3e2e2d0b78e58c4f5/transformed/material-1.11.0/res/values-land/values-land.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,26,35,40",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -23,7 +23,7 @@
                     }
                 },
                 {
-                    "source": "/Users/jing/.gradle/caches/8.13/transforms/733743d2600d4fa968d679c129ac3aa7/transformed/appcompat-1.6.1/res/values-land/values-land.xml",
+                    "source": "/Users/jing/.gradle/caches/9.2.1/transforms/0ccd6d92591d87542fd94a9716e2d6d8/transformed/appcompat-1.6.1/res/values-land/values-land.xml",
                     "from": {
                         "startLines": "2,3,4",
                         "startColumns": "4,4,4",

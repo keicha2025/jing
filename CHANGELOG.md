@@ -46,6 +46,14 @@
 ### Added
 - Added a new download button to each session in the history list.
 - Implemented logic to retrieve all IndexedDB audio blob segments for a session, concatenate them into a single `audio/webm` file, and trigger a native download to the user's device storage.
+- Added "total investment idle funds" planning section on Dashboard.
+- Implemented monthly duration calculation for idle funds.
+- Persistent data storage for new idle funds fields in Firestore.
+- Added "Smart Sort" button in Inventory to sort by Taiwan Stocks > US Stocks > Fund > Others.
+- **Fixed deployment pipeline**: Updated `full_deploy.sh` to cleanly rebuild all projects and ensure `strategy-box` is correctly mapped to `/finance/`.
+- **Cache Invalidation**: Bumped root Service Worker to `v6` to force client-side updates.
+
+**中文說明：修復部署流程，確保 Finance 工具最新功能正確上線，並更新 Service Worker 以強制重新整理快取。**
 ### Changed
 - Changed PWA `short_name` to "夜語" so that it displays cleanly on mobile home screens without English prefix.
 
@@ -199,3 +207,251 @@
 **Affected files:** `pdf-tool/backend/main.py`
 
 修復了 PDF 扁平化工具無法真正點陣化字體的問題。原先使用 Ghostscript pdfwrite 僅重構 PDF 結構，未將文字轉為圖片，導致未嵌入字體的樣式會跑掉。改用 PyMuPDF 逐頁渲染為高解析度圖片後重組，確保所有文字與向量完全轉為像素。
+
+## [2026-03-02] Feat: 案時記 (caselog) Initial MVP
+### Added
+- Created `caselog` module using Next.js (Static Export, TailwindCSS).
+- Integrated Firebase Authentication (Google Sign-In) to establish user sessions.
+- Linked to the newly created Firestore database `case-log` under the project `gen-lang-client-0428297574`.
+- Handled UI translation from the original React `demo.bak` prototype to `page.tsx` using `react-firebase-hooks/firestore`.
+- Transitioned icon system to Google Material Symbols Outlined, satisfying design constraints.
+- Integrated `caselog` build flow into the global `full_deploy.sh` and corresponding rewrite rules in `firebase.json` for seamless deployment.
+
+*此更新建立了 caselog (案時記) 專案的打底基礎，包含與 Firestore 資料庫的串接、Google登入功能以及符合全域工作區架構的部署設定。*
+
+## [2026-03-02] - App Expansion & Multi-page PWA
+### Added
+- Multi-page routing using Next.js App Router (Dashboard, Finance, Stats, Settings).
+- Global Timer state management with TimerContext.
+- GlobalTimerBar component for persistent tracking across views.
+- Support for manual time logging and initial task duration.
+- Firestore security rules for "case-log" database.
+### Fixed
+- Static export build error for dynamic routes by switching to query parameters.
+- Asset path resolution issues with basePath configuration.
+
+## [2026-03-02T11:45:00Z] Caselog: Project Management System & Routing Fix
+
+### Summary
+Enhanced the "Caselog" application with a dedicated project management page, improved navigation for mobile usability, and a robust routing configuration for Firebase Hosting.
+
+### Technical Details
+- **Project Management Page (`src/app/projects/page.tsx`)**: Created a new view for listing all projects with status-based filtering (All/Ongoing/Completed). Includes a simplified `AddProjectModal` for quick entry.
+- **Bottom Navigation (`src/components/BottomNav.tsx`)**: Added a sticky navigation bar with 4 tabs (Home, Timer, Projects, Settings) using `framer-motion` for smooth interactions. Optimized for "thumb-zone" mobile usage.
+- **Project Detail Logic Overhaul**:
+    - **Edit Modal**: Implemented `EditProjectModal` in `project/page.tsx` to handle project metadata and a new **Payment Records** system (collection of amounts and dates).
+    - **Priority Override**: Modified rate logic to ensure project-specific target hourly rates override the global user setting.
+    - **Payment Status**: Changed project status badges to reflect financial progress (Unpaid, Partial, Full) based on total paid vs. budget.
+- **Dashboard Data Binding**: Updated `src/app/page.tsx` to dynamically calculate cumulative workspace stats (Total Budget and Outstanding Receivables) from live Firestore data.
+- **Infrastructure Fixes**:
+    - **Firebase Routing**: Updated root `firebase.json` with `cleanUrls: true` and explicit rewrites for `/caselog/project`, `/caselog/projects`, etc., to support deep links in Next.js static exports.
+    - **Project Card Interaction**: Refactored `ProjectCard.tsx` to use the entire card as a clickable `Link`, added `chevron_right` and `settings` visual cues.
+
+**新增了專案管理頁面與收款紀錄系統，並優化了手機版的底部導覽選單。同步修復了 Firebase 部署後的路由跳轉問題，確保點擊專案卡片與重新整理頁面時能正確顯示內容。**
+
+### Affected Files
+- `caselog/src/app/page.tsx`
+- `caselog/src/app/projects/page.tsx`
+- `caselog/src/app/project/page.tsx`
+- `caselog/src/components/ProjectCard.tsx`
+- `caselog/src/components/BottomNav.tsx`
+- `firebase.json`
+- `CHANGELOG.md`
+
+### Potential Side Effects
+- Users may need to re-login if the persistent session is interrupted by the layout change, though unlikely with Firebase Auth.
+- Existing projects without a `payments` array will default to "Unpaid" status until a record is added.
+
+## [2026-03-02T14:15:00Z] Caselog: Payment Detail Management & Timer Removal
+
+### Summary
+Refined the Caselog application by enhancing payment record details, removing the automated timer functionality in favor of manual time entry, and optimizing the number input UI across the app.
+
+### Technical Details
+- **Payment Record Enhancements**: 
+    - Updated `EditProjectModal` to allow manual entry of **Date** and **Notes (Remarks)** for each payment record.
+    - Improved the payment history list display to include these new fields.
+- **Timer Functionality Removal**:
+    - Removed all automated timer UI components (play/stop buttons) from the project task list.
+    - Retired the `GlobalTimerBar` and the `Timer` tab from the bottom navigation.
+    - Refactored `LogTimeModal` to focus on manual entry of **Start Time**, **End Time**, and **Remarks**.
+- **UI/UX Optimization**:
+    - Replaced browser-native number input arrows with custom **+/- steppers** for Project Budget and Target Rate.
+    - Implemented `NumberAdjuster` component to standardize amount adjustments with appropriate steps (Budget: 1000, Rate: 100).
+    - Reduced amount input widths to prevent UI overflow on mobile screens.
+    - Optimized the **Settings** page: Converted the Logout button to a minimalist icon-only design in the top-right corner.
+- **Data Binding**: Ensured `SwipeableTask` correctly displays accumulated manual hours and provides a streamlined path for manual logging via a `schedule` icon.
+
+**優化收款紀錄管理，支援手動設定日期與備註，並依需求移除全站計時功能，改為純手動補登工時（含起迄時間與備註）。全站金額輸入框改用自定義 +/- 按鈕並優化寬度，確保介面不溢出且更符合行動端操作。**
+
+### 2026-03-02 14:15 (Caselog UI & Functionality Refinement)
+- **Toast Notification System**: Replaced browser-native alerts with a custom, fluid toast system using Framer Motion and project-native colors.
+  - *實作全域通知系統，使用 Framer Motion 打造符合風格的動態提示。*
+- **Enhanced Payment Management**: Moved payment history and addition directly to the project detail page. Each payment now supports manual date and remarks.
+  - *將收款紀錄移至專案詳情頁直覺管理，支援自訂日期與備註。*
+- **Project Duration & Period**: Added start/end date fields for projects, displayed elegantly in the project header.
+  - *新增專案起迄日期設定，並於標題處並列顯示。*
+- **Standardized Button UI**: Replaced icon-only circular buttons with horizontal, labeled "Save" bars for better clarity and touch safety.
+  - *全面將圓形圖示按鈕改為橫向「儲存」長條按鈕，提升操作直覺性。*
+- **Manual Time Entry Optimization**: Redesigned manual logging with separate hours/minutes fields and start/end time options.
+  - *優化手動時數輸入，支援時/分分開輸入並自動轉換。*
+- **Settings Page Polish**: Redesigned the Logout button as an icon and optimized the target hourly rate control with custom +/- steppers.
+  - *設定頁面優化，包含圖示化登出按鈕與自訂義數字調整器。*
+
+Affected files: `src/app/project/page.tsx`, `src/app/projects/page.tsx`, `src/app/settings/page.tsx`, `src/context/ToastContext.tsx`, `src/app/layout.tsx`.
+
+
+## [2026-03-02T23:05:00Z] PDF Tool: White Screen Fix & Asset Path Correction
+
+### Summary
+Resolved a critical issue where the PDF Tool was displaying a blank white screen due to incorrect asset path resolution when deployed to a sub-directory.
+
+### Technical Details
+- **Vite Base Path Update**: Changed `base` from `./` to `/pdf-tool/` in `pdf-tool/vite.config.js`. This ensures that all generated JS and CSS assets are correctly referenced from `https://jing-lab.web.app/pdf-tool/assets/` rather than the root directory.
+- **Routing Compatibility**: The previous relative path `./assets/` was being incorrectly resolved to the root `/assets/` by some browsers/crawlers due to Firebase Hosting's `trailingSlash: false` configuration, causing a collision with the portal's assets.
+
+### Affected Files
+- `pdf-tool/vite.config.js`
+- `CHANGELOG.md`
+
+**修復了 PDF 工具在部署後出現白屏的問題。透過將 Vite 的 base 路徑從相對路徑改為絕對子路徑 `/pdf-tool/`，確保瀏覽器能正確抓取子目錄內的資源檔案，避開與根目錄資源的衝突。**
+
+
+## [2026-03-03] Caselog UI Polishing & ID Simplification
+### Added
+- **URL ID Simplification**: Implemented a "Short ID" system where project URLs use only the last 4 alphanumeric characters (e.g., `?id=XXXX`) for a cleaner, more readable link.
+- **Auto-Mapping Logic**: Added a backend matching mechanism in `ProjectDetailContent` that automatically maps the 4-character short ID from the URL back to the original full Firestore document ID.
+- **Delete Functionality Integration**: Added "Delete Task" text button inside the `EditTaskModal` and "Delete Log" button inside the `EditLogForm` for a more consolidated editing workflow.
+### Changed
+- **Permanent Desktop Icons**: Replaced hover-based editing triggers with permanently visible "Edit" icons on desktop for tasks and log entries, improving discoverability.
+- **Button Styling**: Adjusted "Cancel" and "Confirm/Update" buttons in modals and forms to have equal width (`flex-1`) for better visual balance.
+- **Navigation Links**: Updated `ProjectCard` to automatically truncate project IDs in navigation links.
+- **Excel Export Functionality**: Implemented a comprehensive data export feature in the Settings page. This allows users to download all their project logs as an Excel (XLSX) file, with each project automatically organized into its own separate spreadsheet tab for better clarity and organization.
+- **Improved Export UX**: Added loading indicators and status toasts to provide immediate feedback during the data retrieval and file generation process.
+- **Reporting & Documentation**: Created a new `reports/` directory and generated a comprehensive `development_status.md` to track project metrics, pending tasks, and optimization plans.
+
+實作「匯出所有紀錄」功能。為了滿足使用者「每個專案一個分頁」的需求，系統現在會將所有工時紀錄彙整並產生為 Excel (.xlsx) 檔案，每個案子獨立為一個工作表。同步建立 `reports/` 資料夾並撰寫階段性開發報告。
+
+## [2026-03-03] Caselog Stability & UI Refinement
+### Added
+- **Offline Support (PWA)**: Implemented full offline capabilities using Firestore persistence and PWA manifest. Users can now log data without connectivity; changes sync automatically upon reconnection.
+- **Excel Naming Protection**: Enhanced the Excel export engine to automatically sanitize project names for sheet tabs (filtering `/ \ ? * : [ ]`), ensuring compatibility and handling duplicate project names with suffixes.
+- **Minimal Delete Interface**: Moved "Delete Project" and "Delete Task" actions into dedicated editing views as minimal text buttons to prevent accidental removal while keeping the UI clean.
+
+### Improved
+- **Data Synchronization Accuracy**: Integrated an automatic consistency check in the Project Detail view that silently repairs discrepancies between aggregated project totals and individual task logs.
+- **Desktop UX Optimization**: "Edit" buttons are now permanently visible on desktop devices, resolving discoverability issues previously caused by hover-only triggers.
+- **Button Layout Parity**: Standardized all modal action buttons (Cancel/Save) to equal-width layouts (`flex-1`) for a more balanced and premium feel.
+- **Status Displays**: Initialized actual hourly rate display to show "-" when investment time is zero, preventing misleading zero-value calculations.
+
+### Fixed
+- **Homepage Filtering**: Corrected the project overview on the dashboard to strictly filter for "Ongoing" status, hiding completed archives by default.
+
+完成「穩定性三箭」優化：包含全離線支援、數據自動同步、以及 Excel 匯出命名保護。同時磨合全站 UI 細節，確保電腦版操作直覺且按鈕佈局美觀。
+
+## [2026-03-03] - Finance Deployment & SW Versioning
+### Added
+- Added "total investment idle funds" planning section on Dashboard.
+- Implemented monthly duration calculation for idle funds.
+- Persistent data storage for new idle funds fields in Firestore.
+- Added "Smart Sort" button in Inventory to sort by Taiwan Stocks > US Stocks > Fund > Others.
+- **Fixed deployment pipeline**: Updated `full_deploy.sh` to cleanly rebuild all projects and ensure `strategy-box` is correctly mapped to `/finance/`.
+- **Cache Invalidation**: Bumped root Service Worker to `v6` to force client-side updates.
+
+**中文說明：修復部署流程，確保 Finance 工具最新功能正確上線，並更新 Service Worker 以強制重新整理快取。**
+## [2026-03-03] - Finance Refinement & Multi-Currency Planning
+### Added
+- **Multi-Currency Idle Funds**: Upgraded the "Total Idle Funds Planning" to support TWD, USD, and JPY independently. Each currency now has its own amount, start month, and end month.
+- **Smart Sort**: Implemented a "Smart Sort" button in the `MonthlyConfig` page that automatically reorders items by category: Taiwan Stocks > US Stocks > Fund > Others.
+- **New Input Components**: Used custom `type="month"` inputs for planning periods with a standardized premium look.
+
+### Changed
+- **Balanced Dashboard**: Removed redundant "Total Investment Pool" and "Monthly Fixed Allocation Plan" sections to reduce clutter.
+- **Target Rate Alignment**: All progress tracking in the Dashboard now calculates against the global `financialGoal` instead of the legacy investment pool.
+- **UI/UX Optimization**: Replaced all native `alert()` dialogs with a custom premium toast notification system.
+- **Input Interaction**: Month pickers are now clickable anywhere within the component.
+- **Dynamic idle Funds**: Currencies other than TWD are now hidden by default and only appear when added or containing data.
+- **Amount Formatting**: Implemented intuitive "萬" (ten thousand) formatting for large currency amounts (e.g., 150000 -> 15萬).
+- **UI Polishing**: Updated planned monthly investment amounts to display in white (was green) as per design feedback. Updated sidebar labels for clearer goal tracking.
+
+### Fixed
+- **Historical Trend Chart**: Resolved the "no data" issue by improving category mapping and robustness of the data processing logic.
+- **Data Loading**: Fixed a bug where data might not load if the auth state wasn't cached, by adding `auth.currentUser` to the `useEffect` dependency.
+- **Typo Fix**: Corrected function naming from `handleUpdateGoal` to `handleSaveGoal` in the component tree.
+- **Data Consistency**: Updated TypeScript interfaces (`UserSettings`, `MonthlyConfig`) to reflect the new planning structure and ensured clean data flow between Dashboard and Config pages.
+- **Deployment Versioning**: Bumped root Service Worker to `v8` to ensure latest changes are served.
+
+**中文說明：全面優化 Finance Dashboard UI/UX，包含自定義通知系統、動態幣別顯示及金額單位轉化（萬），並修復歷史趨勢圖表不顯示的問題。**
+
+### [v3.1.1] - 2026-03-03
+#### Final UI/UX Polish & Custom Component Integration
+- **Custom Modals**: Replaced all native browser `confirm()` dialogs with high-quality, custom glassmorphism confirmation modals for a premium feel.
+- **Redundant Section Removal**: Removed the "Financial Goal Achievement Rate" block to declutter the user interface and focus on core metrics.
+- **Improved Contrast**: Updated Recharts Tooltip styles to a high-contrast white background with dark text, ensuring perfect readability in the dark theme.
+- **Smart Amount Formatting**: Implemented dynamic conversion for amounts over 10,000 (e.g., `15000` -> `1.5 萬`), making large numbers easier to parse at a glance.
+- **Bylined Date Interaction**: month inputs now trigger the picker when clicked anywhere on the component wrapper, improving touch/click accessibility.
+- **Color Standardization**: Fully removed the red color scheme for deletion actions, replacing it with the project's brand palette (Muted Gray/Indigo) to avoid visual stress.
+- **Deployment & Caching**: Bumped root Service Worker to `v10` and implemented hard cleanup logic to ensure all clients receive the latest UI updates.
+
+**中文說明：全面提升介面質感，導入自定義玻璃擬態對話框替換原生彈窗，移除冗餘區塊並優化大額數字顯示（萬），確保全站色彩計畫統一。**
+
+---
+
+## [v3.1.2] – 2026-03-03T20:35:00+08:00
+
+### Bug Fix & UI Contrast Improvements
+
+#### Project Rename
+- Renamed the Finance sub-project directory from `strategy-box/` to `finance/` to match its purpose.
+- Updated `full_deploy.sh` to reference the new `finance/` directory for build and asset copy steps.
+
+#### Numerical Input Bug Fix (MonthlyConfig.tsx)
+- **Root Cause**: `type="number"` inputs immediately convert raw string input to `Number()` on change, causing floating-point artifacts mid-typing (e.g., `5000` becoming `4998`).
+- **Fix**: Replaced `type="number"` with `type="text" inputMode="numeric"`. Amount values are now stored as strings while typing. `parseFloat()` + `Math.round()` is only committed on `onBlur`, preventing any auto-adjustment or midtype corruption.
+- Introduced a parallel `amountInputs: string[]` state array to track raw typed values independently of the `items` numerical state.
+
+#### btn-secondary Visibility (index.css)
+- Added full `.btn-secondary` CSS class to `index.css`.
+- Buttons like "同步報價" and "儲存草稿" now display with `color: var(--text-main)` (white) and a subtle glass border, making them clearly legible on the dark background.
+
+#### MonthlyConfig Full Rewrite
+- Replaced legacy `alert()` calls with a custom toast notification system.
+- Improved table header styling — column labels are rendered with `rgba(255,255,255,0.45)` for subtle hierarchy.
+- Smart sort now preserves the `amountInputs` string array in sync with sorted `items`.
+- Delete (Trash2) icon uses `rgba(255,255,255,0.3)` with hover brighten — no red colors.
+
+#### Service Worker
+- Bumped cache version from `jing-lab-v10` to `jing-lab-v11`.
+
+**中文說明：修復每月配置金額自動跳動 Bug，改用字串暫存策略；補全 btn-secondary 樣式；更新 full_deploy.sh 路徑；Service Worker 升至 v11。**
+
+---
+
+## [v3.1.3] – 2026-03-03T21:23:00+08:00
+
+### Sub-app Isolation & Cache Isolation Fix
+
+#### Service Worker Root Exclusion (sw.js)
+- Added `excludedPrefixes` list to the root `sw.js` fetch handler.
+- Sub-app paths (`/preview/`, `/pdf-tool/`, `/v-player-preview/`, `/travel-planner/`, `/finance/`, `/caselog/`) are now **excluded from root SW interception**.
+- Each sub-app's own service worker (via VitePWA plugin) will handle its own caching.
+- This resolves the "blank page after deploy" issue caused by the root SW serving stale sub-app assets.
+- Bumped cache version: `jing-lab-v11` → `jing-lab-v12` to force-evict all existing incorrect caches.
+
+#### Firebase Hosting Cache Headers (firebase.json)
+- Added `Cache-Control: no-cache, no-store, must-revalidate` for all `**/*.html` via hosting `headers` config.
+- Ensures all HTML entry points are always fetched fresh, preventing CDN-level caching of stale HTML shells.
+
+#### Vite base Path Normalization
+- Fixed all sub-projects that had `base: './'` (relative path), which caused asset reference breakage after sub-directory hosting reload.
+- Changed to absolute paths:
+  - `preview/vite.config.js`: `'./'` → `'/preview/'` (also added `scope: '/preview/'` to PWA manifest)
+  - `v-player-preview/vite.config.js`: `'./'` → `'/v-player-preview/'` (also added `scope: '/v-player-preview/'` to PWA manifest)
+  - `travel-planner/frontend/vite.config.js`: `'./'` → `'/travel-planner/'`
+  - `pdf-tool/vite.config.js`: `'./'` → `'/pdf-tool/'`
+
+#### preview/index.html
+- Removed hardcoded local dev paths (`/jing/preview/favicon.svg`) that were invalid in production.
+- Changed all icon hrefs to relative `./` paths for Vite to resolve correctly at build time.
+
+**中文說明：根目錄 Service Worker 不再攔截子應用路徑，解決「部署後空白」問題；所有子專案 vite.config.js 的 base 路徑改為絕對路徑，確保重新整理後資源路徑正確；SW 升至 v12 強制清除舊快取。**

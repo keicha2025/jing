@@ -33,19 +33,37 @@ public final class ActivityMainBinding implements ViewBinding {
   public final FrameLayout btnShutter;
 
   @NonNull
-  public final ImageButton btnSwitchCamera;
-
-  @NonNull
-  public final ImageButton btnToggleSpeed;
-
-  @NonNull
   public final GLSurfaceView glSurfaceView;
+
+  @NonNull
+  public final TextView menu1080P;
+
+  @NonNull
+  public final TextView menu4K;
+
+  @NonNull
+  public final TextView menu720P;
+
+  @NonNull
+  public final LinearLayout menuQuality;
+
+  @NonNull
+  public final LinearLayout menuSettings;
+
+  @NonNull
+  public final TextView menuSwitchCamera;
+
+  @NonNull
+  public final TextView menuToggleSpeed;
 
   @NonNull
   public final View shutterInner;
 
   @NonNull
   public final LinearLayout storageContainer;
+
+  @NonNull
+  public final LinearLayout topRightContainer;
 
   @NonNull
   public final TextView tvFPS;
@@ -61,19 +79,28 @@ public final class ActivityMainBinding implements ViewBinding {
 
   private ActivityMainBinding(@NonNull ConstraintLayout rootView, @NonNull LinearLayout btnQuality,
       @NonNull ImageButton btnSettings, @NonNull FrameLayout btnShutter,
-      @NonNull ImageButton btnSwitchCamera, @NonNull ImageButton btnToggleSpeed,
-      @NonNull GLSurfaceView glSurfaceView, @NonNull View shutterInner,
-      @NonNull LinearLayout storageContainer, @NonNull TextView tvFPS, @NonNull TextView tvRecTimer,
-      @NonNull TextView tvResolution, @NonNull TextView tvStorageInfo) {
+      @NonNull GLSurfaceView glSurfaceView, @NonNull TextView menu1080P, @NonNull TextView menu4K,
+      @NonNull TextView menu720P, @NonNull LinearLayout menuQuality,
+      @NonNull LinearLayout menuSettings, @NonNull TextView menuSwitchCamera,
+      @NonNull TextView menuToggleSpeed, @NonNull View shutterInner,
+      @NonNull LinearLayout storageContainer, @NonNull LinearLayout topRightContainer,
+      @NonNull TextView tvFPS, @NonNull TextView tvRecTimer, @NonNull TextView tvResolution,
+      @NonNull TextView tvStorageInfo) {
     this.rootView = rootView;
     this.btnQuality = btnQuality;
     this.btnSettings = btnSettings;
     this.btnShutter = btnShutter;
-    this.btnSwitchCamera = btnSwitchCamera;
-    this.btnToggleSpeed = btnToggleSpeed;
     this.glSurfaceView = glSurfaceView;
+    this.menu1080P = menu1080P;
+    this.menu4K = menu4K;
+    this.menu720P = menu720P;
+    this.menuQuality = menuQuality;
+    this.menuSettings = menuSettings;
+    this.menuSwitchCamera = menuSwitchCamera;
+    this.menuToggleSpeed = menuToggleSpeed;
     this.shutterInner = shutterInner;
     this.storageContainer = storageContainer;
+    this.topRightContainer = topRightContainer;
     this.tvFPS = tvFPS;
     this.tvRecTimer = tvRecTimer;
     this.tvResolution = tvResolution;
@@ -125,21 +152,51 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.btnSwitchCamera;
-      ImageButton btnSwitchCamera = ViewBindings.findChildViewById(rootView, id);
-      if (btnSwitchCamera == null) {
-        break missingId;
-      }
-
-      id = R.id.btnToggleSpeed;
-      ImageButton btnToggleSpeed = ViewBindings.findChildViewById(rootView, id);
-      if (btnToggleSpeed == null) {
-        break missingId;
-      }
-
       id = R.id.glSurfaceView;
       GLSurfaceView glSurfaceView = ViewBindings.findChildViewById(rootView, id);
       if (glSurfaceView == null) {
+        break missingId;
+      }
+
+      id = R.id.menu1080P;
+      TextView menu1080P = ViewBindings.findChildViewById(rootView, id);
+      if (menu1080P == null) {
+        break missingId;
+      }
+
+      id = R.id.menu4K;
+      TextView menu4K = ViewBindings.findChildViewById(rootView, id);
+      if (menu4K == null) {
+        break missingId;
+      }
+
+      id = R.id.menu720P;
+      TextView menu720P = ViewBindings.findChildViewById(rootView, id);
+      if (menu720P == null) {
+        break missingId;
+      }
+
+      id = R.id.menuQuality;
+      LinearLayout menuQuality = ViewBindings.findChildViewById(rootView, id);
+      if (menuQuality == null) {
+        break missingId;
+      }
+
+      id = R.id.menuSettings;
+      LinearLayout menuSettings = ViewBindings.findChildViewById(rootView, id);
+      if (menuSettings == null) {
+        break missingId;
+      }
+
+      id = R.id.menuSwitchCamera;
+      TextView menuSwitchCamera = ViewBindings.findChildViewById(rootView, id);
+      if (menuSwitchCamera == null) {
+        break missingId;
+      }
+
+      id = R.id.menuToggleSpeed;
+      TextView menuToggleSpeed = ViewBindings.findChildViewById(rootView, id);
+      if (menuToggleSpeed == null) {
         break missingId;
       }
 
@@ -152,6 +209,12 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.storageContainer;
       LinearLayout storageContainer = ViewBindings.findChildViewById(rootView, id);
       if (storageContainer == null) {
+        break missingId;
+      }
+
+      id = R.id.topRightContainer;
+      LinearLayout topRightContainer = ViewBindings.findChildViewById(rootView, id);
+      if (topRightContainer == null) {
         break missingId;
       }
 
@@ -180,8 +243,9 @@ public final class ActivityMainBinding implements ViewBinding {
       }
 
       return new ActivityMainBinding((ConstraintLayout) rootView, btnQuality, btnSettings,
-          btnShutter, btnSwitchCamera, btnToggleSpeed, glSurfaceView, shutterInner,
-          storageContainer, tvFPS, tvRecTimer, tvResolution, tvStorageInfo);
+          btnShutter, glSurfaceView, menu1080P, menu4K, menu720P, menuQuality, menuSettings,
+          menuSwitchCamera, menuToggleSpeed, shutterInner, storageContainer, topRightContainer,
+          tvFPS, tvRecTimer, tvResolution, tvStorageInfo);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

@@ -13,6 +13,7 @@ import android.opengl.GLES11Ext
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.opengl.GLUtils
+import android.opengl.Matrix
 import android.view.Surface
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -29,24 +30,21 @@ class CameraGLRenderer(
     private var overlayTextureId = 0
     private var surfaceTexture: SurfaceTexture? = null
 
-    // For Recording
     @Volatile var recordingSurface: Surface? = null
     @Volatile var recordingWidth: Int = 1920
     @Volatile var recordingHeight: Int = 1080
-    private var encoderTextureReady = false
-
+    @Volatile var isRecording: Boolean = false
     @Volatile var currentSpeed: Float = -1f
     @Volatile var showSpeed: Boolean = true
+    @Volatile var displayRotationDegrees: Int = 0
 
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
-        textSize = 60f
+        textSize = 45f
         typeface = Typeface.MONOSPACE
-        setShadowLayer(4f, 0f, 0f, Color.parseColor("#99000000"))
+        setShadowLayer(4f, 2f, 2f, Color.parseColor("#CC000000"))
     }
-    
-    // Dynamically sized overlay to match resolution if needed
-    // For now we assume a standard relative coordinate system, or we re-scale manually
+
     private var overlayBitmap = Bitmap.createBitmap(1920, 1080, Bitmap.Config.ARGB_8888)
     private var overlayCanvas = Canvas(overlayBitmap)
 
@@ -54,9 +52,11 @@ class CameraGLRenderer(
         attribute vec4 position;
         attribute vec2 texcoord;
         varying vec2 v_texcoord;
+        uniform mat4 uSTMatrix;
+        uniform mat4 uMVPMatrix;
         void main() {
-            gl_Position = position;
-            v_texcoord = texcoord;
+            gl_Position = uMVPMatrix * position;
+            v_texcoord = (uSTMatrix * vec4(texcoord, 0.0, 1.0)).xy;
         }
     """.trimIndent()
 
@@ -79,206 +79,139 @@ class CameraGLRenderer(
         }
     """.trimIndent()
 
-    private val vertexCoords = floatArrayOf(
-        -1.0f, -1.0f, // bottom left
-         1.0f, -1.0f, // bottom right
-        -1.0f,  1.0f, // top left
-         1.0f,  1.0f  // top right
-    )
-    
-    // Adjusted Texture coordinates to fix upside-down text overlay
-    // OpenGL expects (0,1) at top but Bitmap puts (0,0) at top.
-    private val textureCoords = floatArrayOf(
-        0.0f, 1.0f,
-        1.0f, 1.0f,
-        0.0f, 0.0f,
-        1.0f, 0.0f
-    )
+    private val vertexCoords = floatArrayOf(-1f, -1f, 1f, -1f, -1f, 1f, 1f, 1f)
+    private val textureCoords = floatArrayOf(0f, 0f, 1f, 0f, 0f, 1f, 1f, 1f)
+    private val textureCoords2D = floatArrayOf(0f, 1f, 1f, 1f, 0f, 0f, 1f, 0f)
 
     private lateinit var vertexBuffer: FloatBuffer
-    private lateinit var textureBuffer: FloatBuffer
-    
+    private lateinit var textureBufferOES: FloatBuffer
+    private lateinit var textureBuffer2D: FloatBuffer
     private var programOES = 0
     private var program2D = 0
-
-    private fun loadShader(type: Int, shaderCode: String): Int {
-        val shader = GLES20.glCreateShader(type)
-        GLES20.glShaderSource(shader, shaderCode)
-        GLES20.glCompileShader(shader)
-        return shader
-    }
+    private val stMatrix = FloatArray(16)
+    private val mvpMatrix = FloatArray(16)
+    private val identityMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         GLES20.glClearColor(0f, 0f, 0f, 1f)
-
-        val bb = ByteBuffer.allocateDirect(vertexCoords.size * 4)
-        bb.order(ByteOrder.nativeOrder())
-        vertexBuffer = bb.asFloatBuffer().apply { put(vertexCoords); position(0) }
-
-        val tb = ByteBuffer.allocateDirect(textureCoords.size * 4)
-        tb.order(ByteOrder.nativeOrder())
-        textureBuffer = tb.asFloatBuffer().apply { put(textureCoords); position(0) }
-
-        val vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode)
-        val fragmentShaderOES = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCodeOES)
-        programOES = GLES20.glCreateProgram()
-        GLES20.glAttachShader(programOES, vertexShader)
-        GLES20.glAttachShader(programOES, fragmentShaderOES)
-        GLES20.glLinkProgram(programOES)
-
-        val fragmentShader2D = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode2D)
-        program2D = GLES20.glCreateProgram()
-        GLES20.glAttachShader(program2D, vertexShader)
-        GLES20.glAttachShader(program2D, fragmentShader2D)
-        GLES20.glLinkProgram(program2D)
-
-        val textures = IntArray(2)
-        GLES20.glGenTextures(2, textures, 0)
-        oesTextureId = textures[0]
-        overlayTextureId = textures[1]
-
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTextureId)
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
-
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, overlayTextureId)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
-
-        GLES20.glEnable(GLES20.GL_BLEND)
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
-
+        vertexBuffer = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().apply { put(vertexCoords); position(0) }
+        textureBufferOES = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().apply { put(textureCoords); position(0) }
+        textureBuffer2D = ByteBuffer.allocateDirect(8 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().apply { put(textureCoords2D); position(0) }
+        programOES = createProgram(vertexShaderCode, fragmentShaderCodeOES)
+        program2D = createProgram(vertexShaderCode, fragmentShaderCode2D)
+        val tex = IntArray(2); GLES20.glGenTextures(2, tex, 0)
+        oesTextureId = tex[0]; overlayTextureId = tex[1]
+        setupTex(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTextureId)
+        setupTex(GLES20.GL_TEXTURE_2D, overlayTextureId)
         surfaceTexture = SurfaceTexture(oesTextureId)
         onSurfaceCreated(surfaceTexture!!)
     }
 
-    private var screenWidth = 0
-    private var screenHeight = 0
-
-    override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
-        screenWidth = width
-        screenHeight = height
-        GLES20.glViewport(0, 0, width, height)
+    private fun createProgram(v: String, f: String) = GLES20.glCreateProgram().apply {
+        GLES20.glAttachShader(this, loadShader(GLES20.GL_VERTEX_SHADER, v))
+        GLES20.glAttachShader(this, loadShader(GLES20.GL_FRAGMENT_SHADER, f))
+        GLES20.glLinkProgram(this)
     }
 
-    private var encoderEglSurface = EGL14.EGL_NO_SURFACE
-    private var eglDisplay = EGL14.EGL_NO_DISPLAY
-    private var eglContext = EGL14.EGL_NO_CONTEXT
-    
-    private val EGL_RECORDABLE_ANDROID = 0x3142
+    private fun loadShader(t: Int, s: String) = GLES20.glCreateShader(t).apply { GLES20.glShaderSource(this, s); GLES20.glCompileShader(this) }
+    private fun setupTex(t: Int, i: Int) {
+        GLES20.glBindTexture(t, i)
+        GLES20.glTexParameteri(t, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(t, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(t, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
+        GLES20.glTexParameteri(t, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+    }
+
+    private var sW = 0; private var sH = 0
+    override fun onSurfaceChanged(gl: GL10?, w: Int, h: Int) { sW = w; sH = h }
+
+    private var encSurf = EGL14.EGL_NO_SURFACE
+    private var eglDisp = EGL14.EGL_NO_DISPLAY
+    private var eglCtx = EGL14.EGL_NO_CONTEXT
 
     override fun onDrawFrame(gl: GL10?) {
-        surfaceTexture?.updateTexImage()
+        val st = surfaceTexture ?: return
+        st.updateTexImage()
+        // The stMatrix already contains the correct rotation from the Camera Sensor.
+        st.getTransformMatrix(stMatrix)
+        if (eglDisp == EGL14.EGL_NO_DISPLAY) { eglDisp = EGL14.eglGetCurrentDisplay(); eglCtx = EGL14.eglGetCurrentContext() }
+        updateOverlayTexture()
 
-        // Capture current EGL state if we haven't yet
-        if (eglDisplay == EGL14.EGL_NO_DISPLAY) {
-            eglDisplay = EGL14.eglGetCurrentDisplay()
-            eglContext = EGL14.eglGetCurrentContext()
-        }
+        // 1. Preview
+        GLES20.glViewport(0, 0, sW, sH)
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
+        // Center Crop without redundant rotation (rotation is handled by STMatrix)
+        calculateSimpleCrop(sW, sH, 1920, 1080, mvpMatrix)
+        drawFull(mvpMatrix, stMatrix)
 
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
-        
-        // Render 1: Default to GLSurfaceView (The Screen)
-        drawFullFrame()
-        
-        // Render 2: Optionally to RecordingSurface (Encoder)
-        val recordSurface = recordingSurface
-        if (recordSurface != null) {
-            val currentDrawSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW)
-            val currentReadSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_READ)
-
-            if (encoderEglSurface == EGL14.EGL_NO_SURFACE) {
-                // Create EGLSurface for the encoder
-                val config = getEGLConfig()
-                val surfaceAttribs = intArrayOf(EGL14.EGL_NONE)
-                encoderEglSurface = EGL14.eglCreateWindowSurface(eglDisplay, config, recordSurface, surfaceAttribs, 0)
-            }
-
-            // Switch to Encoder Surface
-            EGL14.eglMakeCurrent(eglDisplay, encoderEglSurface, encoderEglSurface, eglContext)
-            
-            // Set output size for video
+        // 2. Record
+        val rs = recordingSurface
+        if (rs != null) {
+            val d = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW)
+            val r = EGL14.eglGetCurrentSurface(EGL14.EGL_READ)
+            if (encSurf == EGL14.EGL_NO_SURFACE) encSurf = EGL14.eglCreateWindowSurface(eglDisp, getConf(), rs, intArrayOf(EGL14.EGL_NONE), 0)
+            EGL14.eglMakeCurrent(eglDisp, encSurf, encSurf, eglCtx)
             GLES20.glViewport(0, 0, recordingWidth, recordingHeight)
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
-            
-            drawFullFrame()
-            
-            // Set presentation time for MediaCodec (nanoseconds)
-            val nsecs = surfaceTexture?.timestamp ?: 0L
-            EGLExt.eglPresentationTimeANDROID(eglDisplay, encoderEglSurface, nsecs)
-            
-            EGL14.eglSwapBuffers(eglDisplay, encoderEglSurface)
-
-            // Restore Screen Surface properly
-            EGL14.eglMakeCurrent(eglDisplay, currentDrawSurface, currentReadSurface, eglContext)
-            // Restore Viewport for screen
-            GLES20.glViewport(0, 0, screenWidth, screenHeight)
-        } else if (encoderEglSurface != EGL14.EGL_NO_SURFACE) {
-            // Cleanup when recording stops
-            EGL14.eglDestroySurface(eglDisplay, encoderEglSurface)
-            encoderEglSurface = EGL14.EGL_NO_SURFACE
+            // No Crop for standard 16:9 recording
+            drawFull(identityMatrix, stMatrix)
+            EGLExt.eglPresentationTimeANDROID(eglDisp, encSurf, st.timestamp)
+            EGL14.eglSwapBuffers(eglDisp, encSurf)
+            EGL14.eglMakeCurrent(eglDisp, d, r, eglCtx)
+        } else if (encSurf != EGL14.EGL_NO_SURFACE) {
+            EGL14.eglDestroySurface(eglDisp, encSurf); encSurf = EGL14.EGL_NO_SURFACE
         }
     }
 
-    private fun getEGLConfig(): android.opengl.EGLConfig? {
-        val attribList = intArrayOf(
-            EGL14.EGL_RED_SIZE, 8,
-            EGL14.EGL_GREEN_SIZE, 8,
-            EGL14.EGL_BLUE_SIZE, 8,
-            EGL14.EGL_ALPHA_SIZE, 8,
-            EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
-            EGL_RECORDABLE_ANDROID, 1,
-            EGL14.EGL_NONE
-        )
-        val configs = arrayOfNulls<android.opengl.EGLConfig>(1)
-        val numConfigs = IntArray(1)
-        EGL14.eglChooseConfig(eglDisplay, attribList, 0, configs, 0, configs.size, numConfigs, 0)
-        return configs[0]
+    private fun calculateSimpleCrop(vW: Int, vH: Int, iW: Int, iH: Int, matrix: FloatArray) {
+        Matrix.setIdentityM(matrix, 0)
+        // Check if display is currently portrait based on dimensions
+        val isDisplayPortrait = vH > vW
+        
+        // Sensor is typically 1920x1080 (Landscape). 
+        // If display is portrait, we are effectively mapping Landscape input to Portrait view.
+        val targetAspect = if (isDisplayPortrait) iH.toFloat() / iW else iW.toFloat() / iH
+        val viewAspect = vW.toFloat() / vH
+        
+        val sX: Float
+        val sY: Float
+        if (viewAspect > targetAspect) {
+            sX = 1.0f
+            sY = viewAspect / targetAspect
+        } else {
+            sX = targetAspect / viewAspect
+            sY = 1.0f
+        }
+        Matrix.scaleM(matrix, 0, sX, sY, 1.0f)
     }
 
-    private fun drawFullFrame() {
-        drawTextureQuad(programOES, GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTextureId)
-        updateOverlayTexture()
-        drawTextureQuad(program2D, GLES20.GL_TEXTURE_2D, overlayTextureId)
+    private fun drawFull(mvp: FloatArray, st: FloatArray) {
+        GLES20.glEnable(GLES20.GL_BLEND); GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
+        drawTex(programOES, GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTextureId, mvp, st, textureBufferOES)
+        drawTex(program2D, GLES20.GL_TEXTURE_2D, overlayTextureId, identityMatrix, identityMatrix, textureBuffer2D)
+    }
+
+    private fun drawTex(p: Int, t: Int, id: Int, mvp: FloatArray, st: FloatArray, tb: FloatBuffer) {
+        GLES20.glUseProgram(p)
+        val ph = GLES20.glGetAttribLocation(p, "position"); GLES20.glEnableVertexAttribArray(ph); GLES20.glVertexAttribPointer(ph, 2, GLES20.GL_FLOAT, false, 8, vertexBuffer)
+        val th = GLES20.glGetAttribLocation(p, "texcoord"); GLES20.glEnableVertexAttribArray(th); GLES20.glVertexAttribPointer(th, 2, GLES20.GL_FLOAT, false, 8, tb)
+        GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(p, "uMVPMatrix"), 1, false, mvp, 0)
+        GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(p, "uSTMatrix"), 1, false, st, 0)
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0); GLES20.glBindTexture(t, id)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
     }
 
     private fun updateOverlayTexture() {
         overlayBitmap.eraseColor(Color.TRANSPARENT)
-        val timeString = android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", System.currentTimeMillis()).toString()
-        overlayCanvas.drawText(timeString, 80f, 1000f, textPaint)
-
-        if (showSpeed) {
-            val speedString = if (currentSpeed >= 0) "SPD: ${currentSpeed.toInt()} km/h" else "GPS LOST"
-            overlayCanvas.drawText(speedString, 80f, 920f, textPaint)
-        }
-
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, overlayTextureId)
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, overlayBitmap, 0)
+        val timeStr = android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", System.currentTimeMillis()).toString()
+        val margin = 80f
+        if (showSpeed) overlayCanvas.drawText(if (currentSpeed >= 0) "${currentSpeed.toInt()} KM/H" else "0 KM/H", margin, 1080f - margin - 65f, textPaint)
+        overlayCanvas.drawText(timeStr, margin, 1080f - margin, textPaint)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, overlayTextureId); GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, overlayBitmap, 0)
     }
-    
-    private fun drawTextureQuad(program: Int, target: Int, textureId: Int) {
-        GLES20.glUseProgram(program)
-        
-        val positionHandle = GLES20.glGetAttribLocation(program, "position")
-        GLES20.glEnableVertexAttribArray(positionHandle)
-        GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 8, vertexBuffer)
 
-        val texcoordHandle = GLES20.glGetAttribLocation(program, "texcoord")
-        GLES20.glEnableVertexAttribArray(texcoordHandle)
-        GLES20.glVertexAttribPointer(texcoordHandle, 2, GLES20.GL_FLOAT, false, 8, textureBuffer)
-
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-        GLES20.glBindTexture(target, textureId)
-        val samplerHandle = GLES20.glGetUniformLocation(program, "tex_sampler")
-        GLES20.glUniform1i(samplerHandle, 0)
-
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
-        
-        GLES20.glDisableVertexAttribArray(positionHandle)
-        GLES20.glDisableVertexAttribArray(texcoordHandle)
+    private fun getConf(): android.opengl.EGLConfig? {
+        val a = intArrayOf(EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8, EGL14.EGL_BLUE_SIZE, 8, EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT, 0x3142, 1, EGL14.EGL_NONE)
+        val c = arrayOfNulls<android.opengl.EGLConfig>(1); val n = IntArray(1); EGL14.eglChooseConfig(eglDisp, a, 0, c, 0, 1, n, 0); return c[0]
     }
 }

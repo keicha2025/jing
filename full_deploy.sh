@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
+rm -rf dist_release
 mkdir -p dist_release
+
+# Cleanup individual project dist folders to avoid stale artifacts
+rm -rf finance/dist
+rm -rf pdf-tool/dist
+rm -rf preview/dist
+rm -rf v-player-preview/dist
+rm -rf caselog/dist
+rm -rf travel-planner/frontend/dist
 
 echo "Building pdf-tool..."
 cd pdf-tool
@@ -26,6 +35,14 @@ cd ..
 mkdir -p dist_release/v-player-preview
 cp -r v-player-preview/dist/* dist_release/v-player-preview/
 
+echo "Building caselog..."
+cd caselog
+npm install --legacy-peer-deps
+npm run build
+cd ..
+mkdir -p dist_release/caselog
+cp -r caselog/dist/* dist_release/caselog/
+
 echo "Building travel-planner..."
 cd travel-planner/frontend
 npm install
@@ -33,6 +50,14 @@ npm run build
 cd ../..
 mkdir -p dist_release/travel-planner
 cp -r travel-planner/frontend/dist/* dist_release/travel-planner/
+
+echo "Building finance..."
+cd finance
+npm install
+npm run build
+cd ..
+mkdir -p dist_release/finance
+cp -r finance/dist/finance/* dist_release/finance/
 
 echo "Copying static assets..."
 cp -r nightwhisper dist_release/

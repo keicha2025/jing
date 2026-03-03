@@ -2986,6 +2986,7 @@ drawable abc_vector_test
 drawable avd_hide_password
 drawable avd_show_password
 drawable bg_glass_circle
+drawable bg_glass_dropdown
 drawable bg_glass_pill
 drawable bg_shutter_inner
 drawable bg_shutter_outer
@@ -3221,8 +3222,6 @@ id bounceStart
 id btnQuality
 id btnSettings
 id btnShutter
-id btnSwitchCamera
-id btnToggleSpeed
 id buttonPanel
 id cache_measures
 id callMeasure
@@ -3395,6 +3394,13 @@ id material_timepicker_ok_button
 id material_timepicker_view
 id material_value_index
 id matrix
+id menu1080P
+id menu4K
+id menu720P
+id menuQuality
+id menuSettings
+id menuSwitchCamera
+id menuToggleSpeed
 id message
 id middle
 id mini
@@ -3595,6 +3601,7 @@ id title_template
 id toggle
 id top
 id topPanel
+id topRightContainer
 id touch_outside
 id transitionToEnd
 id transitionToStart

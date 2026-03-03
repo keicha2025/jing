@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jing-lab-v5';
+const CACHE_NAME = 'jing-lab-v12';
 const ASSETS = [
     './',
     './index.html',
@@ -32,6 +32,20 @@ self.addEventListener('fetch', (event) => {
     // 排除 Firestore 與 擴充功能等非標準請求
     const url = event.request.url;
     if (url.includes('firestore.googleapis.com') || url.startsWith('chrome-extension')) {
+        return;
+    }
+
+    // 不攔截子應用路徑，避免不同子專案互相吃到錯誤快取資源
+    const pathname = new URL(url).pathname;
+    const excludedPrefixes = [
+        '/preview/',
+        '/pdf-tool/',
+        '/v-player-preview/',
+        '/travel-planner/',
+        '/finance/',
+        '/caselog/',
+    ];
+    if (excludedPrefixes.some((prefix) => pathname.startsWith(prefix))) {
         return;
     }
 

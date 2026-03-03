@@ -1,6 +1,7 @@
 R_DEF: Internal format may change without notice
 local
 drawable bg_glass_circle
+drawable bg_glass_dropdown
 drawable bg_glass_pill
 drawable bg_shutter_inner
 drawable bg_shutter_outer
@@ -9,11 +10,17 @@ drawable dot_gray
 id btnQuality
 id btnSettings
 id btnShutter
-id btnSwitchCamera
-id btnToggleSpeed
 id glSurfaceView
+id menu1080P
+id menu4K
+id menu720P
+id menuQuality
+id menuSettings
+id menuSwitchCamera
+id menuToggleSpeed
 id shutterInner
 id storageContainer
+id topRightContainer
 id tvFPS
 id tvRecTimer
 id tvResolution
