@@ -32,7 +32,7 @@ function App() {
     return (
         <Router basename="/finance">
             {user && <Navbar user={user} />}
-            <main style={{ flex: 1, padding: user ? '2rem' : '0' }}>
+            <main style={{ flex: 1, padding: user ? 'var(--page-padding)' : '0' }}>
                 <Routes>
                     <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
                     <Route path="/" element={user ? <Dashboard /> : <Navigate to="/login" />} />

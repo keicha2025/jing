@@ -42,6 +42,18 @@
                 "destination": "/finance/index.html"
             },
             {
+                "source": "/note/**",
+                "destination": "/note/index.html"
+            },
+            {
+                "source": "/mail/**",
+                "destination": "/mail/index.html"
+            },
+            {
+                "source": "/nightwhisper/**",
+                "destination": "/nightwhisper/index.html"
+            },
+            {
                 "source": "/caselog/project",
                 "destination": "/caselog/project.html"
             },
@@ -70,7 +82,7 @@
     "firestore": [
         {
             "database": "jing-finance",
-            "rules": "strategy-box/firestore.rules"
+            "rules": "finance/firestore.rules"
         },
         {
             "database": "case-log",

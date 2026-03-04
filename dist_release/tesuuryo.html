@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,11 +8,30 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&display=swap');
-        
+
+        html {
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE/Edge */
+        }
+
+        html::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Safari, Edge */
+        }
+
         body {
             font-family: 'Noto Sans TC', sans-serif;
-            background-color: #f4f1ee; /* MUJI 背景色 */
+            background-color: #f4f1ee;
+            /* MUJI 背景色 */
             color: #333;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
         }
 
         .muji-card {
@@ -61,12 +81,13 @@
             -webkit-appearance: none;
             margin: 0;
         }
-        
+
         .hidden-element {
             display: none;
         }
     </style>
 </head>
+
 <body class="flex items-center justify-center min-h-screen p-4">
 
     <div class="w-full max-w-md muji-card p-8 shadow-sm">
@@ -84,20 +105,25 @@
                 <div class="flex justify-between items-center mb-2">
                     <label class="text-sm text-gray-500">平台手續費</label>
                     <button onclick="toggleFeeEdit()" class="edit-icon" title="修改手續費">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                            <path d="m15 5 4 4" />
+                        </svg>
                     </button>
                 </div>
-                
+
                 <!-- 顯示狀態 -->
                 <div id="feeDisplay" class="text-gray-700 font-medium py-2 px-1">
                     <span id="currentFeeText">15</span>%
                 </div>
-                
+
                 <!-- 編輯狀態 (隱藏) -->
                 <div id="feeEditWrapper" class="hidden-element">
                     <div class="flex items-center gap-2">
                         <input type="number" id="feeRate" value="15" class="muji-input" oninput="calculate()">
-                        <button onclick="toggleFeeEdit()" class="text-xs text-gray-400 whitespace-nowrap px-2">完成</button>
+                        <button onclick="toggleFeeEdit()"
+                            class="text-xs text-gray-400 whitespace-nowrap px-2">完成</button>
                     </div>
                 </div>
             </div>
@@ -107,7 +133,7 @@
         <div class="mt-12 pt-8 border-t border-gray-100 text-center">
             <div class="text-xs tracking-widest text-gray-400 mb-2 font-medium uppercase">Suggested Price</div>
             <div id="suggestedPrice" class="price-display mb-4">--</div>
-            
+
             <div class="space-y-1 mt-4">
                 <div class="sub-result">
                     <span>原始計算結果 (進位)：</span>
@@ -125,7 +151,7 @@
         function toggleFeeEdit() {
             const display = document.getElementById('feeDisplay');
             const edit = document.getElementById('feeEditWrapper');
-            
+
             if (display.classList.contains('hidden-element')) {
                 display.classList.remove('hidden-element');
                 edit.classList.add('hidden-element');
@@ -141,10 +167,10 @@
         function calculate() {
             const targetPrice = parseFloat(document.getElementById('targetPrice').value);
             const feeRateInput = parseFloat(document.getElementById('feeRate').value);
-            
+
             const suggestedEl = document.getElementById('suggestedPrice');
             const rawCeilEl = document.getElementById('rawPriceCeil');
-            
+
             // 更新即時文字 (如果是編輯中)
             document.getElementById('currentFeeText').innerText = isNaN(feeRateInput) ? 0 : feeRateInput;
 
@@ -170,4 +196,5 @@
         }
     </script>
 </body>
+
 </html>

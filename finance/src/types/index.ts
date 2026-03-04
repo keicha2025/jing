@@ -49,6 +49,11 @@ export interface MonthlyConfig {
         }
     };
     rationale?: string;
+    investmentHorizon?: string;
+    riskTolerance?: string;
+    investmentPsychology?: string;
+    manualIdleFunds?: string | number;
+    investmentNotes?: string;
     updatedAt: Timestamp;
 }
 

@@ -5,6 +5,7 @@ import { httpsCallable } from 'firebase/functions';
 import { getMonthlyConfig, getUserSettings, saveUserSettings, getSnapshots, saveMonthlyConfig, saveSnapshot, getLatestSnapshot } from '../services/db';
 import { MonthlyConfig, UserSettings, Snapshot, MonthlyConfigItem } from '../types';
 import { Target, TrendingUp, PieChart as PieIcon, Save, X, Activity, BarChart2, Plus, Zap, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip,
     AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -286,7 +287,10 @@ ${rationale || '本月尚未填寫心得。'}
             };
 
             await saveSnapshot(newSnapshot);
-            setSnapshots(prev => [...prev, newSnapshot]);
+            setSnapshots(prev => {
+                const filtered = prev.filter(s => s.yearMonth !== yearMonth);
+                return [...filtered, newSnapshot].sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
+            });
 
             // 2. Update total investment spent (optional, keeping it for history)
             if (settings && auth.currentUser) {
@@ -398,9 +402,18 @@ ${rationale || '本月尚未填寫心得。'}
                                 const monthlyAmt = months > 0 ? (plan.amount / months) : 0;
 
                                 return (
-                                    <div key={cur} style={{ display: 'grid', gridTemplateColumns: '0.5fr 1.2fr 1.2fr 1.2fr 0.8fr 1fr', gap: '1rem', alignItems: 'end', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px', position: 'relative' }}>
+                                    <div key={cur} className="pool-row" style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'minmax(60px, 0.5fr) repeat(3, 1fr) 0.8fr 1fr',
+                                        gap: '1rem',
+                                        alignItems: 'end',
+                                        background: 'rgba(255,255,255,0.03)',
+                                        padding: '1rem',
+                                        borderRadius: '8px',
+                                        position: 'relative'
+                                    }}>
                                         <div style={{ fontWeight: 700, color: 'var(--primary)', paddingBottom: '0.5rem' }}>{cur}</div>
-                                        <div>
+                                        <div className="pool-col-amt">
                                             <label className="muted-title" style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.75rem' }}>閒置金額</label>
                                             <input
                                                 type="number"
@@ -417,7 +430,7 @@ ${rationale || '本月尚未填寫心得。'}
                                                 {plan.amount > 0 ? formatDisplayAmount(plan.amount) : ''}
                                             </div>
                                         </div>
-                                        <div>
+                                        <div className="pool-col-date">
                                             <label className="muted-title" style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.75rem' }}>開始月份</label>
                                             <input
                                                 type="month"
@@ -428,7 +441,7 @@ ${rationale || '本月尚未填寫心得。'}
                                                 style={{ background: 'transparent', border: '1px solid var(--surface-border)', color: 'var(--text-main)', padding: '4px 8px', fontSize: '0.85rem', width: '100%', cursor: 'pointer' }}
                                             />
                                         </div>
-                                        <div>
+                                        <div className="pool-col-date">
                                             <label className="muted-title" style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.75rem' }}>結束月份</label>
                                             <input
                                                 type="month"
@@ -439,12 +452,12 @@ ${rationale || '本月尚未填寫心得。'}
                                                 style={{ background: 'transparent', border: '1px solid var(--surface-border)', color: 'var(--text-main)', padding: '4px 8px', fontSize: '0.85rem', width: '100%', cursor: 'pointer' }}
                                             />
                                         </div>
-                                        <div style={{ textAlign: 'center', paddingBottom: '0.3rem' }}>
+                                        <div className="pool-col-period" style={{ textAlign: 'center', paddingBottom: '0.3rem' }}>
                                             <div className="muted-title" style={{ fontSize: '0.7rem' }}>期間</div>
                                             <div style={{ fontSize: '1rem', fontWeight: 600 }}>{months} <span style={{ fontSize: '0.7rem' }}>月</span></div>
                                         </div>
-                                        <div style={{ textAlign: 'right', paddingBottom: '0.3rem' }}>
-                                            <div className="muted-title" style={{ fontSize: '0.7rem' }}>預計每月投入</div>
+                                        <div className="pool-col-res" style={{ textAlign: 'right', paddingBottom: '0.3rem' }}>
+                                            <div className="muted-title" style={{ fontSize: '0.7rem' }}>每月投入</div>
                                             <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FFFFFF' }}>
                                                 {monthlyAmt > 0 ? formatDisplayAmount(monthlyAmt) : '0'}
                                             </div>
@@ -586,21 +599,12 @@ ${rationale || '本月尚未填寫心得。'}
 
             {/* Premium Confirm Modal */}
             {confirmModal && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(10px)' }}>
-                    <div className="glass-card" style={{ maxWidth: '400px', width: '100%', border: '1px solid var(--primary)', padding: '2rem', animation: 'modal-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1.2rem' }}>
-                            <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '8px', borderRadius: '12px' }}>
-                                <AlertCircle size={24} color="var(--primary)" />
-                            </div>
-                            <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{confirmModal.title}</h3>
-                        </div>
-                        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', lineHeight: '1.6' }}>{confirmModal.message}</p>
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-                            <button onClick={() => setConfirmModal(null)} className="btn-secondary" style={{ flex: 1 }}>取消</button>
-                            <button onClick={confirmModal.onConfirm} className="btn-primary" style={{ flex: 1 }}>確認</button>
-                        </div>
-                    </div>
-                </div>
+                <ConfirmModal
+                    title={confirmModal.title}
+                    message={confirmModal.message}
+                    onConfirm={confirmModal.onConfirm}
+                    onCancel={() => setConfirmModal(null)}
+                />
             )}
 
             {isGoalModalOpen && (
@@ -614,6 +618,7 @@ ${rationale || '本月尚未填寫心得。'}
                                 value={tempGoal}
                                 onChange={e => setTempGoal(Number(e.target.value))}
                                 className="pool-input"
+                                style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)' }}
                                 autoFocus
                             />
                         </div>
@@ -721,6 +726,10 @@ ${rationale || '本月尚未填寫心得。'}
                 input[type="month"]::-webkit-calendar-picker-indicator {
                     filter: invert(1);
                     cursor: pointer;
+                }
+
+                @media (max-width: 768px) {
+                    .chart-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
                 }
             `}</style>
         </div >

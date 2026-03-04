@@ -621,3 +621,91 @@ All 10 sub-projects confirmed healthy — HTTP 200, correct titles, no wrong red
 **Affected files:** `index.html`, `nagoya.html`, `okinawa.html`, `okinawa-1.html`, `tesuuryo.html`, `mail/index.html`, `finance/src/index.css`, `pdf-tool/src/index.css`, `v-player-preview/src/index.css`, `preview/src/index.css`, `travel-planner/frontend/src/style.css`, `caselog/src/app/globals.css`
 
 **中文說明：全域隱藏所有網頁與子專案的原生瀏覽器捲軸，並確保維持正常的捲動功能。此項優化涵蓋 Jing Lab 首頁、行程頁面及 Finance、PDF 工具、案時記等所有子系統，提升視覺上的極簡質感與裝置相容性。**
+
+## [v3.2.0] – 2026-03-04T13:45:00+08:00
+### AI Analyst: Immersive Workspace Refactoring (Option A)
+#### Added
+- **4th Analysis Mode: "Market Correlation & Sentiment" (市場連動與情緒共振)**: Added a new strategic analysis mode targeting market cycle resilience and behavioral bias detection.
+- **Immersive Workspace Layout**: Completely redesigned the AI Analyst page following a minimalist two-column "Studio" architecture.
+  - **Left Panel**: Clean strategy cards with integrated hover actions.
+  - **Main Workspace**: Features a unified toolbar, a high-contrast monospaced prompt editor, and a prominent full-width action button.
+- **Scoped Design System**: Introduced a component-level `<style>` architecture to implement subtle glassmorphism, glowing accents, and smooth transitions without polluting global CSS.
+
+#### Changed
+- **Linear Workflow**: Refined the user journey to a focused "Select -> Refine -> Launch" flow.
+- **Visual Polish**: Replaced basic list items with animated cards featuring refined typography (Inter) and brand-aligned colors.
+
+**中文說明：重構「AI 投資策略師」頁面為沉浸式工作台佈局（方案 A）。新增第四種模式「市場連動與情緒共振」，並採用側邊清單搭配中央大型編輯區的設計，全面提升操作流暢度與視覺設計感，導入組件級 scoped 樣式以實現更細膩的動態效果。**
+
+
+
+
+## [v3.2.1] – 2026-03-04T14:15:00+08:00
+### AI Analyst: Studio Grid Layout & Glassmorphism Refinement (Option 1)
+#### Changed
+- **Grid Layout (3-Column)**: Optimized the AI Analyst workspace into a stable 3-column "Studio Grid" (`minmax(280px, 320px) 1fr minmax(250px, 300px)`), providing a balanced layout for Strategy Selection, Prompt Editing, and Engine Tools.
+- **Glassmorphism Polish**: Standardized `studio-glass-panel` aesthetics with enhanced blur (20px), refined translucent borders, and deeper box shadows for a premium layered effect.
+- **Navbar Optimization**: Improved navigation hitboxes and spacing; implemented aggressive label hiding for tablets/mobile to preserve horizontal space.
+- **Button Standardization**: Unified button heights (56px for primary actions) and interaction states; added a pulse-glow indicator for tool status.
+- **Responsive Adaptivity**: Fine-tuned 400px device padding and implemented multi-stage grid-to-stack transformations for tablets.
+
+**中文說明：實施「AI 分析」頁面佈局優化（方案一：Studio Grid）。將介面升級為更穩定的三欄式專業佈局，強化玻璃擬態視覺精緻度，並優化導航欄與按鈕的點擊體驗與響應式細節，確保在行動端與桌面端皆具備平衡且優雅的視覺呈現。**
+
+## [v3.3.0] – 2026-03-04T18:05:00+08:00
+
+### AI Analyst: Personalized Wisdom & Custom Tooling
+#### Added
+- **User Fundamental Profile**: Integrated persistent inputs for investment horizon, risk tolerance, psychology, and idle funds. This data is now automatically injected into all AI prompts to provide context-aware analysis.
+- **Dynamic AI Tool Workbench**: Replaced the hardcoded AI link with a fully customizable "Custom Tool Manager". Users can now define their own set of AI tools (ChatGPT, Claude, etc.) from scratch with individual URLs and display names.
+- **Expert Behavioral Persona**: Rewrote the prompt generator to model a senior quant strategist and behavioral consultant, delivering more diagnostic and actionable responses.
+#### Fixed
+- **Critical Structural Repair**: Resolved severe JSX/CSS syntax errors that were preventing the "Studio" interface from rendering correctly on mobile and desktop.
+- **Persistence Sync**: Ensured seamless data flow between the AI Analyst sidebar and the core Monthly Configuration database records.
+
+**中文說明：大幅提升 AI 分析師的「個人化」深度。現在系統會儲存使用者的投資期限、風險承受度等基本面資訊，並在產生專業提示詞時自動帶入背景；同時開放自由設定無限個 AI 工具連結（如自訂 ChatGPT 路徑），並徹底修復了介面顯示錯誤。**
+
+## [v3.4.0] – 2026-03-04T21:45:00+08:00
+
+### AI Analyst & Monthly Config: Animated Feedback & Smart Sorting
+#### Added
+- **Animated Button Feedback**: Implemented a sophisticated text-based state transition for buttons (Save, Copy, Sort). Original text disappears (0.1s), status (e.g., "已儲存", "已複製") appears with opacity and scale transitions (0.2s), holds for 2s, then restores the original label.
+- **Smart Sort Secondary Weights**: Enhanced sorting logic in `MonthlyConfig.tsx` to prioritize by category (Taiwan Stock > US Stock > Fund > Other) and secondary by **Amount (Descending)** for better financial organization.
+- **Investment Background Refinement**: 
+    - Added "No particular feeling" (無特別感受) to current psychology options.
+    - Converted "Idle Funds" to a plain text input to support non-numeric descriptions (e.g., "50k CAD", "Wait and see").
+    - Added a dedicated "Notes" (備註) field for additional user-provided context.
+- **Layout Optimization**: Balanced the AI Analyst desktop layout to a 1:1 ratio (`minmax(0, 1fr)`) for User Fundamentals and Prompt Editor sections, improving visual symmetry on wide screens.
+
+#### Fixed & Improved
+- **Silent Auto-save**: Refactored the auto-save mechanism to be completely silent, removing noisy toast notifications to focus on intent-driven button feedback.
+- **Design Language Alignment**: Fully purged "Green" as a success indicator, aliasing it to brand Indigo tints (`--primary`) in `index.css`.
+- **Icon Visibility**: Updated all `.icon-btn` and ghost variants to use white/light colors, ensuring maximum contrast against the dark glassmorphism background.
+- **Type Safety**: Updated `MonthlyConfig` and `UserSettings` interfaces to handle string-based idle funds and the new notes field.
+
+**中文摘要：為「AI 分析」與「每月配置」按鈕注入動態文字回饋（已儲存、已複製），取代擾人的彈窗通知。智慧排序新增「金額高至低」二次權重。優化投資背景欄位：閒置資金改為純文字、新增備註、心理狀態新增「無特別感受」。系統版面優化為對稱佈局，並全面移除綠色系改採品牌靛藍色，確保視覺一致性與圖示清晰度。**
+
+## [v3.4.1] – 2026-03-04T20:10:00+08:00
+### Monthly Config: Table Height & Real-time Summaries
+#### Added
+- **Real-time Category Summaries**: Implemented a live calculation display grouping items by category and currency (e.g., Funds-JPY, Funds-TWD) on the Monthly Config page.
+- **Scrollable Investment Grid**: Fixed the investment table height to 420px with custom vertical scrolling, preventing excessive page length.
+- **Markdown Summary Integration**: Exported Markdown reports now include a dedicated "Category Totals" section.
+
+#### Fixed
+- **Monthly Execution Deduplication**: Modified  to ensure that re-executing a plan for the same month overwrites the existing snapshot instead of creating duplicates.
+- **Type Safety & Imports**: Fixed missing  import and addressed implicit  type warnings in the summary calculation logic.
+
+**中文摘要：每月投資配置功能優化。新增分類與幣別的即時總計看板，並將配置表格改為固定高度捲動以提升操作精緻感。修正了重複執行計畫時產生多重快照的問題（改為自動覆蓋），並同步更新 Markdown 報表格式。**
+
+## [v3.4.1] – 2026-03-04T20:12:00+08:00
+### Monthly Config: Table Height & Real-time Summaries
+#### Added
+- **Real-time Category Summaries**: Implemented a live calculation display grouping items by category and currency (e.g., Funds-JPY, Funds-TWD) on the Monthly Config page.
+- **Scrollable Investment Grid**: Fixed the investment table height to 420px with custom vertical scrolling, preventing excessive page length.
+- **Markdown Summary Integration**: Exported Markdown reports now include a dedicated "Category Totals" section.
+
+#### Fixed
+- **Monthly Execution Deduplication**: Modified `executePlanLogic` to ensure that re-executing a plan for the same month overwrites the existing snapshot instead of creating duplicates.
+- **Type Safety & Imports**: Fixed missing `useMemo` import and addressed implicit `any` type warnings in the summary calculation logic.
+
+**中文摘要：每月投資配置功能優化。新增分類與幣別的即時總計看板，並將配置表格改為固定高度捲動以提升操作精緻感。修正了重複執行計畫時產生多重快照的問題（改為自動覆蓋），並同步更新 Markdown 報表格式。**

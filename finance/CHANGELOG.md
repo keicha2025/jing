@@ -177,4 +177,60 @@
 
 ---
 **本次更新將產品邏輯完全聚焦於「每月投資配置」與「紀律執行」，移除了所有與總資產、庫存（Holdings）及賺賠比例相關的追蹤邏輯。**
-**儀表板改為顯示歷史投入趨勢與資金池進度，AI 分析師也同步轉向分析投資紀律與決策校準。**
+
+## [1.6.0] - 2026-03-04 - AI Studio v4.0 & Personalized Insights Integration
+
+### Added
+- **User Fundamental Fields**: Integrated `investmentHorizon`, `riskTolerance`, `investmentPsychology`, and `manualIdleFunds` into the database and UI to provide persistent context for AI analysis.
+- **Custom Tool Manager**: Replaced hardcoded AI links with a dynamic management system allowing users to define their own preferred AI workbenches (ChatGPT, Claude, etc.) from a blank slate.
+- **Role-Based Professional Prompting**: Overhauled the prompt generation engine to utilize 20-year quantized investment bank expertise persona, ensuring results are diagnostic, actionable, and psychologically grounded.
+- **Background Persistence**: Implemented synchronization between the AI Analyst sidebar settings and the monthly investment configuration record.
+
+### Changed
+- **UI/UX Cleanup**: Stabilized the 3-column "Studio" layout using CSS Grid, fixing mobile stacking issues and browser scrollbar invisibility.
+- **Prompt Architecture**: Migrated all logic to a centralized `generatePrompt` function with mode-specific instructions (Discipline, Market, Projection, Cashflow).
+- **Core Design Polish**: Refined glassmorphism effects and animation timings for a premium professional feel.
+
+### Fixed
+- **Critical JSX/CSS Syntax**: Resolved severe rendering issues caused by malformed closing tags and broken CSS variable spacing in the previous build.
+- **Linting & Logic**: Corrected property mapping errors in tool identification and modal confirmation handlers.
+
+### Affected Files
+- `src/pages/AIAnalyst.tsx`
+- `src/types/index.ts`
+- `src/services/db.ts`
+
+---
+**本次更新大幅強化了 AI 分析師的個人化程度，支援存儲投資背景資訊並將其自動帶入專業提示詞中。**
+**同時修復了介面語法錯誤，並開放使用者自由設定 AI 工具連結，實現完全自定義的分析工作流。**
+
+## [1.6.1] - 2026-03-04 - AI Studio Layout Hotfix (Audit-Driven)
+
+### Fixed
+- **Grid Middle Column Overflow (FIX #1)**: Changed `1fr` to `minmax(0, 1fr)` in `studio-layout`. This prevents the Prompt Editor from overflowing its grid track when sibling columns have large minimum sizes.
+- **iOS Safari Sidebar Height Explosion (FIX #2)**: Added `height: auto; overflow-y: auto` on the stacked mobile layout and set `overflow: visible` on `.studio-glass-panel` for mobile. iOS Safari was ignoring `overflow: hidden` on flex children, causing the sidebar to expand indefinitely.
+- **Prompt Textarea Collapse to 0px (FIX #3)**: Added `min-height: 260px` on `.editor-area` and `min-height: 220px; flex: none` on `.prompt-textarea` at `max-width: 768px`. Without a fixed reference height, `flex: 1` collapsed to zero in stacked layout.
+- **Tool Modal Input Overflow on 375px (FIX #4)**: Replaced fixed `width: 100px` on the name input with `flex: 0 0 88px; min-width: 0` and added `flex: 1 1 160px; min-width: 0` to the URL input with `flex-wrap: wrap`. Prevents overflow on narrow modals.
+- **Settings Overwrite Data Loss Bug (FIX #5)**: `saveUserSettings` call now spreads `...settings` before overriding `aiTools`, preventing `aiStrategies` and other persisted fields from being silently cleared.
+- **Tablet Breakpoint Alignment**: Corrected tablet media query from `1200px` to `1100px` to match common laptop viewport widths, using explicit `grid-column: 1 / -1` instead of `span 2` to properly span the right panel.
+
+### Affected Files
+- `src/pages/AIAnalyst.tsx`
+
+---
+**本次熱修復解決了 AI Studio 介面在行動端的三個嚴重崩潰問題（側欄爆裂、編輯器塌縮、Modal 溢出），並修復了儲存工具設定時意外清除策略資料的邏輯 Bug。**
+
+
+
+## [1.7.0] - 2026-03-04 - Monthly Allocation Optimization
+### Added
+- **Category Summary Engine**: Real-time aggregation of item amounts grouped by category and currency.
+- **Scrollable Table Layout**: Implemented a 420px max-height scrollable container for the investment configuration grid.
+- **Snapshot Overwrite Logic**: Enforced unique year-month documents in the `snapshots` collection to prevent duplicates upon re-execution.
+### Changed
+- **Markdown Generator**: Integrated dynamic category totals into exported investment reports.
+### Fixed
+- **State Deduplication**: Ensured local `snapshots` state stays in sync with overwritten database records.
+- **Import Bloat**: Cleaned up React imports and fixed `useMemo` reference error.
+---
+**優化每月投資配置流程：新增即時分類/幣別總計看板，配置表格改為捲動式佈局。實作了快照覆蓋邏輯，防止在同月重複點擊執行時產生多筆重複數據。**

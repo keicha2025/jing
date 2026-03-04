@@ -8,10 +8,12 @@
     --surface-border: rgba(255, 255, 255, 0.05);
     --text-main: #f8fafc;
     --text-muted: #64748b;
-    --success: #10b981;
+    /* ── Design Language v1.0: NO GREEN as functional color ─────────────── */
+    /* success state uses Indigo Tint — see DESIGN_LANGUAGE.md §1.3 */
+    --success: #6366f1;
+    /* was #10b981 green — now aliased to primary */
     --warning: #f59e0b;
     --error: #64748b;
-    /* Removed red, using slate for neutral/caution */
 
     --glass-bg: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.05);
@@ -127,6 +129,10 @@ button {
     transition: var(--transition);
 }
 
+button:active {
+    transform: scale(0.96) !important;
+}
+
 .btn-primary {
     background: linear-gradient(135deg, var(--primary), var(--accent));
     color: white;
@@ -197,18 +203,46 @@ button {
     justify-content: center;
     padding: 0.5rem;
     border-radius: 0.5rem;
-    color: var(--text-muted);
+    /* WHITE icons — visible on dark backgrounds (design language §5) */
+    color: rgba(255, 255, 255, 0.65);
     transition: var(--transition);
 }
 
 .icon-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
     color: var(--text-main);
 }
 
 .icon-btn.danger:hover {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    /* Slate-based danger, not red (design language §1.3) */
+    background: rgba(100, 116, 139, 0.15);
+    color: rgba(248, 250, 252, 0.9);
+}
+
+/* Global icon-btn-ghost — also white icons */
+.icon-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.65);
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.icon-btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.icon-btn-ghost.danger:hover {
+    background: rgba(100, 116, 139, 0.12);
+    color: rgba(248, 250, 252, 0.9);
 }
 
 .input-field {
@@ -241,6 +275,31 @@ button {
 
 .animate-fade-in {
     animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Button Status Text Transitions */
+.status-btn-content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: opacity 0.2s ease;
+}
+
+.status-btn-content.exit {
+    opacity: 0;
+    transition: opacity 0.1s ease;
+}
+
+.status-btn-content.enter {
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+
+.status-btn-content.hidden {
+    opacity: 0;
+    position: absolute;
+    pointer-events: none;
 }
 
 /* Utility classes */

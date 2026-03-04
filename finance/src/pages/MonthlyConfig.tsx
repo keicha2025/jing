@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { auth } from '../firebase';
 import { getMonthlyConfig, saveMonthlyConfig } from '../services/db';
 import { MonthlyConfig, MonthlyConfigItem } from '../types';
 import { Save, Copy, FileText, Plus, Trash2, Zap, CheckCircle2 } from 'lucide-react';
+import Dropdown from '../components/Dropdown';
+import ConfirmModal from '../components/ConfirmModal';
 
 export default function MonthlyConfigPage() {
     const [config, setConfig] = useState<MonthlyConfig | null>(null);
@@ -10,13 +12,40 @@ export default function MonthlyConfigPage() {
     const [loading, setLoading] = useState(true);
     const [isEditMode, setIsEditMode] = useState(false);
     const [markdownText, setMarkdownText] = useState('');
+    const [status, setStatus] = useState<{ [key: string]: string | null }>({});
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+    const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(null);
     // Use string-based amount state to prevent floating-point rounding during typing
     const [amountInputs, setAmountInputs] = useState<string[]>([]);
 
+    // --- Summary Calculations (Mutual listening) ---
+    const summaries = useMemo(() => {
+        const map: Record<string, number> = {};
+        items.forEach(item => {
+            const key = `${item.category}-${item.currency}`;
+            map[key] = (map[key] || 0) + item.amount;
+        });
+        return Object.entries(map).sort((a, b) => a[0].localeCompare(b[0]));
+    }, [items]);
+
+    const triggerStatus = useCallback((key: string, message: string) => {
+        setStatus(prev => ({ ...prev, [key]: 'EXIT' }));
+        setTimeout(() => {
+            setStatus(prev => ({ ...prev, [key]: message }));
+            setTimeout(() => {
+                setStatus(prev => ({ ...prev, [key]: 'RESTORE' }));
+                setTimeout(() => {
+                    setStatus(prev => ({ ...prev, [key]: null }));
+                }, 200);
+            }, 2000);
+        }, 100);
+    }, []);
+
     const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3000);
+        if (type === 'error') {
+            setToast({ message, type });
+            setTimeout(() => setToast(null), 3000);
+        }
     }, []);
 
     useEffect(() => {
@@ -91,7 +120,7 @@ export default function MonthlyConfigPage() {
                     items: finalItems,
                 });
                 setItems(finalItems);
-                showToast('配置已保存！');
+                triggerStatus('save', '配置已保存');
             } catch (e) {
                 console.error(e);
                 showToast('保存失敗', 'error');
@@ -106,19 +135,37 @@ export default function MonthlyConfigPage() {
             const pa = priority[a.item.category] || 99;
             const pb = priority[b.item.category] || 99;
             if (pa !== pb) return pa - pb;
+            // Enhanced secondary sort: Amount (High to Low)
+            if (b.item.amount !== a.item.amount) return b.item.amount - a.item.amount;
             return a.item.ticker.localeCompare(b.item.ticker);
         });
         setItems(combined.map(c => c.item));
         setAmountInputs(combined.map(c => c.amtStr));
-        showToast('已智慧排序', 'info');
+        triggerStatus('sort', '已智慧排序');
     };
 
     const generateMarkdown = (currentItems: MonthlyConfigItem[]) => {
         let md = `| 類別 | 代號 | 金額 | 幣別 |\n`;
         md += `| :--- | :--- | :--- | :--- |\n`;
         currentItems.forEach(item => {
-            md += `| ${item.category} | ${item.ticker} | ${item.amount} | ${item.currency} |\n`;
+            const displayTicker = item.category === '台股' && !item.ticker.endsWith('.TW')
+                ? `${item.ticker}.TW`
+                : item.ticker;
+            md += `| ${item.category} | ${displayTicker} | ${item.amount} | ${item.currency} |\n`;
         });
+
+        // Add Category Summaries to Markdown
+        const map: Record<string, number> = {};
+        currentItems.forEach(item => {
+            const key = `${item.category}-${item.currency}`;
+            map[key] = (map[key] || 0) + item.amount;
+        });
+
+        md += `\n### 類別總計\n`;
+        Object.entries(map).sort((a, b) => a[0].localeCompare(b[0])).forEach(([key, total]) => {
+            md += `- ${key}: ${total.toLocaleString()} ${key.split('-')[1]}\n`;
+        });
+
         return md;
     };
 
@@ -149,7 +196,7 @@ export default function MonthlyConfigPage() {
 
     const copyToClipboard = () => {
         navigator.clipboard.writeText(generateMarkdown(items));
-        showToast('Markdown 已複製到剪貼簿！', 'info');
+        triggerStatus('copy', 'Markdown 已複製');
     };
 
     if (loading) {
@@ -158,50 +205,70 @@ export default function MonthlyConfigPage() {
 
     return (
         <div className="animate-fade-in">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '2rem', flexDirection: 'column' }}>
+                <div style={{ width: '100%' }}>
                     <h1 className="text-gradient">每月投資配置</h1>
-                    <p style={{ color: 'var(--text-muted)' }}>設定您的定期定額策略並匯出日誌</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>設定您的定期定額策略並匯出日誌</p>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                    <button
-                        onClick={handleSmartSort}
-                        style={{
-                            display: 'flex', alignItems: 'center', gap: '0.5rem',
-                            padding: '0.6rem 1rem', borderRadius: '0.75rem',
-                            background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.4)',
-                            color: '#a5b4fc', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        <Zap size={16} /> 智慧排序
+                <div className="config-actions" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', width: '100%', position: 'relative' }}>
+                    <button onClick={handleSmartSort} className="btn-accent-ghost" style={{ flex: 1, minWidth: '120px', padding: '0.5rem', position: 'relative', overflow: 'hidden' }}>
+                        <div className={`status-btn-content ${status.sort === 'EXIT' ? 'exit' : (status.sort === 'RESTORE' ? 'enter' : (status.sort ? 'hidden' : ''))}`}>
+                            <Zap size={16} /> <span className="action-label">智慧排序</span>
+                        </div>
+                        {status.sort && status.sort !== 'EXIT' && status.sort !== 'RESTORE' && (
+                            <div className="status-btn-content enter" style={{ position: 'absolute', inset: 0, justifyContent: 'center' }}>
+                                <CheckCircle2 size={16} /> {status.sort}
+                            </div>
+                        )}
                     </button>
-                    <button
-                        onClick={copyToClipboard}
-                        style={{
-                            display: 'flex', alignItems: 'center', gap: '0.5rem',
-                            padding: '0.6rem 1rem', borderRadius: '0.75rem',
-                            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                            color: 'var(--text-main)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        <Copy size={16} /> 複製 MD
+                    <button onClick={copyToClipboard} className="btn-ghost" style={{ flex: 1, minWidth: '120px', padding: '0.5rem', position: 'relative', overflow: 'hidden' }}>
+                        <div className={`status-btn-content ${status.copy === 'EXIT' ? 'exit' : (status.copy === 'RESTORE' ? 'enter' : (status.copy ? 'hidden' : ''))}`}>
+                            <Copy size={16} /> <span className="action-label">複製 MD</span>
+                        </div>
+                        {status.copy && status.copy !== 'EXIT' && status.copy !== 'RESTORE' && (
+                            <div className="status-btn-content enter" style={{ position: 'absolute', inset: 0, justifyContent: 'center' }}>
+                                <CheckCircle2 size={16} /> {status.copy}
+                            </div>
+                        )}
                     </button>
-                    <button
-                        onClick={handleSave}
-                        className="btn-primary"
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}
-                    >
-                        <Save size={16} /> 保存配置
+                    <button onClick={handleSave} className="btn-primary" style={{ flex: '1 0 100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.875rem', padding: '0.75rem', position: 'relative', overflow: 'hidden' }}>
+                        <div className={`status-btn-content ${status.save === 'EXIT' ? 'exit' : (status.save === 'RESTORE' ? 'enter' : (status.save ? 'hidden' : ''))}`}>
+                            <Save size={16} /> 保存配置
+                        </div>
+                        {status.save && status.save !== 'EXIT' && status.save !== 'RESTORE' && (
+                            <div className="status-btn-content enter" style={{ position: 'absolute', inset: 0, justifyContent: 'center' }}>
+                                <CheckCircle2 size={16} /> {status.save}
+                            </div>
+                        )}
                     </button>
                 </div>
             </div>
 
             <div className="glass-card">
-                {/* Table Header */}
+                {/* 1. Category Summaries (Read-only, Real-time) */}
                 <div style={{
-                    display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: '1rem',
+                    display: 'flex', gap: '0.75rem', flexWrap: 'wrap',
+                    marginBottom: '1.25rem', padding: '0.75rem',
+                    background: 'rgba(255,255,255,0.03)', borderRadius: '0.75rem',
+                    border: '1px solid rgba(255,255,255,0.05)'
+                }}>
+                    {summaries.length > 0 ? summaries.map(([key, total]: [string, number]) => (
+                        <div key={key} style={{
+                            padding: '4px 10px', borderRadius: '6px',
+                            background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)',
+                            fontSize: '0.75rem', color: 'var(--text-main)', display: 'flex', gap: '6px'
+                        }}>
+                            <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{key}</span>
+                            <span>{total.toLocaleString()}</span>
+                        </div>
+                    )) : (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>尚未輸入配置項目</div>
+                    )}
+                </div>
+
+                {/* 2. Table Header */}
+                <div className="table-header" style={{
+                    display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 0.8fr auto', gap: '1rem',
                     alignItems: 'center', marginBottom: '1rem',
                     padding: '0.5rem 0.75rem',
                     borderBottom: '1px solid rgba(255,255,255,0.06)'
@@ -211,29 +278,32 @@ export default function MonthlyConfigPage() {
                     ))}
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* 3. Scrollable Table Body */}
+                <div style={{
+                    display: 'flex', flexDirection: 'column', gap: '0.75rem',
+                    maxHeight: '420px', overflowY: 'auto', paddingRight: '4px'
+                }}>
                     {items.map((item, index) => (
-                        <div key={index} style={{
-                            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: '1rem', alignItems: 'center',
+                        <div key={index} className="investment-row" style={{
+                            display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 0.8fr auto', gap: '1rem', alignItems: 'center',
                             padding: '0.5rem 0.75rem', borderRadius: '0.5rem',
                             background: 'rgba(255,255,255,0.02)',
                             transition: 'background 0.2s'
                         }}>
-                            <div>
-                                <select
-                                    className="input-field"
-                                    style={{ width: '100%', color: 'var(--text-main)' }}
+                            <div className="col-category">
+                                <Dropdown
                                     value={item.category}
-                                    onChange={(e) => handleUpdateItem(index, 'category', e.target.value)}
-                                >
-                                    <option>美股</option>
-                                    <option>台股</option>
-                                    <option>基金</option>
-                                    <option>現金</option>
-                                    <option>其他</option>
-                                </select>
+                                    options={[
+                                        { label: '美股', value: '美股' },
+                                        { label: '台股', value: '台股' },
+                                        { label: '基金', value: '基金' },
+                                        { label: '現金', value: '現金' },
+                                        { label: '其他', value: '其他' }
+                                    ]}
+                                    onChange={(val) => handleUpdateItem(index, 'category', val)}
+                                />
                             </div>
-                            <div style={{ position: 'relative' }}>
+                            <div className="col-ticker" style={{ position: 'relative' }}>
                                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                     <input
                                         className="input-field"
@@ -241,20 +311,21 @@ export default function MonthlyConfigPage() {
                                         onChange={(e) => handleUpdateItem(index, 'ticker', e.target.value)}
                                         style={{
                                             width: '100%', color: 'var(--text-main)',
-                                            paddingRight: item.category === '台股' ? '3rem' : '1rem'
+                                            paddingRight: item.category === '台股' ? '2.5rem' : '0.5rem',
+                                            paddingLeft: '0.5rem'
                                         }}
-                                        placeholder={item.category === '台股' ? "e.g. 2330" : "e.g. VOO"}
+                                        placeholder={item.category === '台股' ? "2330" : "VOO"}
                                     />
                                     {item.category === '台股' && (
                                         <span style={{
-                                            position: 'absolute', right: '1rem',
+                                            position: 'absolute', right: '0.5rem',
                                             color: 'var(--text-muted)', fontWeight: 600,
-                                            pointerEvents: 'none', fontSize: '0.9rem'
+                                            pointerEvents: 'none', fontSize: '0.75rem'
                                         }}>.TW</span>
                                     )}
                                 </div>
                             </div>
-                            <div>
+                            <div className="col-amount">
                                 <input
                                     type="text"
                                     inputMode="numeric"
@@ -263,36 +334,29 @@ export default function MonthlyConfigPage() {
                                     value={amountInputs[index] ?? String(item.amount)}
                                     onChange={(e) => handleAmountInput(index, e.target.value)}
                                     onBlur={() => handleAmountBlur(index)}
-                                    style={{ width: '100%', color: 'var(--text-main)' }}
+                                    style={{ width: '100%', color: 'var(--text-main)', paddingLeft: '0.5rem', paddingRight: '0.5rem' }}
                                     placeholder="0"
                                 />
                             </div>
-                            <div>
-                                <select
-                                    className="input-field"
-                                    style={{ width: '100%', color: 'var(--text-main)' }}
+                            <div className="col-currency">
+                                <Dropdown
                                     value={item.currency}
-                                    onChange={(e) => handleUpdateItem(index, 'currency', e.target.value)}
-                                >
-                                    <option>TWD</option>
-                                    <option>USD</option>
-                                    <option>JPY</option>
-                                </select>
+                                    options={[
+                                        { label: 'TWD', value: 'TWD' },
+                                        { label: 'USD', value: 'USD' },
+                                        { label: 'JPY', value: 'JPY' }
+                                    ]}
+                                    onChange={(val) => handleUpdateItem(index, 'currency', val)}
+                                />
                             </div>
-                            <button
-                                onClick={() => handleRemoveItem(index)}
-                                style={{
-                                    background: 'none', border: 'none',
-                                    color: 'rgba(255,255,255,0.3)', cursor: 'pointer',
-                                    padding: '0.5rem', borderRadius: '0.5rem',
-                                    display: 'flex', alignItems: 'center',
-                                    transition: 'all 0.2s'
-                                }}
-                                onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
-                                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
-                            >
-                                <Trash2 size={16} />
-                            </button>
+                            <div className="col-action">
+                                <button
+                                    onClick={() => setConfirmDeleteIndex(index)}
+                                    className="icon-btn danger"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
                         </div>
                     ))}
 
@@ -366,7 +430,7 @@ export default function MonthlyConfigPage() {
                 <div style={{
                     position: 'fixed', bottom: '24px', right: '24px',
                     padding: '12px 24px',
-                    background: toast.type === 'success' ? 'var(--primary)' : toast.type === 'error' ? '#475569' : 'rgba(99,102,241,0.85)',
+                    background: toast.type === 'error' ? '#64748b' : 'var(--primary)',
                     color: 'white', borderRadius: '12px',
                     boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)',
                     zIndex: 1200, display: 'flex', alignItems: 'center', gap: '12px',
@@ -379,10 +443,50 @@ export default function MonthlyConfigPage() {
                     <span>{toast.message}</span>
                 </div>
             )}
+
+            {confirmDeleteIndex !== null && (
+                <ConfirmModal
+                    title="刪除配置"
+                    message={`確定要刪除「${items[confirmDeleteIndex]?.ticker || '未命名項目'}」嗎？`}
+                    onConfirm={() => {
+                        handleRemoveItem(confirmDeleteIndex);
+                        setConfirmDeleteIndex(null);
+                    }}
+                    onCancel={() => setConfirmDeleteIndex(null)}
+                />
+            )}
             <style>{`
                 @keyframes mc-slide-in {
                     from { transform: translateX(20px); opacity: 0; }
                     to { transform: translateX(0); opacity: 1; }
+                }
+                @media (min-width: 640px) {
+                    .config-actions { flex-direction: row !important; }
+                    .config-actions button { flex: none !important; width: auto !important; }
+                }
+                @media (max-width: 640px) {
+                    .table-header { display: none !important; }
+                    .investment-row { 
+                        grid-template-columns: 1fr 1fr !important; 
+                        gap: 1rem !important; 
+                        padding: 1.25rem 1rem !important;
+                        border: 1px solid rgba(255,255,255,0.05);
+                        position: relative;
+                    }
+                    /* Row 1: Category | Currency */
+                    .col-category { grid-column: span 1; order: 1; }
+                    .col-currency { grid-column: span 1; order: 2; }
+                    
+                    /* Row 2: Ticker | Amount */
+                    .col-ticker { grid-column: span 1; order: 3; }
+                    .col-amount { grid-column: span 1; order: 4; }
+                    
+                    .col-action { 
+                        position: absolute; 
+                        top: 0.5rem; 
+                        right: 0.5rem; 
+                    }
+                    .action-label { display: none; }
                 }
             `}</style>
         </div>

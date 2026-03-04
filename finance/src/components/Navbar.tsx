@@ -12,19 +12,49 @@ export default function Navbar({ user }: NavbarProps) {
     const location = useLocation();
 
     return (
-        <nav className="glass-card" style={{ margin: '1rem', borderRadius: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1.5rem' }}>
-            <Link to="/" className="text-gradient" style={{ fontWeight: 800, fontSize: '1.25rem' }}>JING</Link>
+        <nav className="glass-card" style={{
+            margin: '1.25rem',
+            borderRadius: '1.25rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '0.5rem 1.5rem',
+            height: '64px'
+        }}>
+            <Link to="/" className="text-gradient" style={{
+                fontWeight: 900,
+                fontSize: '1.4rem',
+                letterSpacing: '-0.05em',
+                marginRight: '1rem'
+            }}>JING</Link>
 
-            <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', height: '100%' }}>
                 <NavLink to="/" icon={<Home size={20} />} label="首頁" active={location.pathname === '/'} />
                 <NavLink to="/config" icon={<PenTool size={20} />} label="配置" active={location.pathname === '/config'} />
                 <NavLink to="/ai" icon={<PieChart size={20} />} label="分析" active={location.pathname === '/ai'} />
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <img src={user.photoURL || ''} alt="avatar" style={{ width: 32, height: 32, borderRadius: '50%' }} />
-                <button onClick={handleLogout} className="flex-center" style={{ color: 'var(--text-muted)' }}>
-                    <LogOut size={20} />
+                <div style={{
+                    padding: '2px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, var(--primary), var(--accent))'
+                }}>
+                    <img src={user.photoURL || ''} alt="avatar" style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        display: 'block',
+                        background: 'var(--background)'
+                    }} />
+                </div>
+                <button onClick={handleLogout} className="icon-btn" style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.03)'
+                }}>
+                    <LogOut size={18} />
                 </button>
             </div>
         </nav>
@@ -33,42 +63,39 @@ export default function Navbar({ user }: NavbarProps) {
 
 function NavLink({ to, icon, label, active = false }: { to: string; icon: any, label: string; active?: boolean }) {
     return (
-        <Link to={to} className="flex-center" style={{
-            gap: '0.5rem',
-            color: active ? 'var(--primary)' : 'var(--text-muted)',
-            cursor: 'pointer',
-            padding: '0.5rem 0.75rem',
-            borderRadius: '0.5rem',
-            background: active ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+        <Link to={to} className="nav-link-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.6rem',
+            color: active ? 'white' : 'var(--text-muted)',
+            padding: '0.6rem 1rem',
+            borderRadius: '1rem',
+            background: active ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
             transition: 'var(--transition)',
             position: 'relative',
-            display: 'flex',
-            flexDirection: 'column',
-            minWidth: '70px'
+            fontWeight: active ? 600 : 500,
+            whiteSpace: 'nowrap'
         }}>
-            <div className="flex-center" style={{ gap: '0.5rem' }}>
+            <span style={{
+                color: active ? 'var(--primary)' : 'inherit',
+                display: 'flex',
+                alignItems: 'center'
+            }}>
                 {icon}
-                <div style={{ position: 'relative' }}>
-                    <span style={{
-                        fontSize: '0.9rem',
-                        fontWeight: active ? 600 : 400,
-                        transition: 'font-weight 0.2s ease'
-                    }}>
-                        {label}
-                    </span>
-                    {/* Hidden bold label to reserve space and prevent layout shift */}
-                    <span style={{
-                        fontSize: '0.9rem',
-                        fontWeight: 600,
-                        visibility: 'hidden',
-                        height: 0,
-                        display: 'block',
-                        overflow: 'hidden'
-                    }}>
-                        {label}
-                    </span>
-                </div>
-            </div>
+            </span>
+            <span className="nav-label" style={{ fontSize: '0.9rem' }}>
+                {label}
+            </span>
+            <style>{`
+                .nav-link-item:hover {
+                    background: rgba(255, 255, 255, 0.05);
+                    color: var(--text-main);
+                }
+                @media (max-width: 600px) {
+                    .nav-label { display: none !important; }
+                    .nav-link-item { padding: 0.75rem; border-radius: 12px; }
+                }
+            `}</style>
         </Link>
     );
 }
