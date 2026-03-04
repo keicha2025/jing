@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jing-lab-v12';
+const CACHE_NAME = 'jing-lab-v14';
 const ASSETS = [
     './',
     './index.html',

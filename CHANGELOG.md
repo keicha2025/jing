@@ -455,3 +455,169 @@ Resolved a critical issue where the PDF Tool was displaying a blank white screen
 - Changed all icon hrefs to relative `./` paths for Vite to resolve correctly at build time.
 
 **中文說明：根目錄 Service Worker 不再攔截子應用路徑，解決「部署後空白」問題；所有子專案 vite.config.js 的 base 路徑改為絕對路徑，確保重新整理後資源路徑正確；SW 升至 v12 強制清除舊快取。**
+
+---
+
+## [v3.1.4] – 2026-03-03T21:36:00+08:00
+
+### SW Exclusion Expansion + Full-site Health Verification
+
+#### Service Worker (sw.js)
+- Added `/note/`, `/nightwhisper/`, `/mail/` to `excludedPrefixes` list in root SW fetch handler.
+- These static sub-apps were previously subject to root SW interception; now fully excluded.
+- Bumped cache version: `jing-lab-v12` → `jing-lab-v13`.
+
+#### Full-site Verification (All 10 Sub-projects)
+All sub-projects verified healthy — HTTP 200, correct HTML title, no blank pages:
+
+| URL | Title | Status |
+|-----|-------|--------|
+| `/` | Jing Lab - Project Portal | ✅ |
+| `/finance/` | JING Finance | ✅ |
+| `/pdf-tool/` | FlatModern - PDF Studio | ✅ |
+| `/preview/` | 個人音檔播放器 | ✅ |
+| `/v-player-preview/` | V-Player Web App | ✅ |
+| `/caselog/` | 案時記 / caselog | ✅ |
+| `/travel-planner/` | Travel Planner | ✅ |
+| `/note/` | note | ✅ |
+| `/nightwhisper/` | NightWhisper 夜語 | ✅ |
+| `/mail/` | Minimalist Email Studio | ✅ |
+
+**中文說明：補全靜態子應用（note/nightwhisper/mail）的 SW 排除規則，升至 v13；全站 10 個子專案驗證全數正常。**
+
+---
+
+## [v3.1.5] – 2026-03-04T00:22:00+08:00
+
+### Critical Fix: Firebase Hosting Rewrites Missing for Static Sub-apps
+
+#### Root Cause
+`firebase.json` had a catch-all rewrite `"source": "/**"` → `/index.html` at the bottom of the rewrites array.
+Sub-apps `/note/`, `/mail/`, and `/nightwhisper/` were **not listed** in rewrites before this catch-all,
+so every request to these paths was silently redirected to the root portal page instead of their own `index.html`.
+
+#### Fix — `firebase.json`
+- Added explicit rewrite rules for all three static sub-apps:
+  - `/note/**` → `/note/index.html`
+  - `/mail/**` → `/mail/index.html`
+  - `/nightwhisper/**` → `/nightwhisper/index.html`
+- All rules are placed **before** the catch-all `/**` rule.
+- Also corrected the Firestore rules path: `strategy-box/firestore.rules` → `finance/firestore.rules` (post-rename fix).
+
+#### Fix — `note/sw.js` (v2 → v3)
+- Upgraded `CACHE_NAME` from `note-app-v2` to `note-app-v3` to force-clear stale caches that may have cached incorrect HTML responses for `config.js`.
+- Changed ASSETS list from relative paths (`./`) to absolute paths (`/note/config.js`, etc.) for stable resolution.
+- Added `self.clients.claim()` in `activate` handler so the new SW takes over immediately without requiring a page reload.
+- Changed `cache.addAll()` to `Promise.allSettled()` so a single failed asset doesn't abort the entire SW installation.
+- Tightened fetch handler to only cache responses where `response.type === 'basic'` (prevents caching of CDN cross-origin opaque responses).
+
+#### Full Site Verification (Post-fix)
+All 10 sub-projects confirmed healthy — HTTP 200, correct titles, no wrong redirects:
+
+| App | Title | HTTP |
+|-----|-------|------|
+| `/` | Jing Lab - Project Portal | ✅ 200 |
+| `/finance/` | JING Finance | ✅ 200 |
+| `/pdf-tool/` | FlatModern - PDF Studio | ✅ 200 |
+| `/preview/` | 個人音檔播放器 | ✅ 200 |
+| `/v-player-preview/` | V-Player Web App | ✅ 200 |
+| `/caselog/` | 案時記 / caselog | ✅ 200 |
+| `/travel-planner/` | Travel Planner | ✅ 200 |
+| `/note/` | note | ✅ 200 |
+| `/nightwhisper/` | NightWhisper 夜語 | ✅ 200 |
+| `/mail/` | Minimalist Email Studio | ✅ 200 |
+
+**中文說明：根本原因是 firebase.json 的萬用 rewrite 攔截了 note/mail/nightwhisper，補上各自的 rewrite 規則後全站 10 個子專案全數正常。**
+
+---
+
+## [v3.1.6] – 2026-03-04T07:25:00+08:00
+
+### Custom Component Refactoring & Branding Consistency
+
+#### Dashboard & AI Analyst
+- **ConfirmModal Integration**: Replaced synchronization `window.confirm()` calls in `Dashboard.tsx` and `AIAnalyst.tsx` with a new, asynchronous, Promise-based `ConfirmModal` component. 
+- Designed the modal with a high-transparency glassmorphism backdrop (`rgba(0,0,0,0.85)`) and a `blur(10px)` filter, aligning with the project's premium dark theme.
+- Removed all hardware/browser-native dialogs from key user flows (e.g., deleting goals, switching AI tools).
+
+#### Custom Dropdown Component
+- Created a standalone `Dropdown` component (`src/components/Dropdown.tsx`) to replace native `<select>` tags.
+- Implemented smooth rotation animations for toggle arrows and dedicated focus states for options.
+- Applied the custom `Dropdown` to:
+  - `AIAnalyst.tsx`: AI tool selection.
+  - `MonthlyConfig.tsx`: Category and Currency selections in the investment table.
+
+#### UI Standardization (index.css)
+- Extracted inline styles for buttons into reusable CSS classes to improve maintainability and visual parity:
+  - `.btn-accent-ghost`: For primary non-intrusive actions like 'Smart Sort'.
+  - `.btn-ghost`: For secondary actions like 'Copy MD'.
+  - `.icon-btn`: Standardized icon interaction class with hover state support.
+- Standardized all 'Delete' (Trash2) button interactions — removed red warning colors in favor of the brand's muted grayscale/indigo palette.
+
+#### MonthlyConfig Table Refinement
+- Enhanced the dynamic table in `MonthlyConfig.tsx` by replacing all native row selectors with the new `Dropdown` component.
+- Switched the 'Remove Item' trigger to the new `ConfirmModal`, providing a consistent "Confirm before Delete" experience across all sub-apps.
+
+#### Service Worker
+- Bumped cache version: `jing-lab-v13` → `jing-lab-v14` to ensure the new components and styles are applied.
+
+**中文說明：全面汰換 Finance 專案中的原生 confirm 與 select 組件，導入自定義玻璃擬態 Modal 與 Dropdown，並將按鈕樣式標準化至 index.css，提升整體品牌視覺一致性。**
+
+### [v3.1.7] - 2026-03-04
+#### Responsive Design Audit & Mobile UX Optimization (Finance)
+- **Fluid Typography**: Implemented `clamp()` based font sizing for `h1` and `h2` to ensure titles scale gracefully on mobile.
+- **Global Layout Tokens**: Introduced responsive CSS variables (`--page-padding`, `--card-padding`) to optimize content density on small viewports.
+- **Navbar Refactoring**: Added logic to hide navigation labels and show icons only on screens < 480px, preventing overlap with the branding logo.
+- **Card-based Transformation (Monthly Config)**: Refactored the investment grid into a vertical card-style layout for mobile, eliminating horizontal scrolling and improving touch accessibility.
+- **Grid Optimization (Dashboard)**: Fixed the 6-column "Idle Funds Planning" grid to wrap into a 2-column stacked layout on mobile.
+- **Fluid Inputs**: Adjusted input field padding and icon placement for a more thumb-friendly experience on touchscreens.
+
+**中文說明：針對 Finance 專案進行極窄螢幕（< 400px）響應式優化。導入流體字體與全局間距變數。將配置表格在行動端轉化為卡片式佈局，並優化導航列與閒置資金規劃的網格結構，解決破版與重疊問題。**
+
+
+### v3.1.8 (2026-03-04) - Enhanced Responsive Fix (V3)
+- **Technical Details**: 
+    - Implemented high-specificity ID selectors (`#analyst-page`) to override stubborn global styles.
+    - Forced `display: flex !important` and `flex-direction: column !important` on `analyst-grid` for mobile view.
+    - Added `!important` to `Navbar` nav-labels to hide them on narrow screens.
+    - Refactored `icon-selector` with `grid !important` to prevent horizontal overflow in modals.
+    - Added visible version tag `VER: 3.1.8-RWD-V3` for deployment verification.
+- **Affected Files**: `AIAnalyst.tsx`, `Navbar.tsx`
+- **中文摘要**: 執行 V3 強制修復，使用 ID 權重與 !important 解決 RWD 佈局被覆蓋的問題，並優化彈窗圖示選擇器，確保在 iPhone SE (320px) 等窄螢幕環境下完全不溢出且操作順暢。
+
+### v3.1.9 (2026-03-04) - Cross-Page UX & Markdown Enhancement
+- **Monthly Investment Allocation Page**:
+    - Implemented a 2x2 vertical layout for investment items on narrow screens (Category/Currency on top, Ticker/Amount below).
+    - Automatically appends `.TW` to "台股" tickers in Markdown generation logic for better compatibility.
+- **Global UI Overhaul**:
+    - Removed all native scrollbars and replaced them with a thin, minimal custom design, enhancing the premium look.
+    - Standardized page breathing space using `2rem` gaps for narrow screen grids to reduce crowdedness.
+- **Dashboard Optimization**:
+    - Refactored "Period" and "Monthly Investment" inputs to display side-by-side on mobile, maximizing vertical screen real estate.
+- **Refactoring**:
+    - Removed unused internal styles from `AIAnalyst.tsx` and unified layout control into `index.css`.
+- **Affected Files**: `MonthlyConfig.tsx`, `index.css`, `Dashboard.tsx`, `AIAnalyst.tsx`
+- **中文摘要**: 每月配置頁面行動端佈局重構為 2x2 結構，Markdown 匯出自動補全台股 .TW 後綴。全域汰換原生捲軸為自定義極簡設計，並優化首頁與策略師頁面的間距佈局，提升窄螢幕下的空間利用率與視覺美感。
+
+## [2026-03-04] Global Scrollbar Removal & Cross-Project Optimization
+### Added
+- **Global Scrollbar Hiding**: Implemented rules to hide native browser scrollbars project-wide while maintaining full scrolling functionality. This ensures a cleaner, more premium aesthetic across all browsers (Chrome, Safari, Edge, Firefox).
+- **Project-Wide Implementation**: Applied custom CSS to effectively hide scrollbars in:
+    - Root `index.html` (Project Portal)
+    - Static HTML pages: `nagoya.html`, `okinawa.html`, `okinawa-1.html`, `tesuuryo.html`
+    - Sub-project styling:
+        - `mail/index.html`
+        - `finance/src/index.css`
+        - `pdf-tool/src/index.css`
+        - `v-player-preview/src/index.css`
+        - `preview/src/index.css`
+        - `travel-planner/frontend/src/style.css`
+        - `caselog/src/app/globals.css`
+- **Cross-Browser Compatibility**: Utilized `scrollbar-width: none` (Firefox), `-ms-overflow-style: none` (IE/Edge), and `::-webkit-scrollbar { display: none; }` (Chrome/Safari/Edge) for consistent results.
+
+### Fixed
+- **UI Clutter**: Removed distracting visual scrollbars to align with the "Minimalist Premium" design language of Jing Lab.
+
+**Affected files:** `index.html`, `nagoya.html`, `okinawa.html`, `okinawa-1.html`, `tesuuryo.html`, `mail/index.html`, `finance/src/index.css`, `pdf-tool/src/index.css`, `v-player-preview/src/index.css`, `preview/src/index.css`, `travel-planner/frontend/src/style.css`, `caselog/src/app/globals.css`
+
+**中文說明：全域隱藏所有網頁與子專案的原生瀏覽器捲軸，並確保維持正常的捲動功能。此項優化涵蓋 Jing Lab 首頁、行程頁面及 Finance、PDF 工具、案時記等所有子系統，提升視覺上的極簡質感與裝置相容性。**

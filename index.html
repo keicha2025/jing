@@ -47,19 +47,18 @@
             -webkit-backdrop-filter: blur(16px);
         }
 
-        /* 自定義捲軸 */
+        /* 隱藏捲軸但保持捲動功能 */
+        html,
+        body {
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE/Edge */
+        }
+
         ::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #e7e5e4;
-            /* Stone 200 */
-            border-radius: 10px;
+            display: none;
+            /* Chrome, Safari, Edge */
         }
 
         .admin-toggle {

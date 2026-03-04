@@ -11,3 +11,18 @@ body {
     min-width: 320px;
     min-height: 100vh;
 }
+
+/* Global Scrollbar Hiding */
+html,
+body,
+* {
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+}
+
+::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, Edge */
+}

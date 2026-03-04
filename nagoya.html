@@ -1,23 +1,32 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>關西・名古屋 7日漫遊</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             /* Muji Color Palette */
-            --bg-color: #F7F7F2;      /* Rice Paper */
-            --card-bg: #FFFFFF;       /* White */
-            --text-main: #444444;     /* Charcoal */
-            --text-sub: #7a7a7a;      /* Light Grey */
-            --accent: #7F0019;        /* Muji Red (Sparse use) */
-            --line-color: #D3D3D3;    /* Light Border */
-            --craft-color: #A69478;   /* Cardboard/Craft */
-            --shadow: 0 2px 8px rgba(0,0,0,0.03);
+            --bg-color: #F7F7F2;
+            /* Rice Paper */
+            --card-bg: #FFFFFF;
+            /* White */
+            --text-main: #444444;
+            /* Charcoal */
+            --text-sub: #7a7a7a;
+            /* Light Grey */
+            --accent: #7F0019;
+            /* Muji Red (Sparse use) */
+            --line-color: #D3D3D3;
+            /* Light Border */
+            --craft-color: #A69478;
+            /* Cardboard/Craft */
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
         }
 
         * {
@@ -33,7 +42,22 @@
             padding: 0;
             font-weight: 300;
             line-height: 1.6;
-            padding-bottom: 60px; /* Space for footer */
+            padding-bottom: 60px;
+            /* Space for footer */
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE/Edge */
+        }
+
+        html {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Safari, Edge */
         }
 
         /* Container for Mobile First */
@@ -75,9 +99,12 @@
             overflow-x: auto;
             white-space: nowrap;
             padding: 10px 0;
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
         }
+
         .sticky-nav::-webkit-scrollbar {
             display: none;
         }
@@ -120,7 +147,7 @@
             display: flex;
             align-items: center;
         }
-        
+
         h2::before {
             content: '';
             display: inline-block;
@@ -156,6 +183,7 @@
             background-color: #eee;
             color: #666;
         }
+
         .hotel-tag.booked {
             background-color: #E8F0FE;
             color: #1A73E8;
@@ -166,6 +194,7 @@
             color: var(--text-sub);
             margin-top: 8px;
         }
+
         .hotel-price {
             font-family: monospace;
             color: var(--text-main);
@@ -175,7 +204,8 @@
         /* Itinerary Timeline */
         .day-block {
             margin-bottom: 40px;
-            scroll-margin-top: 80px; /* For sticky nav offset */
+            scroll-margin-top: 80px;
+            /* For sticky nav offset */
         }
 
         .day-header {
@@ -212,7 +242,8 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: var(--shadow);
-            padding-top: 5px; /* Slight padding since image is gone */
+            padding-top: 5px;
+            /* Slight padding since image is gone */
         }
 
         .timeline-list {
@@ -257,9 +288,9 @@
             font-size: 12px;
             letter-spacing: 0.1em;
         }
-
     </style>
 </head>
+
 <body>
 
     <header>
@@ -285,7 +316,7 @@
         <!-- 住宿資訊 -->
         <section id="accommodation">
             <h2>住宿資訊</h2>
-            
+
             <div class="hotel-card">
                 <div class="hotel-city">
                     大阪 (淀屋橋)
@@ -314,7 +345,7 @@
 
         <!-- 行程內容 -->
         <section style="border: none;">
-            
+
             <!-- Day 1 -->
             <article class="day-block" id="day1">
                 <div class="day-header">
@@ -322,7 +353,7 @@
                     <span class="day-date">3/19 THU</span>
                 </div>
                 <div class="day-title">抵達與經典滋味</div>
-                
+
                 <div class="day-content">
                     <ul class="timeline-list">
                         <li class="timeline-item">13:00 抵達關西機場</li>
@@ -341,7 +372,7 @@
                     <span class="day-date">3/20 FRI</span>
                 </div>
                 <div class="day-title">城市南北漫遊</div>
-                
+
                 <div class="day-content">
                     <ul class="timeline-list">
                         <li class="timeline-item">上午：梅田 (Grand Front / 藍天大廈)</li>
@@ -358,7 +389,7 @@
                     <span class="day-date">3/21 SAT</span>
                 </div>
                 <div class="day-title">奈良一日遊</div>
-                
+
                 <div class="day-content">
                     <ul class="timeline-list">
                         <li class="timeline-item">搭乘近鐵前往奈良</li>
@@ -376,7 +407,7 @@
                     <span class="day-date">3/22 SUN</span>
                 </div>
                 <div class="day-title">京都散策與移動</div>
-                
+
                 <div class="day-content">
                     <ul class="timeline-list">
                         <li class="timeline-item">上午：京都錦市場 (玉子燒、甜甜圈)</li>
@@ -394,7 +425,7 @@
                     <span class="day-date">3/23 MON</span>
                 </div>
                 <div class="day-title">伊勢神宮一日遊</div>
-                
+
                 <div class="day-content">
                     <ul class="timeline-list">
                         <li class="timeline-item">搭乘近鐵特急 (約1.5小時)</li>
@@ -412,7 +443,7 @@
                     <span class="day-date">3/24 TUE</span>
                 </div>
                 <div class="day-title">犬山城下町散策</div>
-                
+
                 <div class="day-content">
                     <ul class="timeline-list">
                         <li class="timeline-item">搭乘名鐵前往犬山 (約30分)</li>
@@ -430,7 +461,7 @@
                     <span class="day-date">3/25 WED</span>
                 </div>
                 <div class="day-title">歸途</div>
-                
+
                 <div class="day-content">
                     <ul class="timeline-list">
                         <li class="timeline-item">09:00 前往中部國際機場</li>
@@ -472,4 +503,5 @@
         });
     </script>
 </body>
+
 </html>
