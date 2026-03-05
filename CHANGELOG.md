@@ -742,3 +742,17 @@ All 10 sub-projects confirmed healthy — HTTP 200, correct titles, no wrong red
 **Affected files:** `index.html`, `firebase.json`, `default.firestore.rules`
 
 **中文摘要：修復了入口頁面即使登入也無法儲存排版的權限遺失問題（寫入(default)資料庫的規則未建），同時將陽春的瀏覽器預設 alert/confirm 提示窗，改為符合 Jing Lab 介面風格的自訂隱藏式美化視窗。**
+
+---
+
+## [2026-03-05] Note: Performance Optimization
+### Optimized
+- **Tailwind Static Generation**: Replaced `cdn.tailwindcss.com` with a pre-compiled, pruned `style.css` (reduced from 100KB+ runtime JS to 21KB static CSS).
+- **Localized Scripts**: Moved `diff_match_patch.js` from CDN to local folder, reducing DNS/TTL overhead.
+- **Service Worker Cache Strategy**: Switched to a "Cache-First" model for static assets, enabling sub-second load times on repeat visits and better offline support.
+- **Resource Hints**: Added `preconnect` for Google Fonts and Firebase to speed up initial connection handshakes.
+
+**Affected files:** `note/index.html`, `note/sw.js`, `note/style.css`
+
+**中文摘要：對 `note` 子應用進行了深度效能優化。透過移除 Tailwind Play CDN、本地化外部腳本以及將 Service Worker 調整為「快取優先」策略，顯著提升了載入速度與離線穩定性。**
+
