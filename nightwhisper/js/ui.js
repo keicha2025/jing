@@ -277,25 +277,131 @@ class NightWhisperUI {
     }
 
     // ================================================
-    // 4. 延時 Slider 綁定
+    // 4. 自訂拉桿組件 (Custom Slider)
     // ================================================
 
-    initDelaySlider(sliderId, valueId) {
-        const slider = document.getElementById(sliderId);
-        const valueEl = document.getElementById(valueId);
-        const unitEl = document.getElementById('delay-unit');
-        if (!slider || !valueEl) return;
+    initCustomSlider(containerId, options = {}) {
+        console.log(`[Slider] Entering initCustomSlider for #${containerId}`);
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.error(`[Slider] Container #${containerId} not found`);
+            return null;
+        }
 
-        const update = () => {
-            const val = parseInt(slider.value);
-            valueEl.innerText = val === 0 ? '立即' : val;
-            if (unitEl) unitEl.style.display = val === 0 ? 'none' : 'inline';
+        const {
+            min = 0,
+            max = 100,
+            step = 1,
+            initialValue = 0,
+            valueId = null,
+            unitId = null,
+            onInput = null,
+            zeroLabel = null
+        } = options;
+
+        let value = initialValue;
+        const valueEl = valueId ? document.getElementById(valueId) : null;
+        const unitEl = unitId ? document.getElementById(unitId) : null;
+
+        // 強制初始化結構 (如果尚未存在)
+        container.classList.add('custom-slider-container');
+        if (!container.querySelector('.slider-track-bg')) {
+            console.log(`[Slider] Injecting HTML into #${containerId}`);
+            container.innerHTML = `
+                <div class="slider-track-bg"></div>
+                <div class="slider-track-fill"></div>
+                <div class="slider-thumb"></div>
+            `;
+        }
+
+        const fill = container.querySelector('.slider-track-fill');
+        const thumb = container.querySelector('.slider-thumb');
+
+        if (!fill || !thumb) {
+            console.error(`[Slider] Failed to find track/thumb in #${containerId}`);
+            return null;
+        }
+
+        const updateUI = (val) => {
+            const percent = ((val - min) / (max - min)) * 100;
+            if (fill) fill.style.width = `${percent}%`;
+            if (thumb) thumb.style.left = `${percent}%`;
+
+            if (valueEl) {
+                if (val === 0 && zeroLabel) {
+                    valueEl.innerText = zeroLabel;
+                    if (unitEl) {
+                        unitEl.innerText = ''; // 強制清空文字，比 CSS 隱藏更可靠
+                        unitEl.style.setProperty('display', 'none', 'important');
+                    }
+                } else {
+                    valueEl.innerText = val;
+                    if (unitEl) {
+                        unitEl.innerText = '分鐘'; // 恢復文字
+                        unitEl.style.setProperty('display', 'inline', 'important');
+                    }
+                }
+            }
+            if (onInput) onInput(val);
         };
 
-        slider.addEventListener('input', update);
-        update();
+        const calculateValue = (clientX) => {
+            const rect = container.getBoundingClientRect();
+            if (rect.width === 0) return value;
+            let pos = (clientX - rect.left) / rect.width;
+            pos = Math.max(0, Math.min(pos, 1));
 
-        return () => parseInt(slider.value);
+            let rawVal = min + pos * (max - min);
+            let steppedVal = Math.round(rawVal / step) * step;
+            steppedVal = Math.max(min, Math.min(steppedVal, max));
+            return steppedVal;
+        };
+
+        const handlePointerMove = (e) => {
+            const newVal = calculateValue(e.clientX);
+            if (newVal !== value) {
+                value = newVal;
+                updateUI(value);
+            }
+        };
+
+        const handlePointerUp = (e) => {
+            document.removeEventListener('pointermove', handlePointerMove);
+            document.removeEventListener('pointerup', handlePointerUp);
+            if (lastPointerId !== null) {
+                try {
+                    container.releasePointerCapture(lastPointerId);
+                } catch (err) { }
+                lastPointerId = null;
+            }
+        };
+
+        let lastPointerId = null;
+        container.addEventListener('pointerdown', (e) => {
+            lastPointerId = e.pointerId;
+            try {
+                container.setPointerCapture(e.pointerId);
+            } catch (err) { }
+
+            const newVal = calculateValue(e.clientX);
+            value = newVal;
+            updateUI(value);
+
+            document.addEventListener('pointermove', handlePointerMove);
+            document.addEventListener('pointerup', handlePointerUp);
+        });
+
+        // 初始更新
+        updateUI(value);
+        console.log(`[Slider] Initialized #${containerId} at ${value}`);
+
+        return {
+            getValue: () => value,
+            setValue: (newVal) => {
+                value = Math.max(min, Math.min(newVal, max));
+                updateUI(value);
+            }
+        };
     }
 
     // ================================================
@@ -348,3 +454,5 @@ class NightWhisperUI {
 }
 
 window.NightWhisperUI = NightWhisperUI;
+window.NW_UI_LOADED = true;
+console.log('[UI] Script Loaded');

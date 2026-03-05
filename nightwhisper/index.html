@@ -5,7 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NightWhisper 夜語</title>
+    <title>NightWhisper — 靜謐入眠，智慧啟航</title>
+    <!-- 強制路徑補完，避免相對路徑在無斜線 URL 下失效 -->
+    <script>
+        if (window.location.pathname.endsWith('/nightwhisper')) {
+            window.location.replace(window.location.href + '/');
+        }
+    </script>
     <meta name="description" content="智慧睡眠監測工具 — 偵測打呼與夢話，波形分析一目了然">
     <meta name="theme-color" content="#6366F1">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -47,8 +53,49 @@
     </script>
 
     <!-- Design Tokens + Custom Styles -->
-    <link rel="stylesheet" href="css/design-tokens.css?v=2.10.0">
-    <link rel="stylesheet" href="css/style.css?v=2.10.0">
+    <link rel="stylesheet" href="./css/design-tokens.css?v=2.16.5">
+    <link rel="stylesheet" href="./css/style.css?v=2.16.5">
+
+    <!-- 全域隱藏捲軸 — 最高優先權 (放在所有 CSS 最後面) -->
+    <style>
+        /* Hide scrollbar for Chrome, Safari, Edge (Chromium) */
+        *::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        /* Hide scrollbar for Firefox */
+        * {
+            scrollbar-width: none !important;
+        }
+
+        /* Hide scrollbar for IE/Edge (Legacy) */
+        * {
+            -ms-overflow-style: none !important;
+        }
+
+        /* Prevent layout shift */
+        html {
+            scrollbar-gutter: stable;
+        }
+
+        /*
+         * 物理性隱藏捲軸 (Nuclear Fallback)
+         * 原理：view-panel 設 overflow:hidden 裁切，
+         * 內層捲動容器同時向右推出多餘的捲軸軌道寬度
+         */
+        .view-panel {
+            overflow: hidden !important;
+        }
+
+        .view-panel>.overflow-y-auto {
+            overflow-y: scroll !important;
+            -webkit-overflow-scrolling: touch;
+            margin-right: -20px !important;
+            padding-right: 20px !important;
+        }
+    </style>
 </head>
 
 <body class="bg-black text-zinc-200 font-sans antialiased h-[100dvh] w-full overflow-hidden select-none">
@@ -69,7 +116,7 @@
                         <div class="flex items-center gap-2 mt-0.5">
                             <p class="text-zinc-400 text-sm">今晚預計睡眠 8 小時</p>
                             <span
-                                class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-zinc-500 font-mono">v2.10.0</span>
+                                class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-zinc-500 font-mono">v2.16.5</span>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
@@ -105,7 +152,7 @@
                                 <span id="delay-unit" class="text-xs font-normal ml-1">分鐘</span>
                             </span>
                         </div>
-                        <input type="range" id="delay-slider" min="0" max="120" step="5" value="0">
+                        <div id="delay-slider-container" class="mt-2"></div>
                         <div class="flex justify-between mt-2 text-[10px] text-zinc-500 font-medium">
                             <span>立即</span>
                             <span>60 分鐘</span>
@@ -125,7 +172,7 @@
                                 <span id="skip-unit" class="text-xs font-normal ml-1">分鐘</span>
                             </span>
                         </div>
-                        <input type="range" id="skip-slider" min="0" max="180" step="10" value="0">
+                        <div id="skip-slider-container" class="mt-2"></div>
                         <div class="flex justify-between mt-2 text-[10px] text-zinc-500 font-medium">
                             <span>0</span>
                             <span>90m</span>
@@ -154,7 +201,7 @@
                                 <span class="material-symbols-outlined text-zinc-400">info</span>
                                 <div>
                                     <p class="text-white font-medium" id="app-info-title">系統版本</p>
-                                    <p class="text-zinc-500 text-xs" id="app-version-text">目前版本: v2.10.0 (2026-03-01)
+                                    <p class="text-zinc-500 text-xs" id="app-version-text">目前版本: v2.14.0 (2026-03-04)
                                     </p>
                                 </div>
                             </div>
@@ -422,7 +469,7 @@
                         <span class="text-white font-medium">關於 NightWhisper</span>
                     </div>
                     <p class="text-zinc-500 text-xs leading-relaxed">
-                        Version 2.10.0 • 純前端 PWA<br>
+                        Version 2.14.0 • 純前端 PWA<br>
                         所有錄音與分析資料僅儲存於您的裝置上，不會上傳至任何伺服器。<br>
                         採用 Web Audio API 進行即時 FFT 頻率分析。
                     </p>
@@ -502,12 +549,12 @@
         import * as Mp4Muxer from 'https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.mjs';
         window.Mp4Muxer = Mp4Muxer;
     </script>
-    <script src="js/storage.js?v=2.13.0"></script>
-    <script src="js/recorder.js?v=2.13.0"></script>
-    <script src="js/analyzer.js?v=2.13.0"></script>
-    <script src="js/waveform.js?v=2.13.0"></script>
-    <script src="js/ui.js?v=2.13.0"></script>
-    <script src="js/app.js?v=2.13.0"></script>
+    <script src="./js/storage.js?v=2.16.5"></script>
+    <script src="./js/recorder.js?v=2.16.5"></script>
+    <script src="./js/analyzer.js?v=2.16.5"></script>
+    <script src="./js/waveform.js?v=2.16.5"></script>
+    <script src="./js/ui.js?v=2.16.5"></script>
+    <script src="./js/app.js?v=2.16.5"></script>
 </body>
 
 </html>

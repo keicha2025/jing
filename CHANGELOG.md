@@ -709,3 +709,16 @@ All 10 sub-projects confirmed healthy — HTTP 200, correct titles, no wrong red
 - **Type Safety & Imports**: Fixed missing `useMemo` import and addressed implicit `any` type warnings in the summary calculation logic.
 
 **中文摘要：每月投資配置功能優化。新增分類與幣別的即時總計看板，並將配置表格改為固定高度捲動以提升操作精緻感。修正了重複執行計畫時產生多重快照的問題（改為自動覆蓋），並同步更新 Markdown 報表格式。**
+
+## [2026-03-05] Caselog: TypeScript JSX & Compatibility Fix
+### Fixed
+- **Resolved JSX Global Namespace Issue**: Fixed a critical TypeScript error where `JSX.IntrinsicElements` was missing, causing all HTML tags and custom components to be typed as `any`.
+- **Component Children Prop Propagation**: Fixed "Type '{}' is missing the property 'children'" error in `AuthWrapper` and other high-level components by ensuring the global `JSX` namespace correctly inherits from `React.JSX`.
+- **React 19 Compatibility**: Updated `tsconfig.json` with `jsxImportSource: "react"` to align with the new React 19 JSX transformation and type resolution strategy.
+
+### Added
+- **Global JSX Declarations (`src/types/jsx.d.ts`)**: Introduced a bridge type definition file that explicitly exposes `React.JSX` interfaces to the global scope, stabilizing the IDE and build-time type-checking.
+
+**Affected files:** `caselog/tsconfig.json`, `caselog/src/types/jsx.d.ts`, `caselog/CHANGELOG.md`
+
+**中文摘要：徹底修復了 Caselog 專案在 React 19 環境下的 TypeScript 型別衝突（JSX 命名空間遺失與 children 屬性報測）。透過更新 tsconfig 配置與新增全域型別 bridge 檔案，恢復了正確的型別推導與開發環境體驗。**

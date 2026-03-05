@@ -3,47 +3,90 @@
    引用 design-tokens.css 變數
    ============================================ */
 
-/* ── 隱藏捲軸但保持可捲動 ── */
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
+/* ── 全域隱藏捲軸但保持可捲動 (Hide but scrollable) ── */
+/* 使用萬用選擇器，確保任何元素都不會顯示原生捲軸 */
+/* 適用於 Chrome, Safari, Edge, Firefox */
+
+/* Firefox + IE/Edge */
+* {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
 }
 
-.no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+/* Chrome, Safari, Opera, Edge (Chromium) */
+*::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
 }
 
-/* ── Range Slider (新版 accent 風格) ── */
-input[type=range] {
-    -webkit-appearance: none;
-    appearance: none;
+/* 防止因捲軸消失造成的版面跳動 */
+html {
+    scrollbar-gutter: stable;
+}
+
+/* ── Custom Premium Slider (方案二：完全自定義組件) ── */
+.custom-slider-container {
+    position: relative;
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    display: flex !important;
+    align-items: center;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    overflow: visible !important;
+}
+
+.slider-track-bg {
+    position: absolute;
+    top: 50%;
     width: 100%;
     height: 6px;
-    background: #27272a;
-    /* zinc-800 */
-    border-radius: 9999px;
-    outline: none;
+    background: rgba(255, 255, 255, 0.15) !important;
+    /* Brighter */
+    border-radius: 999px;
+    transform: translateY(-50%);
+    pointer-events: none;
 }
 
-input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    height: 20px;
-    width: 20px;
-    border-radius: 50%;
-    background: var(--color-primary);
-    cursor: pointer;
-    box-shadow: 0 0 12px var(--color-primary-glow);
+.slider-track-fill {
+    position: absolute;
+    top: 50%;
+    height: 6px;
+    background: linear-gradient(90deg, #6366F1, #818CF8) !important;
+    border-radius: 999px;
+    width: 0%;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+    transform: translateY(-50%);
+    pointer-events: none;
 }
 
-input[type=range]::-moz-range-thumb {
-    height: 20px;
-    width: 20px;
+.slider-thumb {
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    width: 24px;
+    /* Slightly larger */
+    height: 24px;
+    background: #FFFFFF !important;
+    /* Pure white */
     border-radius: 50%;
-    background: var(--color-primary);
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 0 12px var(--color-primary-glow);
+    transform: translate(-50%, -50%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 255, 255, 0.3);
+    z-index: 20 !important;
+    transition: transform 0.1s ease-out, box-shadow 0.2s;
+    pointer-events: none;
+    /* Let the container handle events */
 }
+
+.custom-slider-container:active .slider-thumb {
+    transform: translate(-50%, -50%) scale(1.2);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.9), 0 0 20px rgba(99, 102, 241, 0.8);
+}
+
 
 /* ── 呼吸動畫 ── */
 @keyframes breathe {
