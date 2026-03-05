@@ -756,3 +756,20 @@ All 10 sub-projects confirmed healthy — HTTP 200, correct titles, no wrong red
 
 **中文摘要：對 `note` 子應用進行了深度效能優化。透過移除 Tailwind Play CDN、本地化外部腳本以及將 Service Worker 調整為「快取優先」策略，顯著提升了載入速度與離線穩定性。**
 
+---
+
+## [2026-03-05] Note App: UI Fixes & Saving Bug Resolution
+### Added
+- **Loading Overlay & Mask**: Implemented a sophisticated loading mask in the `note` application. It displays real-time status messages (e.g., "獲取資料中...", "成功加載資料", "連線錯誤") based on actual API/Auth responses.
+- **Missing Color Token Definitions**: Manually defined `.bg-primary`, `.text-primary`, `.text-secondary`, and `.bg-accent` in the `note/index.html` style block to ensure consistent rendering across different build environments.
+
+### Fixed
+- **Uncaught TypeError in `diff_match_patch.js`**: Resolved logic error where `replace is not a function` occurred during the saving process. Added explicit `String()` casting for note titles and contents before passing them to the diff engine.
+- **PWA Toolset Visibility**: Adjusted the viewport-fit and manifest `display` properties to ensure the browser's utility bar is hidden when the app is installed/added to the home screen.
+- **Floating Window (Modal) Visibility**: Refined the `customModal` and `diffModal` styles to use a High-Contrast structure: Dark Background (`bg-primary`) with Light Text (`text-white`).
+- **Save Button Contrast**: Updated the save button's CSS classes to `bg-primary text-white`, ensuring it matches the "Cancel" button's visual weight and remains visible against the white note cards.
+- **Asset Desync**: Bumped Service Worker version to `v9` to force cache invalidation for the new UI and logic changes.
+
+**Affected files:** `note/index.html`, `note/sw.js`, `note/manifest.json`, `CHANGELOG.md`
+
+**中文摘要：修復了 `note` 應用中「儲存按鈕顏色太淺看不見」以及「存檔時程式報錯 (TypeError)」的問題。新增了具備狀態提示的載入遮罩動畫、優化了浮動視窗的深色主題顯示，並解決了 PWA 安裝後出現瀏覽器工具列的顯示問題。**

@@ -1,15 +1,16 @@
-const CACHE_NAME = 'note-app-v4';
+const CACHE_NAME = 'note-app-v9';
 const ASSETS = [
     '/note/',
     '/note/index.html',
     '/note/config.js',
+    '/note/firebase-init.js',
     '/note/manifest.json',
     '/note/style.css',
     '/note/note_appicon.png',
     '/note/diff_match_patch.js',
-    'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap',
-    'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js',
-    'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js'
+    'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap',
+    'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js',
+    'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'
 ];
 
 // 安裝 Service Worker 並快取資源
