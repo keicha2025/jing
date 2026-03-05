@@ -2,6 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
+### [2.16.5] - 2026-03-05
+- **Critical Fix**: Path resolution for subfolder hosting.
+  - Added script to force trailing slash on `/nightwhisper` URL.
+  - Changed all script/link tags to use explicit `./` relative paths.
+  - Fixes the issue where scripts failed to load when accessed without a trailing slash.
+> 修復了子目錄部署下的路徑解析問題，透過強制補完 URL 斜線以及明確指定相對路徑 `./`，解決了因 Firebase 導向導致腳本無法正確載入的致命錯誤。
+
+### [2.16.4] - 2026-03-05
+- **Fix**: Foolproof unit-hiding for sliders.
+  - Used `innerText = ''` to clear unit labels when slider is at zero.
+  - Added global `window.NW_UI_LOADED` flag and extra logging.
+> 採用更強制的手段隱藏單位標籤（直接清空文字內容），並加入全域變數與更多日誌以追蹤腳本執行狀況。
+
+### [2.16.3] - 2026-03-05
+- **Critical Fix**: Restored corrupted `app.js` and optimized startup sequence.
+  - Moved UI and Slider initialization to the very top of the entry function.
+  - Wrapped async storage initialization in a try-catch to prevent blocking UI.
+  - Added detailed `[App]` stage logging for better remote debugging.
+> 重建了損壞的 `app.js` 並優化了啟動流程，確保 UI 與拉桿在任何非同步操作前完成初始化，避免程式碼掛掉導致組件不顯示。
+
+### [2.16.2] - 2026-03-05
+- **Fix**: Improved custom slider visibility and initialization logic.
+  - Added 100ms delay to slider initialization to ensure DOM readiness.
+  - Used `setProperty('display', 'none', 'important')` for unit labels at zero value.
+  - Increased track and thumb contrast in CSS.
+  - Added forced `innerHTML` injection if slider elements are missing.
+  - Set `overflow: visible` on slider containers to prevent clipping.
+> 強化了自定義拉桿的顯示與初始化邏輯，解決了拉桿不可見以及「分鐘」單位標籤未能正確隱藏的問題。
+
+### [2.16.1] - 2026-03-05
+- **Fix**: Attempted to fix custom slider unit visibility bug.
+  - Added defensive checks for slider track injection.
+  - Modified unit label visibility logic.
+> 嘗試修復自定義拉桿在數值為 0 時仍顯示「分鐘」單位的問題。
+
+## [2.15.0] - 2026-03-05
+
+### Added
+- **Premium Custom Sliders**: Replaced native `<input type="range">` with completely custom-designed slider components for "Delay Startup" and "Ignore Start Time".
+  - 使用自定義組件取代原生拉桿，提升視覺質感並修復功能失效問題。
+- **Interactive UI Feedback**: Added smooth transitions, glow effects, and real-time value synchronization for the new sliders.
+  - 新增動態流暢的視覺回饋與數值即時同步功能。
+
+## [2.14.0] - 2026-03-04
+
+### Changed
+- **Scrollbar UI Optimization**: Implemented "Hide but scrollable" behavior across all major browsers (Chrome, Safari, Edge, Firefox). Added `scrollbar-gutter: stable` to prevent layout shift (jittering) when navigating.
+  - 全域隱藏原生捲軸並維持捲動功能，解決頁面內容在隱藏捲軸後產生的晃動問題。
+
+---
+
 ## [2.13.0] - 2026-03-02
 
 ### Fixed

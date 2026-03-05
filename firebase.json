@@ -81,6 +81,10 @@
     },
     "firestore": [
         {
+            "database": "(default)",
+            "rules": "default.firestore.rules"
+        },
+        {
             "database": "jing-finance",
             "rules": "finance/firestore.rules"
         },

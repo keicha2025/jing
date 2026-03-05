@@ -6,21 +6,61 @@
 
 (async function () {
     'use strict';
+    console.log('[App] Starting v2.16.2...');
 
-    // ── 初始化模組 ──
-    const isApp = window.hasOwnProperty('Capacitor') || window.hasOwnProperty('cordova');
+    // ── 1. 首先初始化 UI 物作與組件 ──
+    const ui = new NightWhisperUI();
     const storage = new NightWhisperStorage();
-    await storage.init();
 
+    // 初始化延時啟動 Slider (自訂組件) - 優先執行，以免被後續 async 切換卡住
+    let delaySliderComp = null;
+    let skipSliderComp = null;
+
+    try {
+        console.log('[App] Initializing Sliders...');
+        delaySliderComp = ui.initCustomSlider('delay-slider-container', {
+            min: 0,
+            max: 120,
+            step: 5,
+            initialValue: 0,
+            valueId: 'delay-value',
+            unitId: 'delay-unit',
+            zeroLabel: '立即'
+        });
+
+        skipSliderComp = ui.initCustomSlider('skip-slider-container', {
+            min: 0,
+            max: 180,
+            step: 5,
+            initialValue: 0,
+            valueId: 'skip-value',
+            unitId: 'skip-unit'
+        });
+    } catch (e) {
+        console.error('[App] Slider Init Error:', e);
+    }
+
+    const getDelayMinutes = () => delaySliderComp ? delaySliderComp.getValue() : 0;
+    const getSkipMinutes = () => skipSliderComp ? skipSliderComp.getValue() : 0;
+
+    // ── 2. 非同步資料初始化 ──
+    try {
+        console.log('[App] Initializing Storage...');
+        await storage.init();
+        console.log('[App] Storage Ready');
+    } catch (e) {
+        console.error('[App] Storage Init Error:', e);
+    }
+
+    const isApp = window.hasOwnProperty('Capacitor') || window.hasOwnProperty('cordova');
     const recorder = new NightWhisperRecorder(storage);
     const analyzer = new NightWhisperAnalyzer(storage);
     const waveform = new NightWhisperWaveform('waveform-canvas');
-    const ui = new NightWhisperUI();
 
     // 初始化靈敏度 (從設定 Slider 讀取)
     analyzer.setSensitivity(document.getElementById('sensitivity-slider')?.value || 3);
 
-    // ── DOM 元素 ──
+    // ── 3. DOM 元素 ──
     const allViews = document.querySelectorAll('.view-panel');
 
     const views = {
@@ -74,7 +114,7 @@
         btnReanalyze: document.getElementById('btn-reanalyze'),
     };
 
-    // ── 狀態 ──
+    // ── 4. 狀態 ──
     let currentSessionId = null;
     let clockInterval = null;
     let delayTimer = null;
@@ -82,19 +122,11 @@
     let isMonitoring = false;
     let currentView = 'setup';
 
-    // ── 初始化 UI 組件 ──
+    // ── 5. 初始化 UI 組件 ──
     ui.initSlideToStop('slide-track', 'slide-thumb');
     ui.initPlayer();
-    const getDelayMinutes = ui.initDelaySlider('delay-slider', 'delay-value');
-    const getFilterEnabled = ui.initFilterToggle('filter-toggle-btn', 'filter-toggle-dot');
 
-    // 初始化忽略時間 Slider
-    const getSkipMinutes = () => parseInt(els.skipSlider?.value || 0);
-    if (els.skipSlider) {
-        els.skipSlider.addEventListener('input', (e) => {
-            if (els.skipValue) els.skipValue.innerText = e.target.value;
-        });
-    }
+    const getFilterEnabled = ui.initFilterToggle('filter-toggle-btn', 'filter-toggle-dot');
 
     // 電池狀態
     if (navigator.getBattery) {
@@ -103,14 +135,13 @@
         }).catch(() => { });
     }
 
-    // ── 系統更新與環境適應 ──
+    // ── 6. 系統更新與環境適應 ──
     if (isApp) {
         console.log('[NightWhisper] Running in Native App mode');
         if (els.appInfoTitle) els.appInfoTitle.innerText = 'App 版本';
         if (els.btnUpdate) {
             els.btnUpdate.innerText = '下載最新 APK';
             els.btnUpdate.addEventListener('click', () => {
-                // 導向 GitHub 的 APK 下載連結 (請確保此路徑正確)
                 const apkUrl = 'https://github.com/keicha2025/jing/releases';
                 window.open(apkUrl, '_system');
             });

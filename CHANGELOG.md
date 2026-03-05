@@ -731,3 +731,14 @@ All 10 sub-projects confirmed healthy — HTTP 200, correct titles, no wrong red
 **Affected files:** `index.html`
 
 **中文摘要：在 Jing Lab 入口索引頁新增 Caselog 專案卡片，讓使用者能更快速地存取專案開發紀錄與技術日誌。**
+
+## [2026-03-05] Portal: Fixed Auth Saving & Custom Dialog
+### Fixed
+- **Firestore Permission Issue**: Resolved an error (`Missing or insufficient permissions`) that prevented users from saving project arrangements even when logged in as Admin. Added `default.firestore.rules` and updated `firebase.json` for the `(default)` database, granting proper write access to the Admin email.
+
+### Changed
+- **Custom Modal Dialog**: Replaced the native browser `confirm()` and `alert()` popups in `index.html` (e.g. for logging out and saving errors) with a custom-designed, stylized modal component using Tailwind CSS, enhancing the overall visual consistency of the portal.
+
+**Affected files:** `index.html`, `firebase.json`, `default.firestore.rules`
+
+**中文摘要：修復了入口頁面即使登入也無法儲存排版的權限遺失問題（寫入(default)資料庫的規則未建），同時將陽春的瀏覽器預設 alert/confirm 提示窗，改為符合 Jing Lab 介面風格的自訂隱藏式美化視窗。**

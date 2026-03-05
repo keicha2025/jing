@@ -149,9 +149,71 @@
                 儲存變更
             </button>
         </div>
+
+        <!-- 自訂彈出視窗 (Modal) -->
+        <div id="customModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center">
+            <!-- 背景遮罩 -->
+            <div class="absolute inset-0 bg-stone-900/30 backdrop-blur-sm transition-opacity opacity-0"
+                id="modalBackdrop"></div>
+            <!-- 視窗主體 -->
+            <div class="relative bg-white/95 backdrop-blur-xl border border-white/50 shadow-2xl rounded-2xl p-6 w-[340px] max-w-[90vw] transform scale-95 opacity-0 transition-all duration-300"
+                id="modalContent">
+                <h3 class="text-base font-semibold text-stone-800 mb-1.5" id="modalTitle">系統提示</h3>
+                <p class="text-sm text-stone-500 mb-6 leading-relaxed" id="modalMessage">請確認您的操作。</p>
+                <div class="flex gap-3 justify-end">
+                    <button id="modalBtnCancel"
+                        class="hidden px-4 py-2 text-sm font-medium text-stone-400 hover:text-stone-700 transition-colors tap-feedback">取消</button>
+                    <button id="modalBtnConfirm"
+                        class="px-5 py-2 text-sm font-bold bg-stone-900 text-white rounded-xl hover:scale-[0.98] transition-all tap-feedback">確認</button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script>
+        // 模態視窗控制函數
+        function showModal(title, message, isConfirm = false) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customModal');
+                const backdrop = document.getElementById('modalBackdrop');
+                const content = document.getElementById('modalContent');
+                const cancelBtn = document.getElementById('modalBtnCancel');
+                const confirmBtn = document.getElementById('modalBtnConfirm');
+
+                document.getElementById('modalTitle').innerText = title;
+                document.getElementById('modalMessage').innerText = message;
+
+                if (isConfirm) {
+                    cancelBtn.classList.remove('hidden');
+                } else {
+                    cancelBtn.classList.add('hidden');
+                }
+
+                modal.classList.remove('hidden');
+                // 觸發重繪以啟用過渡動畫
+                void modal.offsetWidth;
+                backdrop.classList.remove('opacity-0');
+                content.classList.remove('scale-95', 'opacity-0');
+
+                const cleanup = (result) => {
+                    backdrop.classList.add('opacity-0');
+                    content.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        modal.classList.add('hidden');
+                    }, 300); // 等待過渡動畫結束
+
+                    cancelBtn.onclick = null;
+                    confirmBtn.onclick = null;
+                    backdrop.onclick = null;
+                    resolve(result);
+                };
+
+                cancelBtn.onclick = () => cleanup(false);
+                confirmBtn.onclick = () => cleanup(true);
+                backdrop.onclick = () => { if (!isConfirm) cleanup(true); else cleanup(false); };
+            });
+        }
+
         // 專案資料
         const projects = [
             {
@@ -221,6 +283,12 @@
                 icon: "file-text"
             },
             {
+                title: "Caselog 專案紀錄",
+                description: "整合 Next.js 15 的全端專案開發管理系統與技術筆記日誌，支援 PWA 離線操作與 Excel 匯出。",
+                path: "caselog/index.html",
+                icon: "clipboard-list"
+            },
+            {
                 title: "JING Finance 理財管理",
                 description: "個人理財資產管理工具 — 支援定期定額配置、資產圖表化與 AI 投資分析建議。",
                 path: "finance/index.html",
@@ -253,7 +321,7 @@
         // --- Auth 邏輯 ---
         async function toggleAuth() {
             if (state.isAdmin) {
-                if (confirm("要登出管理模式嗎？")) {
+                if (await showModal("系統提示", "要登出管理模式嗎？", true)) {
                     await auth.signOut();
                     location.reload();
                 }
@@ -368,7 +436,7 @@
                 lucide.createIcons();
             } catch (e) {
                 console.error(e);
-                alert("儲存失敗，請檢查權限。");
+                await showModal("儲存失敗", "請檢查連線或您的權限狀態。");
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
