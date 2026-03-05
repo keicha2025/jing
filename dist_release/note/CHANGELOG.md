@@ -71,5 +71,36 @@ None.
 
 ---
 
-**中文說明：** 修復了筆記應用程式中因相對路徑引用錯誤導致的 `config.js` 載入失敗與 Firebase 配置遺失問題。同步更新了 PWA 標籤並確保在各種 URL 格式下資源都能正確載入。
+
+---
+
+## 2026-03-05T13:50:00+08:00
+
+### Summary
+Refactored internal CSS components from Tailwind `@apply` to standard Vanilla CSS.
+
+### Technical Details
+**Modified Files:**
+- `note/index.html`
+
+**Implementation:**
+1. Replaced Tailwind-specific `@apply` directives with equivalent standard CSS properties in the `<style>` block.
+2. Manually mapped Tailwind utility classes (`bg-gray-100`, `ring-2`, etc.) to accurate hex color codes and CSS specifications.
+3. Implemented pseudo-selector `:active` directly in CSS for better browser support and cleaner code.
+4. Resolved IDE warnings regarding "Unknown at rule @apply" to ensure better tooling compatibility.
+
+**User Experience Impact:**
+- No visual changes in the UI.
+- Improved rendering stability by reducing reliance on Tailwind's runtime CSS processing for custom components.
+
+**Affected Components:**
+- `.tap-feedback`, `del`, `ins`, `.note-card.editing`
+
+**Migration Notes:**
+None.
+
+---
+
+**中文說明：** 將筆記應用程式內部的 `@apply` 語法改寫為標準的 Vanilla CSS。這解除了 IDE 的警告，同時減少了對 Tailwind 執行期解析的依賴，使元件樣式更穩定。
+
 
