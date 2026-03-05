@@ -12,7 +12,7 @@
     "@ducanh2912/next-pwa": "^10.2.9",
     "firebase": "^12.10.0",
     "framer-motion": "^12.34.3",
-    "next": "15.0.3",
+    "next": "^15.5.12",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-firebase-hooks": "^5.1.1",
