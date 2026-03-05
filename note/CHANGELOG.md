@@ -39,4 +39,37 @@ None. This is a pure UI enhancement with no breaking changes or data structure m
 
 ---
 
-**中文說明：** 將複製按鈕的「已複製」浮窗提示改為微交互設計，點擊後圖示從複製符號短暫變為打勾，1.5 秒後自動恢復，避免與手機原生提示重複。
+
+---
+
+## 2026-03-05T13:55:00+08:00
+
+### Summary
+Fixed critical script loading issues and PWA deprecation warnings in the note application.
+
+### Technical Details
+**Modified Files:**
+- `note/index.html`
+
+**Implementation:**
+1. Updated script, manifest, and service worker paths from relative to absolute paths (`/note/`) to ensure stability across different URL versions.
+2. Resolved `firebaseConfig is not defined` error caused by `config.js` failing to load (404-as-HTML issue).
+3. Added `<meta name="mobile-web-app-capable" content="yes">` to resolve PWA deprecation warnings.
+4. Corrected path references for manifest and service worker registration to `/note/` root.
+
+**User Experience Impact:**
+- Application now loads correctly regardless of whether the URL ends with a trailing slash.
+- Restored authentication and persistent data fetching by ensuring configuration integrity.
+- Resolved browser warnings in console and tab metadata.
+
+**Affected Components:**
+- Page Header (meta tags, script tags)
+- App Initialization (Service Worker, manifest linking)
+
+**Migration Notes:**
+None.
+
+---
+
+**中文說明：** 修復了筆記應用程式中因相對路徑引用錯誤導致的 `config.js` 載入失敗與 Firebase 配置遺失問題。同步更新了 PWA 標籤並確保在各種 URL 格式下資源都能正確載入。
+
