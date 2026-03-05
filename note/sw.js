@@ -1,4 +1,4 @@
-const CACHE_NAME = 'note-app-v3';
+const CACHE_NAME = 'note-app-v4';
 const ASSETS = [
     '/note/',
     '/note/index.html',
