@@ -722,3 +722,12 @@ All 10 sub-projects confirmed healthy — HTTP 200, correct titles, no wrong red
 **Affected files:** `caselog/tsconfig.json`, `caselog/src/types/jsx.d.ts`, `caselog/CHANGELOG.md`
 
 **中文摘要：徹底修復了 Caselog 專案在 React 19 環境下的 TypeScript 型別衝突（JSX 命名空間遺失與 children 屬性報測）。透過更新 tsconfig 配置與新增全域型別 bridge 檔案，恢復了正確的型別推導與開發環境體驗。**
+
+## [2026-03-05] Portal: Added Caselog Entrypoint
+### Added
+- **New Project Portal Entry**: Added "Caselog 專案紀錄" to the main `index.html` dashboard, providing high-visibility access to the project log application.
+- **Project Metadata**: Configured title, icon (clipboard-list), and feature descriptions for the Caselog portal card.
+
+**Affected files:** `index.html`
+
+**中文摘要：在 Jing Lab 入口索引頁新增 Caselog 專案卡片，讓使用者能更快速地存取專案開發紀錄與技術日誌。**
