@@ -51,7 +51,7 @@ function InlineLogForm({ project, task, onDone }: any) {
             await updateDoc(taskDocRef, {
                 totalMinutes: increment(totalMinutes),
                 totalTime: increment(totalMinutes / 60),
-                lastLogAt: serverTimestamp()
+                lastLogAt: new Date(date + 'T00:00:00')
             });
             // Update project-level aggregation
             await updateDoc(projectDocRef, {
@@ -151,7 +151,7 @@ function EditLogForm({ log, project, task, onDone }: any) {
                 note
             });
             await updateDoc(taskDocRef, {
-                lastLogAt: serverTimestamp()
+                lastLogAt: new Date(date + 'T00:00:00')
             });
             if (diff !== 0) {
                 await updateDoc(taskDocRef, {
@@ -215,8 +215,7 @@ function EditLogForm({ log, project, task, onDone }: any) {
                                 await deleteDoc(logDocRef);
                                 await updateDoc(taskDocRef, {
                                     totalMinutes: increment(-(log.duration || 0)),
-                                    totalTime: increment(-(log.duration || 0) / 60),
-                                    lastLogAt: serverTimestamp()
+                                    totalTime: increment(-(log.duration || 0) / 60)
                                 });
                                 await updateDoc(projectDocRef, { totalMinutes: increment(-(log.duration || 0)) });
                                 showToast('已刪除紀錄');

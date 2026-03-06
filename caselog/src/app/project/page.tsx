@@ -576,13 +576,19 @@ const AddTaskModal = ({ onClose, user, tasksRef }: any) => {
             });
 
             if (totalMinutes > 0) {
-                // Also create an initial log
                 const logsRef = collection(db, `${tasksRef.path}/${taskDoc.id}/logs`);
+                const todayStr = new Date().toISOString().split('T')[0];
                 await addDoc(logsRef, {
                     duration: totalMinutes,
                     type: 'initial',
                     note: '初始工時',
+                    date: todayStr,
                     createdAt: serverTimestamp(),
+                });
+
+                // Ensure task's lastLogAt matches the initial log date
+                await updateDoc(doc(db, tasksRef.path, taskDoc.id), {
+                    lastLogAt: new Date(todayStr + 'T00:00:00')
                 });
             }
 
@@ -1045,7 +1051,7 @@ const LogTimeModal = ({ onClose, user, task, projectId }: any) => {
                 await updateDoc(taskRef, {
                     totalMinutes: increment(totalMinutes),
                     totalTime: increment(totalHours),
-                    lastLogAt: serverTimestamp()
+                    lastLogAt: new Date(date + 'T00:00:00')
                 });
                 // Update project-level aggregation
                 await updateDoc(projectRef, {
