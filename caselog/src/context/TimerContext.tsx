@@ -73,7 +73,9 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
             // 2. Update task totalTime (aggregated)
             const taskRef = doc(db, `users/${userId}/projects/${finalActiveTimer.projectId}/tasks/${finalActiveTimer.taskId}`);
             await updateDoc(taskRef, {
-                totalTime: increment(durationSeconds / 3600), // Convert to hours if that's what we use
+                totalMinutes: increment(Math.floor(durationSeconds / 60)),
+                totalTime: increment(durationSeconds / 3600),
+                lastLogAt: serverTimestamp()
             });
 
         } catch (error) {

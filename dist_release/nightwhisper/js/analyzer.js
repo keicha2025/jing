@@ -329,7 +329,7 @@ class NightWhisperAnalyzer {
             }
         }
 
-        // 如果超過 80% 的 bin 都在底噪範圍內，判定為持續性噪音
+        // 如果超過 80% 的 bin 都沒有顯著偏離底噪，判定為持續性噪音
         const totalBins = endBin - startBin;
         return deviationCount < totalBins * 0.2;
     }
@@ -397,6 +397,8 @@ class NightWhisperAnalyzer {
         let eventPeakDb = -Infinity;
         let consecutiveCount = 0;
         const newEvents = [];
+
+        console.log(`[Re-analysis] Starting re-analysis for session ${sessionId} with sensitivity ${sensitivity}. Total data points: ${analysisData.length}`);
 
         // 輔助函式：取得平滑化的數值
         const getSmoothed = (index, key) => {
@@ -467,6 +469,9 @@ class NightWhisperAnalyzer {
                     eventPeakDb = -Infinity;
                     consecutiveCount = 0;
                 }
+            }
+            if (i % 1000 === 0) {
+                console.log(`[Re-analysis] Progress: ${((i / analysisData.length) * 100).toFixed(1)}%`);
             }
         }
 
@@ -550,44 +555,57 @@ class NightWhisperAnalyzer {
     }
 
     // 模擬 FFT：計算全時域 dB 並根據零交越率 (Zero-Crossing Rate) 估算能量分佈
-    _simulateFFT(timeData) {
-        const freqData = new Float32Array(this.fftSize / 2);
+    _simulateFFT(data) {
+        const len = data.length;
 
-        // 核心 dB 計算
-        let sumSq = 0;
-        let zeroCrossings = 0;
-        for (let i = 0; i < timeData.length; i++) {
-            sumSq += timeData[i] * timeData[i];
-            if (i > 0 && ((timeData[i] >= 0 && timeData[i - 1] < 0) || (timeData[i] < 0 && timeData[i - 1] >= 0))) {
-                zeroCrossings++;
-            }
-        }
-        const rms = Math.sqrt(sumSq / timeData.length);
+        // 1. 計算 RMS (能量)
+        let sum = 0;
+        for (let i = 0; i < len; i++) sum += data[i] * data[i];
+        const rms = Math.sqrt(sum / len);
         const db = 20 * Math.log10(rms + 1e-6);
 
-        // 估算估計頻率 (Hz)
-        const estFreq = (zeroCrossings * this.sampleRate) / (2 * timeData.length);
-
-        // 將 dB 依頻率特徵分配給不同的頻譜位置，讓判定邏輯能區分 snore/talk
-        for (let i = 0; i < freqData.length; i++) {
-            const freq = (i * this.sampleRate) / this.fftSize;
-
-            // 如果估計頻率落在該 bin 附近，則賦予較高能量，否則給予底噪
-            if (Math.abs(freq - estFreq) < 500) {
-                freqData[i] = db;
-            } else {
-                freqData[i] = -100;
+        // 2. 估計零交越率 (估計主頻率)
+        let crossings = 0;
+        for (let i = 1; i < len; i++) {
+            if ((data[i] >= 0 && data[i - 1] < 0) || (data[i] < 0 && data[i - 1] >= 0)) {
+                crossings++;
             }
         }
-        return freqData;
+        const estimatedFreq = (crossings * this.sampleRate) / (2 * len);
+
+        // 3. 模擬頻譜分配 (進度版：根據主頻率將能量分佈到多個 bin)
+        const numBins = this.fftSize / 2;
+        const spectrum = new Float32Array(numBins).fill(-100);
+        const binSize = (this.sampleRate / 2) / numBins;
+
+        const distribute = (freq, energy, width) => {
+            const centerBin = Math.floor(freq / binSize);
+            for (let i = -width; i <= width; i++) {
+                const bin = centerBin + i;
+                if (bin >= 0 && bin < numBins) {
+                    const falloff = 1 - Math.abs(i) / (width + 1);
+                    const currentDb = energy + 10 * Math.log10(falloff + 1e-6);
+                    spectrum[bin] = Math.max(spectrum[bin], currentDb);
+                }
+            }
+        };
+
+        if (estimatedFreq < 1200) {
+            distribute(estimatedFreq, db, 3);
+            distribute(estimatedFreq * 2, db - 12, 4);
+            distribute(estimatedFreq * 3, db - 20, 5);
+        } else {
+            distribute(estimatedFreq, db, 6);
+            distribute(estimatedFreq * 0.5, db - 10, 8);
+        }
+
+        return spectrum;
     }
 
     _analyzeOfflineStep(spectrum, time) {
         const snoreEnergy = this._getBandEnergy(spectrum, this.FREQ_BANDS.snore);
         const talkEnergy = this._getBandEnergy(spectrum, this.FREQ_BANDS.talk);
-
-        // 修正：在模擬模式下，所有 bin 的值都相同，直接取第一筆即可代表整體能量
-        const overallDb = spectrum[0];
+        const overallDb = this._getOverallDb(spectrum);
 
         let eventType = null;
         if (snoreEnergy > this.THRESHOLDS.snoreDb && snoreEnergy > talkEnergy) {

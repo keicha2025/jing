@@ -5,22 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NightWhisper — 靜謐入眠，智慧啟航</title>
+    <title>NightWhisper v2.16.8 - 靜謐入眠，智慧啟航</title>
     <!-- 強制路徑補完，避免相對路徑在無斜線 URL 下失效 -->
     <script>
         if (window.location.pathname.endsWith('/nightwhisper')) {
             window.location.replace(window.location.href + '/');
         }
     </script>
-    <meta name="description" content="智慧睡眠監測工具 — 偵測打呼與夢話，波形分析一目了然">
+    <meta name="description" content="靜謐入眠，智慧啟航 v2.16.8 睡眠監測工具 — 偵測打呼與夢話，波形分析一目了然">
     <meta name="theme-color" content="#6366F1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="icons/icon-192.png" type="image/png">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="manifest" href="/nightwhisper/manifest.json">
+    <link rel="icon" href="/nightwhisper/icons/icon-192.png" type="image/png">
+    <link rel="apple-touch-icon" href="/nightwhisper/icons/icon-192.png">
 
     <!-- 字體與圖示 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -53,8 +53,8 @@
     </script>
 
     <!-- Design Tokens + Custom Styles -->
-    <link rel="stylesheet" href="./css/design-tokens.css?v=2.16.5">
-    <link rel="stylesheet" href="./css/style.css?v=2.16.5">
+    <link rel="stylesheet" href="/nightwhisper/css/design-tokens.css?v=2.16.7">
+    <link rel="stylesheet" href="/nightwhisper/css/style.css?v=2.16.7">
 
     <!-- 全域隱藏捲軸 — 最高優先權 (放在所有 CSS 最後面) -->
     <style>
@@ -116,7 +116,7 @@
                         <div class="flex items-center gap-2 mt-0.5">
                             <p class="text-zinc-400 text-sm">今晚預計睡眠 8 小時</p>
                             <span
-                                class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-zinc-500 font-mono">v2.16.5</span>
+                                class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-zinc-500 font-mono">v2.16.8</span>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
@@ -201,7 +201,7 @@
                                 <span class="material-symbols-outlined text-zinc-400">info</span>
                                 <div>
                                     <p class="text-white font-medium" id="app-info-title">系統版本</p>
-                                    <p class="text-zinc-500 text-xs" id="app-version-text">目前版本: v2.14.0 (2026-03-04)
+                                    <p class="text-zinc-500 text-xs" id="app-version-text">目前版本: v2.16.8 (2026-03-04)
                                     </p>
                                 </div>
                             </div>
@@ -466,10 +466,10 @@
                 <div class="bg-white/5 backdrop-blur-md rounded-3xl p-5 border border-white/10">
                     <div class="flex items-center gap-3 mb-3">
                         <span class="material-symbols-outlined text-violet-400">info</span>
-                        <span class="text-white font-medium">關於 NightWhisper</span>
+                        <span class="text-xs text-white/40">NightWhisper v2.16.8</span>
                     </div>
                     <p class="text-zinc-500 text-xs leading-relaxed">
-                        Version 2.14.0 • 純前端 PWA<br>
+                        Version 2.16.7 • 純前端 PWA<br>
                         所有錄音與分析資料僅儲存於您的裝置上，不會上傳至任何伺服器。<br>
                         採用 Web Audio API 進行即時 FFT 頻率分析。
                     </p>
@@ -549,12 +549,12 @@
         import * as Mp4Muxer from 'https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.mjs';
         window.Mp4Muxer = Mp4Muxer;
     </script>
-    <script src="./js/storage.js?v=2.16.5"></script>
-    <script src="./js/recorder.js?v=2.16.5"></script>
-    <script src="./js/analyzer.js?v=2.16.5"></script>
-    <script src="./js/waveform.js?v=2.16.5"></script>
-    <script src="./js/ui.js?v=2.16.5"></script>
-    <script src="./js/app.js?v=2.16.5"></script>
+    <script src="/nightwhisper/js/storage.js?v=2.16.7"></script>
+    <script src="/nightwhisper/js/recorder.js?v=2.16.7"></script>
+    <script src="/nightwhisper/js/analyzer.js?v=2.16.7"></script>
+    <script src="/nightwhisper/js/waveform.js?v=2.16.7"></script>
+    <script src="/nightwhisper/js/ui.js?v=2.16.7"></script>
+    <script src="/nightwhisper/js/app.js?v=2.16.7"></script>
 </body>
 
 </html>

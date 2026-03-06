@@ -25,6 +25,8 @@ class NightWhisperRecorder {
         // 回呼
         this.onStatusChange = null;
         this.onError = null;
+
+        this.segmentStartTime = 0;
     }
 
     /**
@@ -156,6 +158,7 @@ class NightWhisperRecorder {
         if (!this.isRecording) return;
 
         this.currentChunks = [];
+        this.segmentStartTime = Date.now();
 
         // 優先順序：audio/mp4 (M4A) > audio/webm (Opus)
         const types = [
@@ -206,6 +209,7 @@ class NightWhisperRecorder {
         // 這裡我們直接存入。因為不 stop()，所以 header 只會在 segmentIndex 0 出現
         await this._saveCurrentSegment();
         this.segmentIndex++;
+        this.segmentStartTime = Date.now();
     }
 
     async _saveCurrentSegment() {
@@ -222,7 +226,7 @@ class NightWhisperRecorder {
                 blob: blob,
                 mimeType: blob.type,
                 size: blob.size,
-                duration: this.SEGMENT_DURATION,
+                duration: Date.now() - this.segmentStartTime,
             });
             console.log(`[Recorder] Segment ${this.segmentIndex} saved (${(blob.size / 1024).toFixed(1)} KB)`);
         } catch (err) {

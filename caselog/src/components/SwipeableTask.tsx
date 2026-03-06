@@ -216,6 +216,7 @@ function EditLogForm({ log, project, task, onDone }: any) {
                                 await updateDoc(taskDocRef, {
                                     totalMinutes: increment(-(log.duration || 0)),
                                     totalTime: increment(-(log.duration || 0) / 60),
+                                    lastLogAt: serverTimestamp()
                                 });
                                 await updateDoc(projectDocRef, { totalMinutes: increment(-(log.duration || 0)) });
                                 showToast('已刪除紀錄');

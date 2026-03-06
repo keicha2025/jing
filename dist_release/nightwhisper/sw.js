@@ -3,30 +3,31 @@
 // 離線快取策略 (Cache First)
 // ============================================
 
-const CACHE_NAME = 'nightwhisper-v2.10.0';
+const CACHE_NAME = 'nightwhisper-v2.16.8';
 const ASSETS = [
-    './',
-    './index.html',
-    './css/design-tokens.css?v=2.10.0',
-    './css/style.css?v=2.10.0',
-    './js/app.js?v=2.10.0',
-    './js/recorder.js?v=2.10.0',
-    './js/analyzer.js?v=2.10.0',
-    './js/storage.js?v=2.10.0',
-    './js/waveform.js?v=2.10.0',
-    './js/ui.js?v=2.10.0',
-    './manifest.json',
-    './icons/icon-192.png',
-    './icons/icon-512.png',
+    '/nightwhisper/',
+    '/nightwhisper/index.html',
+    '/nightwhisper/css/design-tokens.css?v=2.16.8',
+    '/nightwhisper/css/style.css?v=2.16.8',
+    '/nightwhisper/js/storage.js?v=2.16.8',
+    '/nightwhisper/js/recorder.js?v=2.16.8',
+    '/nightwhisper/js/analyzer.js?v=2.16.8',
+    '/nightwhisper/js/waveform.js?v=2.16.8',
+    '/nightwhisper/js/ui.js?v=2.16.8',
+    '/nightwhisper/js/app.js?v=2.16.8',
+    '/nightwhisper/manifest.json',
+    '/nightwhisper/icons/icon-192.png',
+    '/nightwhisper/icons/icon-512.png',
 ];
 
 // 安裝：預快取所有靜態資源
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
+            console.log('[SW] Pre-caching assets...');
             return cache.addAll(ASSETS);
-        })
-    ).catch(err => console.log('SW install fail:', err));
+        }).catch(err => console.error('[SW] Pre-cache failed:', err))
+    );
     self.skipWaiting();
 });
 

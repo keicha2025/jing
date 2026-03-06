@@ -6,9 +6,7 @@
 
 (async function () {
     'use strict';
-    console.log('[App] Starting v2.16.2...');
-
-    // ── 1. 首先初始化 UI 物作與組件 ──
+    console.log("%c NightWhisper v2.16.8 %c https://jing-lab.web.app/nightwhisper ", "color:white; background:#6366f1; padding:4px 0;", "background:#333; padding:4px 0;");
     const ui = new NightWhisperUI();
     const storage = new NightWhisperStorage();
 
@@ -71,6 +69,7 @@
         history: document.getElementById('view-history'),
     };
 
+    // UI 元素快取 (避免重複 query)
     const els = {
         btnStart: document.getElementById('btn-start'),
         timeDisplay: document.getElementById('current-time'),
@@ -1003,6 +1002,7 @@
                         type: 'upload',
                         fileName: file.name
                     }).then(() => {
+                        console.log("[Upload] Session created, saving blob...");
                         // 寫入原始 blob 用於回放
                         storage.saveRecording({
                             sessionId: currentSessionId,
@@ -1036,6 +1036,11 @@
                                 const size = audioData.allocationSize(options);
                                 const buffer = new ArrayBuffer(size);
                                 audioData.copyTo(buffer, options);
+
+                                if (audioData.format.indexOf('f32') === -1) {
+                                    console.warn("[Upload] Unsupported format (non-float):", audioData.format);
+                                }
+
                                 const float32Data = new Float32Array(buffer);
 
                                 const timeMs = startTimestamp + (timeSeconds * 1000);
@@ -1089,25 +1094,25 @@
                         }
                     } catch (e) { console.warn("[Decoder] AudioSpecificConfig warn:", e); }
 
-                    console.log("[Decoder] Decoder.configure using:", config);
                     audioDecoder.configure(config);
 
+                    mp4boxfile.onSamples = (id, user, samples) => {
+                        for (let sample of samples) {
+                            if (audioDecoder.state === "configured") {
+                                audioDecoder.decode(new EncodedAudioChunk({
+                                    type: sample.is_sync ? "key" : "delta",
+                                    timestamp: (sample.cts / audioTrack.timescale) * 1000000,
+                                    duration: (sample.duration / audioTrack.timescale) * 1000000,
+                                    data: sample.data
+                                }));
+                            }
+                        }
+                    };
+
+                    console.log("[Decoder] Starting extraction...");
                     // 開始提取 samples
                     mp4boxfile.setExtractionOptions(audioTrack.id, null, { nbSamples: 1000 });
                     mp4boxfile.start();
-                };
-
-                mp4boxfile.onSamples = (id, user, samples) => {
-                    for (let sample of samples) {
-                        if (audioDecoder.state === "configured") {
-                            audioDecoder.decode(new EncodedAudioChunk({
-                                type: sample.is_sync ? "key" : "delta",
-                                timestamp: (sample.cts / audioTrack.timescale) * 1000000,
-                                duration: (sample.duration / audioTrack.timescale) * 1000000,
-                                data: sample.data
-                            }));
-                        }
-                    }
                 };
 
                 const checkAndFinish = async () => {
@@ -1236,7 +1241,7 @@
     // ── Service Worker ──
     if ('serviceWorker' in navigator) {
         // 使用相對路徑避免註冊到 root 的 sw.js
-        navigator.serviceWorker.register('./sw.js').then((reg) => {
+        navigator.serviceWorker.register('/nightwhisper/sw.js').then((reg) => {
             console.log('[App] SW registered:', reg.scope);
             // 每次載入時主動檢查是否有新版本
             reg.update();

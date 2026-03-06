@@ -1,8 +1,33 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## [2.16.8] - 2026-03-06
+### Fixed
+- **Algorithm Consistency**: Fixed `binSize` mismatch between real-time and offline analysis in `analyzer.js`.
+- **Event Detection**: Simulated spectrum now correctly matches `fftSize` to ensure energy bands are correctly identified.
+- **Service Worker**: Fixed syntax error in `sw.js` (`event.waitUntil` return value handling).
+- **UX**: Added more detailed logging for re-analysis progress and spectral estimation.
 
-### [2.16.5] - 2026-03-05
+**中文說明：修復音訊分析演算法的頻譜尺寸不匹配問題，確保能正確偵測事件，並修正 SW 語法錯誤。**
+
+## [2.16.7] - 2026-03-06
+### Fixed
+- **Cache-Busting**: Bumped version to v2.16.7 to force refresh of stale service worker and browser caches.
+- **Path Resolution**: Fixed absolute path referencing for all assets (`/nightwhisper/`) to ensure reliability on sub-project URLs.
+- **Algorithm API**: Final fix for `_simulateFFT` input parameter type mismatch (handling `Float32Array`).
+- **Deployment**: Verified sync of all JS/CSS files to `dist_release/`.
+
+**中文說明：強制升級版本號以解決瀏覽器快取舊程式碼的問題，並修復路徑解析。**
+
+## [2.16.6] - 2026-03-06
+### Fixed
+- Unified versioning across all core files (index.html, app.js, sw.js) to resolve PWA update inconsistencies.
+- Optimized Service Worker cache strategy and updated asset list.
+- Improved precision of offline audio re-analysis by refining frequency estimation logic.
+- Cleaned up redundant DOM element initializations in `app.js`.
+
+*同步全域版本號至 v2.16.6，優化 PWA 離線快取與重新分析演算法，提升系統穩定性。*
+
+### [2.16.5] - 2025-05-31
 - **Critical Fix**: Path resolution for subfolder hosting.
   - Added script to force trailing slash on `/nightwhisper` URL.
   - Changed all script/link tags to use explicit `./` relative paths.

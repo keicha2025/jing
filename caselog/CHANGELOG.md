@@ -15,5 +15,6 @@
 - Added date editing capability in `LogTimeModal`.
 - Integrated date editing in `SwipeableTask` (Inline Add/Edit forms).
 - Optimized layout for date field in `SwipeableTask` to ensure visibility on all screen sizes.
+- Fixed missing `lastLogAt` updates on timer stop and log deletion to ensure consistent sorting.
 
-**中文摘要：實作任務按最後活動排序、工時日期補錄功能，並優化編輯表單佈局以確保日期欄位在各裝置皆能正常顯示。**
+**中文摘要：實作任務按最後活動排序、工時日期補錄功能，並優化編輯表單佈局。修復計時停止與刪除紀錄時未更新活動時間的問題，確保排序始終準確。**

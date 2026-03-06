@@ -572,6 +572,7 @@ const AddTaskModal = ({ onClose, user, tasksRef }: any) => {
                 totalMinutes: totalMinutes,
                 totalTime: totalHours,
                 createdAt: serverTimestamp(),
+                lastLogAt: serverTimestamp(),
             });
 
             if (totalMinutes > 0) {
