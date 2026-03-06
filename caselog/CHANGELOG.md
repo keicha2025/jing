@@ -11,11 +11,9 @@
 ## [Unreleased] - 2026-03-06
 ### Added
 - Implemented task list sorting based on the "Last Log Activity" (most recent first).
-- Added task sorting strictly by the **custom work date** of the last log entry.
-- Added date editing capability in `LogTimeModal`.
-- Integrated date editing in `SwipeableTask` (Inline Add/Edit forms).
-- Optimized layout for date field in `SwipeableTask` to ensure visibility on all screen sizes.
-- Refined `lastLogAt` behavior: normalized all work-dated activity to **end-of-day (23:59:59)** to avoid ranking conflicts with newly created tasks.
-- Improved frontend sorting logic to handle mixed data types (Firebase Timestamp vs JS Date) robustly.
+- Implemented **Strict Log-Date Sorting** using a new denormalized `latestLogDate` (String) field.
+- Redesigned sorting hierarchy: Tasks now rank strictly by their latest work log date (lexicographical comparison).
+- Added auto-recalculation of `latestLogDate` when work logs are deleted, ensuring sorting stability.
+- Solved the issue where newly created tasks or out-of-order logs caused incorrect ranking.
 
-**中文摘要：優化任務列表排序邏輯。將工時自定義日期統一設定為該日 23:59:59，確保「當天有工時」的任務一定排在「當天剛建立但沒工時」的任務之上。同時提升了前端排序在處理不同資料格式時的穩定性。**
+**中文摘要：徹底重構任務排序邏輯。改用專門的 `latestLogDate` 字串欄位進行去正規化排序，解決了之前補錄舊工時或新創任務時導致的順序錯亂問題。現在無論如何補錄或刪除工時，列表都會精準地按照「工作日期」由新到舊排列。**

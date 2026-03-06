@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
 import { auth, db } from '@/lib/firebase';
-import { collection, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, increment } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, increment, deleteField } from 'firebase/firestore';
 import { TAILWIND_COLORS } from '@/lib/constants';
 import { formatCurrency, getProjectStats } from '@/lib/utils';
 import AuthWrapper from '@/components/AuthWrapper';
@@ -86,18 +86,20 @@ function ProjectDetailContent() {
     const tasks = (tasksSnap?.docs || [])
         .map(d => ({ id: d.id, ...d.data() } as any))
         .sort((a, b) => {
+            // Priority 1: latestLogDate (String, e.g., "2026-03-06")
+            const dateA = a.latestLogDate || "";
+            const dateB = b.latestLogDate || "";
+
+            if (dateA !== dateB) return dateB.localeCompare(dateA);
+
+            // Priority 2: createdAt fallback (Timestamp or standard value)
             const getMs = (val: any) => {
                 if (!val) return 0;
                 if (typeof val.toMillis === 'function') return val.toMillis();
-                if (val instanceof Date) return val.getTime();
                 if (val.seconds) return val.seconds * 1000;
                 return new Date(val).getTime() || 0;
             };
 
-            const timeA = getMs(a.lastLogAt) || getMs(a.createdAt);
-            const timeB = getMs(b.lastLogAt) || getMs(b.createdAt);
-
-            if (timeB !== timeA) return timeB - timeA;
             return getMs(b.createdAt) - getMs(a.createdAt);
         });
 
@@ -582,6 +584,7 @@ const AddTaskModal = ({ onClose, user, tasksRef }: any) => {
                 totalMinutes: totalMinutes,
                 totalTime: totalHours,
                 createdAt: serverTimestamp(),
+                latestLogDate: totalMinutes > 0 ? new Date().toISOString().split('T')[0] : "",
             });
 
             if (totalMinutes > 0) {
@@ -595,9 +598,9 @@ const AddTaskModal = ({ onClose, user, tasksRef }: any) => {
                     createdAt: serverTimestamp(),
                 });
 
-                // Use end of day (23:59:59) so work-dated tasks stay on top of same-day created tasks
+                // Use latestLogDate for standardized sorting
                 await updateDoc(doc(db, tasksRef.path, taskDoc.id), {
-                    lastLogAt: new Date(todayStr + 'T23:59:59')
+                    latestLogDate: todayStr
                 });
             }
 
@@ -1057,10 +1060,17 @@ const LogTimeModal = ({ onClose, user, task, projectId }: any) => {
                 });
 
                 const projectRef = doc(db, `users/${user.uid}/projects/${projectId}`);
+                // Use latestLogDate for sorting. We only update if it's newer.
+                const newLatestDate = (task.latestLogDate && task.latestLogDate > date)
+                    ? task.latestLogDate
+                    : date;
+
                 await updateDoc(taskRef, {
                     totalMinutes: increment(totalMinutes),
                     totalTime: increment(totalHours),
-                    lastLogAt: new Date(date + 'T23:59:59')
+                    latestLogDate: newLatestDate,
+                    // Remove lastLogAt to clean up the schema
+                    lastLogAt: deleteField()
                 });
                 // Update project-level aggregation
                 await updateDoc(projectRef, {
