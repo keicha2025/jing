@@ -86,40 +86,19 @@ function ProjectDetailContent() {
     const tasks = (tasksSnap?.docs || [])
         .map(d => ({ id: d.id, ...d.data() } as any))
         .sort((a, b) => {
-            const getSortMs = (task: any) => {
-                const lastLog = task.lastLogAt;
-                const created = task.createdAt;
-
-                // 1. If has logs, use lastLogAt (already set to 23:59:59 in our update logic)
-                if (lastLog) {
-                    if (typeof lastLog.toMillis === 'function') return lastLog.toMillis();
-                    if (lastLog instanceof Date) return lastLog.getTime();
-                    if (lastLog.seconds) return lastLog.seconds * 1000;
-                }
-
-                // 2. Fallback to createdAt, but normalize to Start of Day (00:00:00) 
-                // to let ANY log work on the same day take priority.
-                if (created) {
-                    let date;
-                    if (typeof created.toDate === 'function') date = created.toDate();
-                    else if (created instanceof Date) date = created;
-                    else if (created.seconds) date = new Date(created.seconds * 1000);
-                    else date = new Date(created);
-
-                    if (!isNaN(date.getTime())) {
-                        date.setHours(0, 0, 0, 0);
-                        return date.getTime();
-                    }
-                }
-                return 0;
+            const getMs = (val: any) => {
+                if (!val) return 0;
+                if (typeof val.toMillis === 'function') return val.toMillis();
+                if (val instanceof Date) return val.getTime();
+                if (val.seconds) return val.seconds * 1000;
+                return new Date(val).getTime() || 0;
             };
 
-            const timeA = getSortMs(a);
-            const timeB = getSortMs(b);
+            const timeA = getMs(a.lastLogAt) || getMs(a.createdAt);
+            const timeB = getMs(b.lastLogAt) || getMs(b.createdAt);
 
             if (timeB !== timeA) return timeB - timeA;
-            // Absolute fallback for stable sort
-            return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
+            return getMs(b.createdAt) - getMs(a.createdAt);
         });
 
     // 優先使用專案自身設定，如果沒有則回退到設定頁的全域目標時薪
@@ -603,7 +582,6 @@ const AddTaskModal = ({ onClose, user, tasksRef }: any) => {
                 totalMinutes: totalMinutes,
                 totalTime: totalHours,
                 createdAt: serverTimestamp(),
-                lastLogAt: serverTimestamp(),
             });
 
             if (totalMinutes > 0) {
