@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollection, useDocument } from 'react-firebase-hooks/firestore';
 import { auth, db } from '@/lib/firebase';
-import { collection, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, increment, deleteField } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, increment, deleteField, getDocs, query, orderBy, where, limit } from 'firebase/firestore';
 import { TAILWIND_COLORS } from '@/lib/constants';
 import { formatCurrency, getProjectStats } from '@/lib/utils';
 import AuthWrapper from '@/components/AuthWrapper';
@@ -114,31 +114,43 @@ function ProjectDetailContent() {
     const totalMinutesFromTasksSync = tasks.reduce((acc, t) => acc + (t.totalMinutes || 0), 0);
     const projectTotalMinutes = project?.totalMinutes || 0;
 
-    // Automatic sync check
+    // --- Database Optimization & Self-Healing Hook ---
     React.useEffect(() => {
-        if (!user || !projectRef || tasks.length === 0) return;
-        // If aggregate is missing or clearly wrong (not matching task sums), fix it quietly
-        if (projectTotalMinutes !== totalMinutesFromTasksSync) {
-            updateDoc(projectRef, { totalMinutes: totalMinutesFromTasksSync }).catch(() => { });
-        }
-    }, [tasksSnap, user, projectRef, projectTotalMinutes, totalMinutesFromTasksSync]);
+        if (!user || !project.id || tasks.length === 0) return;
 
-    // Visibility & Focus Monitor (Option 2)
-    React.useEffect(() => {
-        const handleRefresh = () => {
-            // Firestore usually handles this, but we can log or trigger a soft re-eval if needed
-            // console.log('Window focused, keeping data alive');
+        const healTasks = async () => {
+            for (const task of tasks) {
+                // If a task is missing the new schema fields, or has legacy fields, heal it
+                if (task.latestLogDate === undefined || task.lastLogAt) {
+                    const logsRef = collection(db, `users/${user.uid}/projects/${project.id}/tasks/${task.id}/logs`);
+                    const logsSnap = await getDocs(query(logsRef, orderBy('date', 'desc')));
+
+                    let totalMin = 0;
+                    let latestDate = "";
+
+                    logsSnap.docs.forEach(d => {
+                        const data = d.data();
+                        totalMin += (data.duration || 0);
+                        if (!latestDate || (data.date && data.date > latestDate)) {
+                            latestDate = data.date;
+                        }
+                    });
+
+                    const taskRef = doc(db, `users/${user.uid}/projects/${project.id}/tasks/${task.id}`);
+                    await updateDoc(taskRef, {
+                        latestLogDate: latestDate,
+                        totalMinutes: totalMin,
+                        totalTime: totalMin / 60,
+                        lastLogAt: deleteField() // Clean up legacy schema
+                    });
+                }
+            }
         };
-        window.addEventListener('focus', handleRefresh);
-        window.addEventListener('visibilitychange', handleRefresh);
-        return () => {
-            window.removeEventListener('focus', handleRefresh);
-            window.removeEventListener('visibilitychange', handleRefresh);
-        };
-    }, []);
+
+        healTasks().catch(console.error);
+    }, [tasksSnap, user, project.id]);
 
     // Compute stats using precomputed minutes (Option 1)
-    // Preference: project.totalMinutes (Aggregate) -> then sum(task.totalMinutes) -> then fallback to legacy hours
     const finalLoggedMinutes = project?.totalMinutes ?? totalMinutesFromTasksSync;
     const stats = getProjectStats(effectiveProjectForStats, tasks, [], finalLoggedMinutes);
 
@@ -598,9 +610,18 @@ const AddTaskModal = ({ onClose, user, tasksRef }: any) => {
                     createdAt: serverTimestamp(),
                 });
 
-                // Use latestLogDate for standardized sorting
+                // Schema Alignment: Set initial stats correctly
                 await updateDoc(doc(db, tasksRef.path, taskDoc.id), {
-                    latestLogDate: todayStr
+                    latestLogDate: todayStr,
+                    totalMinutes: totalMinutes,
+                    totalTime: totalHours
+                });
+            } else {
+                // Initialize empty task schema
+                await updateDoc(doc(db, tasksRef.path, taskDoc.id), {
+                    latestLogDate: "",
+                    totalMinutes: 0,
+                    totalTime: 0
                 });
             }
 
@@ -1060,16 +1081,15 @@ const LogTimeModal = ({ onClose, user, task, projectId }: any) => {
                 });
 
                 const projectRef = doc(db, `users/${user.uid}/projects/${projectId}`);
-                // Use latestLogDate for sorting. We only update if it's newer.
-                const newLatestDate = (task.latestLogDate && task.latestLogDate > date)
-                    ? task.latestLogDate
-                    : date;
+
+                // Recalculate latestLogDate robustly by scanning the newest log
+                const logsSnap = await getDocs(query(logsRef, orderBy('date', 'desc'), limit(1)));
+                const latestDate = logsSnap.empty ? "" : (logsSnap.docs[0].data().date || "");
 
                 await updateDoc(taskRef, {
                     totalMinutes: increment(totalMinutes),
                     totalTime: increment(totalHours),
-                    latestLogDate: newLatestDate,
-                    // Remove lastLogAt to clean up the schema
+                    latestLogDate: latestDate,
                     lastLogAt: deleteField()
                 });
                 // Update project-level aggregation

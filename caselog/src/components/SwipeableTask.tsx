@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import { TAILWIND_COLORS } from '@/lib/constants';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { collection, query, orderBy, Timestamp, doc, deleteDoc, updateDoc, increment, addDoc, serverTimestamp, getDocs, limit, where } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp, doc, deleteDoc, updateDoc, increment, addDoc, serverTimestamp, getDocs, limit, where, deleteField } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/context/ToastContext';
 
@@ -48,13 +48,15 @@ function InlineLogForm({ project, task, onDone }: any) {
                 type: 'manual',
                 createdAt: serverTimestamp(),
             });
-            const newLatestDate = (task.latestLogDate && task.latestLogDate > date)
-                ? task.latestLogDate
-                : date;
+            // Recalculate latestLogDate robustly
+            const logsSnap = await getDocs(query(logsRef, orderBy('date', 'desc'), limit(1)));
+            const latestDate = logsSnap.empty ? "" : (logsSnap.docs[0].data().date || "");
+
             await updateDoc(taskDocRef, {
                 totalMinutes: increment(totalMinutes),
                 totalTime: increment(totalMinutes / 60),
-                latestLogDate: newLatestDate
+                latestLogDate: latestDate,
+                lastLogAt: deleteField()
             });
             // Update project-level aggregation
             await updateDoc(projectDocRef, {
@@ -153,14 +155,13 @@ function EditLogForm({ log, project, task, onDone }: any) {
                 endTimeText: endT,
                 note
             });
-            // Simple logic: if new date is later, update. 
-            // If earlier, it doesn't hurt much as it still ranks by day.
-            // A more robust way would be to re-scan logs, but let's stick to simplicity for edits.
-            const newLatestDate = (task.latestLogDate && task.latestLogDate > date)
-                ? task.latestLogDate
-                : date;
+            // Recalculate latestLogDate robustly
+            const logsSnap = await getDocs(query(doc(db, `users/${project.userId}/projects/${project.id}/tasks/${task.id}/logs`).parent, orderBy('date', 'desc'), limit(1)));
+            const latestDate = logsSnap.empty ? "" : (logsSnap.docs[0].data().date || "");
+
             await updateDoc(taskDocRef, {
-                latestLogDate: newLatestDate
+                latestLogDate: latestDate,
+                lastLogAt: deleteField()
             });
             if (diff !== 0) {
                 await updateDoc(taskDocRef, {
