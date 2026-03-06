@@ -234,3 +234,26 @@
 - **Import Bloat**: Cleaned up React imports and fixed `useMemo` reference error.
 ---
 **優化每月投資配置流程：新增即時分類/幣別總計看板，配置表格改為捲動式佈局。實作了快照覆蓋邏輯，防止在同月重複點擊執行時產生多筆重複數據。**
+
+## [1.8.0] - 2026-03-06 - PWA Transformation
+
+### Added
+- **PWA Support**: Integrated `vite-plugin-pwa` for seamless mobile installation and offline caching capabilities.
+- **Web App Manifest**: Configured application metadata including name ("Jing Finance"), standalone display mode, and theme colors.
+- **Multi-size Icon Assets**: Generated 192x192, 512x512, and 180x180 (iOS) icons from `appicon.png`.
+- **iOS Professional Experience**: Added `apple-touch-icon` and `theme-color` meta tags for a native-like feel on mobile devices.
+
+### Changed
+- **Vite Configuration**: Updated `vite.config.ts` to handle automatic Service Worker registration and manifest generation within the `/finance/` scope.
+- **HTML Entry**: Optimized `index.html` for better PWA discoverability.
+
+### Affected Files
+- `vite.config.ts`
+- `index.html`
+- `public/icons/*`
+- `public/apple-touch-icon.png`
+
+---
+**本次更新將 Finance 系統正式轉換為 PWA 應用程式。**
+**實現了自動化的 Service Worker 管理與圖示配置，支援手機「新增至主畫面」功能，提供更趨近原生應用的全螢幕作業體驗。**
+
