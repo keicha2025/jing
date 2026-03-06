@@ -3,7 +3,12 @@
     "short_name": "Caselog",
     "description": "Premium Work Log & Finance Monitor",
     "start_url": "/caselog/",
+    "scope": "/caselog/",
     "display": "standalone",
+    "display_override": [
+        "standalone",
+        "fullscreen"
+    ],
     "background_color": "#F7F3F0",
     "theme_color": "#8BA888",
     "icons": [

@@ -9,6 +9,12 @@ import PageTransition from "@/components/PageTransition";
 export const metadata: Metadata = {
   title: "案時記 / caselog",
   description: "Freelance Case & Time Management",
+  manifest: "/caselog/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Caselog",
+  },
 };
 
 export const viewport: Viewport = {
@@ -17,6 +23,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  themeColor: "#8BA888",
 };
 
 export default function RootLayout({
@@ -29,8 +36,6 @@ export default function RootLayout({
       <head>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <link rel="icon" href="/caselog/favicon.ico" />
-        <link rel="manifest" href="/caselog/manifest.json" />
-        <meta name="theme-color" content="#8BA888" />
         <link rel="apple-touch-icon" href="/caselog/app-icon.png" />
       </head>
       <body className="antialiased font-sans overscroll-none h-full bg-[#F9F8F6]">
