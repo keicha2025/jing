@@ -83,7 +83,13 @@ function ProjectDetailContent() {
     const [tasksSnap] = useCollection(tasksRef);
     const [settingsSnap] = useDocument(settingsRef);
 
-    const tasks = tasksSnap?.docs.map(d => ({ id: d.id, ...d.data() } as any)) || [];
+    const tasks = tasksSnap?.docs
+        .map(d => ({ id: d.id, ...d.data() } as any))
+        .sort((a, b) => {
+            const timeA = a.lastLogAt?.seconds || (a.createdAt?.seconds || 0);
+            const timeB = b.lastLogAt?.seconds || (b.createdAt?.seconds || 0);
+            return timeB - timeA;
+        }) || [];
 
     // 優先使用專案自身設定，如果沒有則回退到設定頁的全域目標時薪
     const globalRate = settingsSnap?.data()?.targetRate;
@@ -998,6 +1004,7 @@ const LogTimeModal = ({ onClose, user, task, projectId }: any) => {
     const { showToast } = useToast();
     const [h, setH] = useState('');
     const [m, setM] = useState('');
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [startT, setStartT] = useState('');
     const [endT, setEndT] = useState('');
     const [note, setNote] = useState('');
@@ -1025,6 +1032,7 @@ const LogTimeModal = ({ onClose, user, task, projectId }: any) => {
                 const totalHours = totalMinutes / 60;
                 await addDoc(logsRef, {
                     duration: totalMinutes,
+                    date: date,
                     startTimeText: startT,
                     endTimeText: endT,
                     type: 'manual',
@@ -1036,6 +1044,7 @@ const LogTimeModal = ({ onClose, user, task, projectId }: any) => {
                 await updateDoc(taskRef, {
                     totalMinutes: increment(totalMinutes),
                     totalTime: increment(totalHours),
+                    lastLogAt: serverTimestamp()
                 });
                 // Update project-level aggregation
                 await updateDoc(projectRef, {
@@ -1081,20 +1090,32 @@ const LogTimeModal = ({ onClose, user, task, projectId }: any) => {
                         <label className={`block text-[10px] font-black uppercase tracking-widest mb-4 ${TAILWIND_COLORS.textSecondary} opacity-70`}>新增工時紀錄</label>
                         <div className="flex gap-4 mb-6">
                             <div className="flex-1 relative">
+                                <label className="block text-[9px] font-bold opacity-40 uppercase tracking-widest mb-2">日期</label>
+                                <input
+                                    type="date" value={date} onChange={e => setDate(e.target.value)}
+                                    className="w-full bg-white border border-[#EAE3DA] rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-[#8BA888] font-mono"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 mb-6">
+                            <div className="flex-1 relative">
+                                <label className="block text-[9px] font-bold opacity-40 uppercase tracking-widest mb-2">小時</label>
                                 <input
                                     type="number" value={h} onChange={e => setH(e.target.value)}
                                     className="w-full bg-white border border-[#EAE3DA] rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-[#8BA888] font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     placeholder="0"
                                 />
-                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#8C857B] opacity-40 uppercase tracking-widest">小時</span>
+                                <span className="absolute right-4 bottom-5 text-[10px] font-bold text-[#8C857B] opacity-40 uppercase tracking-widest">小時</span>
                             </div>
                             <div className="flex-1 relative">
+                                <label className="block text-[9px] font-bold opacity-40 uppercase tracking-widest mb-2">分鐘</label>
                                 <input
                                     type="number" value={m} onChange={e => setM(e.target.value)}
                                     className="w-full bg-white border border-[#EAE3DA] rounded-2xl px-5 py-4 text-base focus:outline-none focus:border-[#8BA888] font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     placeholder="0"
                                 />
-                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#8C857B] opacity-40 uppercase tracking-widest">分鐘</span>
+                                <span className="absolute right-4 bottom-5 text-[10px] font-bold text-[#8C857B] opacity-40 uppercase tracking-widest">分鐘</span>
                             </div>
                         </div>
 

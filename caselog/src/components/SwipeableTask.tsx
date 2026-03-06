@@ -23,6 +23,7 @@ function InlineLogForm({ project, task, onDone }: any) {
     const { showToast } = useToast();
     const [h, setH] = useState('');
     const [m, setM] = useState('');
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [startT, setStartT] = useState('');
     const [endT, setEndT] = useState('');
     const [note, setNote] = useState('');
@@ -40,6 +41,7 @@ function InlineLogForm({ project, task, onDone }: any) {
             const projectDocRef = doc(db, `users/${project.userId}/projects/${project.id}`);
             await addDoc(logsRef, {
                 duration: totalMinutes,
+                date,
                 startTimeText: startT,
                 endTimeText: endT,
                 note,
@@ -49,6 +51,7 @@ function InlineLogForm({ project, task, onDone }: any) {
             await updateDoc(taskDocRef, {
                 totalMinutes: increment(totalMinutes),
                 totalTime: increment(totalMinutes / 60),
+                lastLogAt: serverTimestamp()
             });
             // Update project-level aggregation
             await updateDoc(projectDocRef, {
@@ -71,30 +74,41 @@ function InlineLogForm({ project, task, onDone }: any) {
             onClick={(e) => e.stopPropagation()}
             className="overflow-hidden mt-2 bg-white/60 rounded-xl p-3 border border-[#EAE3DA]/60 space-y-2"
         >
-            <div className="flex gap-2">
-                {/* Hours */}
-                <div className="relative flex-1">
-                    <input
-                        type="number" value={h} onChange={e => setH(e.target.value)}
-                        placeholder="0"
-                        className="w-full bg-[#F9F8F6] border border-[#EAE3DA] rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#8BA888] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#8C857B] opacity-50 pointer-events-none">h</span>
+            <div className="space-y-2">
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <label className="block text-[8px] font-bold opacity-30 uppercase tracking-widest mb-1 ml-1">日期</label>
+                        <input
+                            type="date" value={date} onChange={e => setDate(e.target.value)}
+                            className="w-full bg-[#F9F8F6] border border-[#EAE3DA] rounded-lg px-2 py-1.5 text-[10px] font-mono focus:outline-none focus:border-[#8BA888]"
+                        />
+                    </div>
                 </div>
-                {/* Minutes */}
-                <div className="relative flex-1">
-                    <input
-                        type="number" value={m} onChange={e => setM(e.target.value)}
-                        placeholder="0"
-                        className="w-full bg-[#F9F8F6] border border-[#EAE3DA] rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#8BA888] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#8C857B] opacity-50 pointer-events-none">m</span>
+                <div className="flex gap-2">
+                    {/* Hours */}
+                    <div className="relative flex-1">
+                        <input
+                            type="number" value={h} onChange={e => setH(e.target.value)}
+                            placeholder="0"
+                            className="w-full bg-[#F9F8F6] border border-[#EAE3DA] rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#8BA888] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#8C857B] opacity-50 pointer-events-none">h</span>
+                    </div>
+                    {/* Minutes */}
+                    <div className="relative flex-1">
+                        <input
+                            type="number" value={m} onChange={e => setM(e.target.value)}
+                            placeholder="0"
+                            className="w-full bg-[#F9F8F6] border border-[#EAE3DA] rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#8BA888] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#8C857B] opacity-50 pointer-events-none">m</span>
+                    </div>
+                    {/* Time range */}
+                    <input type="time" value={startT} onChange={e => setStartT(e.target.value)}
+                        className="flex-1 bg-[#F9F8F6] border border-[#EAE3DA] rounded-lg px-2 py-2 text-xs font-mono focus:outline-none focus:border-[#8BA888]" />
+                    <input type="time" value={endT} onChange={e => setEndT(e.target.value)}
+                        className="flex-1 bg-[#F9F8F6] border border-[#EAE3DA] rounded-lg px-2 py-2 text-xs font-mono focus:outline-none focus:border-[#8BA888]" />
                 </div>
-                {/* Time range */}
-                <input type="time" value={startT} onChange={e => setStartT(e.target.value)}
-                    className="flex-1 bg-[#F9F8F6] border border-[#EAE3DA] rounded-lg px-2 py-2 text-xs font-mono focus:outline-none focus:border-[#8BA888]" />
-                <input type="time" value={endT} onChange={e => setEndT(e.target.value)}
-                    className="flex-1 bg-[#F9F8F6] border border-[#EAE3DA] rounded-lg px-2 py-2 text-xs font-mono focus:outline-none focus:border-[#8BA888]" />
             </div>
             <div className="flex gap-2">
                 <input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="備註 (選填)"
@@ -113,6 +127,7 @@ function EditLogForm({ log, project, task, onDone }: any) {
     const { showToast } = useToast();
     const [h, setH] = useState(String(Math.floor((log.duration || 0) / 60)));
     const [m, setM] = useState(String((log.duration || 0) % 60));
+    const [date, setDate] = useState(log.date || (log.createdAt instanceof Timestamp ? log.createdAt.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0]));
     const [startT, setStartT] = useState(log.startTimeText || '');
     const [endT, setEndT] = useState(log.endTimeText || '');
     const [note, setNote] = useState(log.note || '');
@@ -130,9 +145,13 @@ function EditLogForm({ log, project, task, onDone }: any) {
         try {
             await updateDoc(logDocRef, {
                 duration: newTotalMinutes,
+                date,
                 startTimeText: startT,
                 endTimeText: endT,
                 note
+            });
+            await updateDoc(taskDocRef, {
+                lastLogAt: serverTimestamp()
             });
             if (diff !== 0) {
                 await updateDoc(taskDocRef, {
@@ -160,17 +179,28 @@ function EditLogForm({ log, project, task, onDone }: any) {
             onClick={(e) => e.stopPropagation()}
             className="overflow-hidden mt-1 mb-2 bg-[#8BA888]/5 rounded-xl p-3 border border-[#8BA888]/20 space-y-2"
         >
-            <div className="flex gap-2">
-                <div className="relative flex-1">
-                    <input type="number" value={h} onChange={e => setH(e.target.value)} placeholder="0" className="w-full bg-white border border-[#EAE3DA] rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#8BA888] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#8C857B] opacity-50">h</span>
+            <div className="space-y-2">
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <label className="block text-[8px] font-bold opacity-30 uppercase tracking-widest mb-1 ml-1">日期</label>
+                        <input
+                            type="date" value={date} onChange={e => setDate(e.target.value)}
+                            className="w-full bg-white border border-[#EAE3DA] rounded-lg px-2 py-1.5 text-[10px] font-mono focus:outline-none focus:border-[#8BA888]"
+                        />
+                    </div>
                 </div>
-                <div className="relative flex-1">
-                    <input type="number" value={m} onChange={e => setM(e.target.value)} placeholder="0" className="w-full bg-white border border-[#EAE3DA] rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#8BA888] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#8C857B] opacity-50">m</span>
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <input type="number" value={h} onChange={e => setH(e.target.value)} placeholder="0" className="w-full bg-white border border-[#EAE3DA] rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#8BA888] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#8C857B] opacity-50">h</span>
+                    </div>
+                    <div className="relative flex-1">
+                        <input type="number" value={m} onChange={e => setM(e.target.value)} placeholder="0" className="w-full bg-white border border-[#EAE3DA] rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#8BA888] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-[#8C857B] opacity-50">m</span>
+                    </div>
+                    <input type="time" value={startT} onChange={e => setStartT(e.target.value)} className="flex-1 bg-white border border-[#EAE3DA] rounded-lg px-2 py-2 text-xs font-mono focus:outline-none" />
+                    <input type="time" value={endT} onChange={e => setEndT(e.target.value)} className="flex-1 bg-white border border-[#EAE3DA] rounded-lg px-2 py-2 text-xs font-mono focus:outline-none" />
                 </div>
-                <input type="time" value={startT} onChange={e => setStartT(e.target.value)} className="flex-1 bg-white border border-[#EAE3DA] rounded-lg px-2 py-2 text-xs font-mono" />
-                <input type="time" value={endT} onChange={e => setEndT(e.target.value)} className="flex-1 bg-white border border-[#EAE3DA] rounded-lg px-2 py-2 text-xs font-mono" />
             </div>
             <div className="flex gap-2 items-center">
                 <input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="備註" className="flex-1 bg-white border border-[#EAE3DA] rounded-lg px-3 py-2 text-xs" />
@@ -423,7 +453,9 @@ export default function SwipeableTask({ task, project, onEdit, onToggleStatus }:
                                             >
                                                 <span className="text-[10px] font-mono font-bold text-[#4A443C] w-11 shrink-0">{fmtMin(log.duration || 0)}</span>
                                                 <span className="text-[9px] text-[#8C857B] opacity-50 shrink-0">
-                                                    {log.createdAt instanceof Timestamp
+                                                    {log.date ? (
+                                                        <span className="bg-[#8BA888]/10 text-[#8BA888] px-1.5 py-0.5 rounded font-black">{log.date}</span>
+                                                    ) : log.createdAt instanceof Timestamp
                                                         ? log.createdAt.toDate().toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
                                                         : '剛剛'}
                                                 </span>

@@ -7,3 +7,13 @@
 - Updated `tsconfig.json` with `jsxImportSource: "react"` for better React 19 compatibility.
 
 **中文說明：修復了 TypeScript 的 JSX 型別錯誤，確保全域 JSX 命名空間可用，並解決了組件 children 屬性遺失的問題。**
+
+## [Unreleased] - 2026-03-06
+### Added
+- Implemented task list sorting based on the "Last Log Activity" (most recent first).
+- Added task sorting by `lastLogAt` (falling back to `createdAt`).
+- Added date editing capability in `LogTimeModal`.
+- Integrated date editing in `SwipeableTask` (Inline Add/Edit forms).
+- Optimized layout for date field in `SwipeableTask` to ensure visibility on all screen sizes.
+
+**中文摘要：實作任務按最後活動排序、工時日期補錄功能，並優化編輯表單佈局以確保日期欄位在各裝置皆能正常顯示。**
