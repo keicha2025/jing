@@ -9,11 +9,11 @@ import PageTransition from "@/components/PageTransition";
 export const metadata: Metadata = {
   title: "案時記 / caselog",
   description: "Freelance Case & Time Management",
-  manifest: "/caselog/manifest.json",
+  manifest: "/caselog/site.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "Caselog",
+    statusBarStyle: "black-translucent",
+    title: "案時記",
   },
 };
 
@@ -37,6 +37,9 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <link rel="icon" href="/caselog/favicon.ico" />
         <link rel="apple-touch-icon" href="/caselog/app-icon.png" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="antialiased font-sans overscroll-none h-full bg-[#F9F8F6]">
         <TimerProvider>

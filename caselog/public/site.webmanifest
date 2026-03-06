@@ -1,15 +1,17 @@
 {
-    "name": "Caselog",
-    "short_name": "Caselog",
+    "name": "案時記 Caselog",
+    "short_name": "案時記",
+    "id": "com.jinglab.caselog",
     "description": "Premium Work Log & Finance Monitor",
     "start_url": "/caselog/",
     "scope": "/caselog/",
     "display": "standalone",
     "display_override": [
         "standalone",
-        "fullscreen"
+        "fullscreen",
+        "minimal-ui"
     ],
-    "background_color": "#F7F3F0",
+    "background_color": "#F9F8F6",
     "theme_color": "#8BA888",
     "icons": [
         {
@@ -22,7 +24,19 @@
             "src": "/caselog/app-icon.png",
             "sizes": "192x192",
             "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/caselog/app-icon.png",
+            "sizes": "192x192",
+            "type": "image/png",
             "purpose": "maskable"
+        },
+        {
+            "src": "/caselog/app-icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "/caselog/app-icon.png",

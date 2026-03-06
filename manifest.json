@@ -1,7 +1,9 @@
 {
     "name": "Jing Lab - Project Portal",
     "short_name": "Jing Lab",
-    "start_url": "./index.html",
+    "id": "jing-lab-portal",
+    "start_url": "/index.html",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#FAFAF9",
     "theme_color": "#FAFAF9",
