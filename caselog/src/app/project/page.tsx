@@ -116,7 +116,7 @@ function ProjectDetailContent() {
 
     // --- Database Optimization & Self-Healing Hook ---
     React.useEffect(() => {
-        if (!user || !project.id || tasks.length === 0) return;
+        if (!user || !project?.id || tasks.length === 0) return;
 
         const healTasks = async () => {
             for (const task of tasks) {
@@ -148,7 +148,7 @@ function ProjectDetailContent() {
         };
 
         healTasks().catch(console.error);
-    }, [tasksSnap, user, project.id]);
+    }, [tasksSnap, user, project?.id]);
 
     // Compute stats using precomputed minutes (Option 1)
     const finalLoggedMinutes = project?.totalMinutes ?? totalMinutesFromTasksSync;
@@ -158,7 +158,7 @@ function ProjectDetailContent() {
     if (!project) return <div className="p-10 text-center text-[#B5AEA4] italic">載入中...</div>;
 
     const handleToggleStatus = async (taskId: string, isCompleted: boolean) => {
-        if (!user || !project.id) return;
+        if (!user || !project?.id) return;
         const taskRef = doc(db, `users/${user.uid}/projects/${project.id}/tasks/${taskId}`);
         await updateDoc(taskRef, { isCompleted });
     };
