@@ -490,7 +490,7 @@ export default function SwipeableTask({ task, project, onEdit, onToggleStatus }:
 
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setLogEditingId(log.id); }}
-                                                    className="hidden md:block text-[#8C857B] opacity-30 hover:opacity-80 transition-all ml-2"
+                                                    className="hidden md:block text-[#8C857B] opacity-30 hover:opacity-80 transition-all ml-auto"
                                                 >
                                                     <Icon name="edit" size={14} />
                                                 </button>
