@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useDocument } from 'react-firebase-hooks/firestore';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDocs, collection } from 'firebase/firestore';
+import { doc, setDoc, getDocs, collection, query, orderBy } from 'firebase/firestore';
 import { TAILWIND_COLORS } from '@/lib/constants';
 import AuthWrapper from '@/components/AuthWrapper';
 import { useToast } from '@/context/ToastContext';
@@ -64,10 +64,6 @@ export default function SettingsPage() {
                 const projectData = projectDoc.data();
                 const projectName = projectData.name || projectDoc.id;
 
-                // Sheet name protection:
-                // 1. Filter invalid chars: / \ ? * : [ ]
-                // 2. Limit to 31 chars
-                // 3. Ensure uniqueness (deduplication)
                 const baseName = projectName.replace(/[\\?*:[\]/]/g, '').trim().slice(0, 31) || 'Project';
                 let finalName = baseName;
                 let counter = 1;
@@ -78,36 +74,61 @@ export default function SettingsPage() {
                 }
                 usedNames.add(finalName);
 
-                // Fetch tasks for this project
+                // Fetch tasks for this project, sorted by latest log or creation
                 const tasksRef = collection(db, `users/${user.uid}/projects/${projectDoc.id}/tasks`);
                 const tasksSnap = await getDocs(tasksRef);
 
-                const allLogs: any[] = [];
+                // Sort tasks locally to match the UI ranking (latest log first)
+                const sortedTasks = tasksSnap.docs
+                    .map(d => ({ id: d.id, ...d.data() } as any))
+                    .sort((a, b) => {
+                        const dateA = a.latestLogDate || "";
+                        const dateB = b.latestLogDate || "";
+                        if (dateA !== dateB) return dateB.localeCompare(dateA);
+                        return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
+                    });
 
-                for (const taskDoc of tasksSnap.docs) {
-                    const taskData = taskDoc.data();
-                    // Fetch logs for this task
-                    const logsRef = collection(db, `users/${user.uid}/projects/${projectDoc.id}/tasks/${taskDoc.id}/logs`);
-                    const logsSnap = await getDocs(logsRef);
+                const wsData: any[] = [];
+
+                for (const task of sortedTasks) {
+                    // Task Header Row
+                    wsData.push({
+                        '層級': '任務 (Task)',
+                        '任務/工時日期': task.name || task.title || '未命名任務',
+                        '時長(分鐘)': task.totalMinutes || 0,
+                        '備註': '--- 任務總計 ---'
+                    });
+
+                    // Fetch logs for this task, sorted by date
+                    const logsRef = collection(db, `users/${user.uid}/projects/${projectDoc.id}/tasks/${task.id}/logs`);
+                    const logsSnap = await getDocs(query(logsRef, orderBy('date', 'desc')));
 
                     logsSnap.docs.forEach(logDoc => {
-                        const logData = logDoc.data();
-                        const date = logData.createdAt?.toDate ? logData.createdAt.toDate() : new Date();
-
-                        allLogs.push({
-                            '日期': date.toLocaleDateString(),
-                            '任務名稱': taskData.name || taskData.title || '未命名任務',
+                        const logData = logDoc.data() as any;
+                        wsData.push({
+                            '層級': '  └─ 工時 (Log)',
+                            '任務/工時日期': logData.date || '-',
                             '時長(分鐘)': logData.duration || 0,
-                            '開始時間': logData.startTimeText || '-',
-                            '結束時間': logData.endTimeText || '-',
                             '備註': logData.note || ''
                         });
                     });
+
+                    // Spacer row for better visibility
+                    wsData.push({});
                 }
 
-                // If no logs, just add a placeholder or empty sheet
-                const wsData = allLogs.length > 0 ? allLogs : [{ '訊息': '尚無工時紀錄' }];
-                const ws = XLSX.utils.json_to_sheet(wsData);
+                // If no logs at all
+                const finalWsData = wsData.length > 0 ? wsData : [{ '訊息': '尚無任何任務或工時紀錄' }];
+                const ws = XLSX.utils.json_to_sheet(finalWsData);
+
+                // Optional: Column widths for better UX
+                ws['!cols'] = [
+                    { wch: 15 }, // 層級
+                    { wch: 30 }, // 任務/工時日期
+                    { wch: 12 }, // 時長
+                    { wch: 50 }, // 備註
+                ];
+
                 XLSX.utils.book_append_sheet(wb, ws, finalName);
             }
 
