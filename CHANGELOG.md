@@ -773,3 +773,14 @@ All 10 sub-projects confirmed healthy — HTTP 200, correct titles, no wrong red
 **Affected files:** `note/index.html`, `note/sw.js`, `note/manifest.json`, `CHANGELOG.md`
 
 **中文摘要：修復了 `note` 應用中「儲存按鈕顏色太淺看不見」以及「存檔時程式報錯 (TypeError)」的問題。新增了具備狀態提示的載入遮罩動畫、優化了浮動視窗的深色主題顯示，並解決了 PWA 安裝後出現瀏覽器工具列的顯示問題。**
+
+## [2026-03-06] Mail: Config Path Fix & Deployment Stability
+### Fixed
+- **Resolved "Unexpected token '<'" Error**: Fixed a critical path resolution bug in the `mail` application where relative script paths (`config.js`) were incorrectly redirected to the root `index.html` on sub-directory access.
+- **Absolute Path Integration**: Updated `mail/index.html` to use a root-relative path (`/mail/config.js`), ensuring configuration loads correctly regardless of URL trailing slashes.
+- **Firebase Hosting Compatibility**: Aligned the mail app with the global `trailingSlash: false` hosting policy by stabilizing its asset references.
+- **CSS Syntax Refinement**: Fixed invalid `ring` and `ring-offset` properties in `.theme-btn.active` by replacing them with standard `box-shadow` implementations.
+
+**Affected files:** `mail/index.html`, `CHANGELOG.md`
+
+**中文摘要：修復了 `mail` 工具在部署後因路徑解析錯誤導導致的 `config.js` 載入失敗（出現 Unexpected token '<' 錯誤）。同時修正了 `index.html` 中無效的 CSS 屬性，確保介面樣式符合標準。最後執行全站完整部署以同步所有子專案。**
