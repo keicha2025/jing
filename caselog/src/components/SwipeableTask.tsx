@@ -51,7 +51,7 @@ function InlineLogForm({ project, task, onDone }: any) {
             await updateDoc(taskDocRef, {
                 totalMinutes: increment(totalMinutes),
                 totalTime: increment(totalMinutes / 60),
-                lastLogAt: new Date(date + 'T00:00:00')
+                lastLogAt: new Date(date + 'T23:59:59')
             });
             // Update project-level aggregation
             await updateDoc(projectDocRef, {
@@ -151,7 +151,7 @@ function EditLogForm({ log, project, task, onDone }: any) {
                 note
             });
             await updateDoc(taskDocRef, {
-                lastLogAt: new Date(date + 'T00:00:00')
+                lastLogAt: new Date(date + 'T23:59:59')
             });
             if (diff !== 0) {
                 await updateDoc(taskDocRef, {

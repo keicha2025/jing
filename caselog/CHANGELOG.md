@@ -15,6 +15,7 @@
 - Added date editing capability in `LogTimeModal`.
 - Integrated date editing in `SwipeableTask` (Inline Add/Edit forms).
 - Optimized layout for date field in `SwipeableTask` to ensure visibility on all screen sizes.
-- Fixed `lastLogAt` behavior: it now synchronizes with the manually selected work date instead of the operation time.
+- Refined `lastLogAt` behavior: normalized all work-dated activity to **end-of-day (23:59:59)** to avoid ranking conflicts with newly created tasks.
+- Improved frontend sorting logic to handle mixed data types (Firebase Timestamp vs JS Date) robustly.
 
-**中文摘要：任務列表改為完全依照「工時自定義日期」排序，不論何時補錄，皆以工時當下的日期為準。修正了新增/編輯工時時的活動追蹤邏輯，並同步修復了部分代碼語法錯誤。**
+**中文摘要：優化任務列表排序邏輯。將工時自定義日期統一設定為該日 23:59:59，確保「當天有工時」的任務一定排在「當天剛建立但沒工時」的任務之上。同時提升了前端排序在處理不同資料格式時的穩定性。**

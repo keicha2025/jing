@@ -86,9 +86,19 @@ function ProjectDetailContent() {
     const tasks = tasksSnap?.docs
         .map(d => ({ id: d.id, ...d.data() } as any))
         .sort((a, b) => {
-            const timeA = a.lastLogAt?.seconds || (a.createdAt?.seconds || 0);
-            const timeB = b.lastLogAt?.seconds || (b.createdAt?.seconds || 0);
-            return timeB - timeA;
+            const getMs = (val: any) => {
+                if (!val) return 0;
+                if (typeof val.toMillis === 'function') return val.toMillis();
+                if (val instanceof Date) return val.getTime();
+                if (val.seconds) return val.seconds * 1000;
+                if (typeof val === 'number') return val;
+                return 0;
+            };
+            const timeA = getMs(a.lastLogAt) || getMs(a.createdAt);
+            const timeB = getMs(b.lastLogAt) || getMs(b.createdAt);
+            if (timeB !== timeA) return timeB - timeA;
+            // Secondary sort: createdAt descending
+            return getMs(b.createdAt) - getMs(a.createdAt);
         }) || [];
 
     // 優先使用專案自身設定，如果沒有則回退到設定頁的全域目標時薪
@@ -586,9 +596,9 @@ const AddTaskModal = ({ onClose, user, tasksRef }: any) => {
                     createdAt: serverTimestamp(),
                 });
 
-                // Ensure task's lastLogAt matches the initial log date
+                // Use end of day (23:59:59) so work-dated tasks stay on top of same-day created tasks
                 await updateDoc(doc(db, tasksRef.path, taskDoc.id), {
-                    lastLogAt: new Date(todayStr + 'T00:00:00')
+                    lastLogAt: new Date(todayStr + 'T23:59:59')
                 });
             }
 
@@ -1051,7 +1061,7 @@ const LogTimeModal = ({ onClose, user, task, projectId }: any) => {
                 await updateDoc(taskRef, {
                     totalMinutes: increment(totalMinutes),
                     totalTime: increment(totalHours),
-                    lastLogAt: new Date(date + 'T00:00:00')
+                    lastLogAt: new Date(date + 'T23:59:59')
                 });
                 // Update project-level aggregation
                 await updateDoc(projectRef, {
