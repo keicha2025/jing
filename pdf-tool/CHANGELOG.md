@@ -49,4 +49,16 @@ All notable changes to this project will be documented in this file.
 
 **Affected files:** `index.html`, `public/favicon.svg`
 
-**更新專案網頁圖標，採用自定義設計的 SVG 格式圖標。設計風格為深石色底座搭配 Indigo 摺角文件，強化品牌辨識度並符合專案美學。**
+## [0.1.5] - 2026-03-08
+
+### Optimization & Simplification
+- **Compression Mode**: Removed the local (client-side) compression method to ensure consistent output quality.
+- **Unified Workflow**: Standardized on Cloud-Native Ghostscript compression for all PDF reduction tasks.
+- **Security**: Reinforced whitelist access control for the professional cloud compression feature.
+- **UI Cleaning**: Removed the "Local/Cloud" mode switcher for a more streamlined, goal-oriented user experience.
+- **Button Reordering**: Swapped "Download" and "Restart" button positions to place the primary download action on the right.
+
+**Affected files:** `src/App.jsx`
+
+**移除本地壓縮模式，一律採用雲端 Ghostscript 引擎執行 PDF 壓縮，以確保最高品質的輸出結果。同時簡化介面按鈕（將下載按鈕移至右側），並維持白名單專業版權限限制。**
+

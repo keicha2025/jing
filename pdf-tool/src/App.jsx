@@ -233,8 +233,8 @@ const FlattenView = ({ isWhitelisted, isDarkMode, user, handleLogin }) => {
                                     </div>
                                 </div>
                                 <div className="flex space-x-3 justify-center">
-                                    <button onClick={() => downloadFile(result.blob, result.name)} className={`px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest ${isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white shadow-xl'}`}>即刻下載</button>
                                     <button onClick={() => { setFile(null); setResult(null); }} className={`px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest border ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-black/5 hover:bg-black/5'}`}>重新開始</button>
+                                    <button onClick={() => downloadFile(result.blob, result.name)} className={`px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest ${isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white shadow-xl'}`}>即刻下載</button>
                                 </div>
                             </motion.div>
                         ) : file ? (
@@ -284,118 +284,30 @@ const FlattenView = ({ isWhitelisted, isDarkMode, user, handleLogin }) => {
 
 const CompressView = ({ isWhitelisted, isDarkMode, user, handleLogin }) => {
     const [selectedLevel, setSelectedLevel] = useState('recommended');
-    const [mode, setMode] = useState('client');
     const [file, setFile] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [result, setResult] = useState(null);
-    const [progress, setProgress] = useState(0);
 
     const levels = [
-        { id: 'extreme', title: 'Extreme', subtitle: '最低畫質，最高壓縮', description: '將圖片降至 72 DPI，適合郵件附件傳輸。', icon: <Zap className="w-5 h-5" />, tag: '最快', quality: 0.3, scale: 0.4 },
-        { id: 'recommended', title: 'Recommended', subtitle: '平衡畫質與體積', description: '維持 150 DPI，大部分文件的最佳選擇。', icon: <FileText className="w-5 h-5" />, tag: '最佳平衡', quality: 0.6, scale: 0.7 },
-        { id: 'high', title: 'High Quality', subtitle: '保留細節，輕微壓縮', description: '300 DPI 原生品質，僅優化檔案結構。', icon: <FileText className="w-5 h-5" />, tag: '無損感', quality: 0.8, scale: 0.9 }
+        { id: 'extreme', title: 'Extreme', subtitle: '最低畫質，最高壓縮', description: '將圖片降至 72 DPI，適合郵件附件傳輸。', icon: <Zap className="w-5 h-5" />, tag: '最快' },
+        { id: 'recommended', title: 'Recommended', subtitle: '平衡畫質與體積', description: '維持 150 DPI，大部分文件的最佳選擇。', icon: <FileText className="w-5 h-5" />, tag: '最佳平衡' },
+        { id: 'high', title: 'High Quality', subtitle: '保留細節，輕微壓縮', description: '300 DPI 原生品質，僅優化檔案結構。', icon: <FileText className="w-5 h-5" />, tag: '無損感' }
     ];
-
-    const compressImageBytes = async (bytes, quality, scale) => {
-        return new Promise((resolve, reject) => {
-            const blob = new Blob([bytes]);
-            const url = URL.createObjectURL(blob);
-            const img = new Image();
-            img.onload = () => {
-                URL.revokeObjectURL(url);
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const w = Math.max(1, img.width * scale);
-                const h = Math.max(1, img.height * scale);
-                canvas.width = w;
-                canvas.height = h;
-                ctx.drawImage(img, 0, 0, w, h);
-                canvas.toBlob((resultBlob) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(new Uint8Array(reader.result));
-                    reader.readAsArrayBuffer(resultBlob);
-                }, 'image/jpeg', quality);
-            };
-            img.onerror = () => {
-                URL.revokeObjectURL(url);
-                reject(new Error('Image load failed'));
-            };
-            img.src = url;
-        });
-    };
 
     const executeCompression = async () => {
         if (!file) return;
-        if (mode === 'cloud' && !isWhitelisted) {
-            alert('雲端模式僅限白名單專業版使用者功能。請先登入。');
+        if (!isWhitelisted) {
+            alert('壓縮功能僅限白名單專業版使用者。請先登入或聯繫管理員。');
             return;
         }
         setIsProcessing(true);
-        setProgress(0);
         try {
-            if (mode === 'client') {
-                const arrayBuffer = await file.arrayBuffer();
-                const pdfDoc = await PDFDocument.load(arrayBuffer);
-                const config = levels.find(l => l.id === selectedLevel);
-
-                const indirectObjects = pdfDoc.context.enumerateIndirectObjects();
-                let totalImages = 0;
-                let processedImages = 0;
-
-                // First pass: count images
-                for (const [ref, obj] of indirectObjects) {
-                    if (obj instanceof PDFRawStream || obj instanceof PDFStream) {
-                        const subtype = obj.dict.get(PDFName.of('Subtype'));
-                        if (subtype === PDFName.of('Image')) totalImages++;
-                    }
-                }
-
-                // Second pass: compress
-                for (const [ref, obj] of indirectObjects) {
-                    if (obj instanceof PDFRawStream || obj instanceof PDFStream) {
-                        const subtype = obj.dict.get(PDFName.of('Subtype'));
-                        if (subtype === PDFName.of('Image')) {
-                            try {
-                                const filter = obj.dict.get(PDFName.of('Filter'));
-                                // We primarily handle DCTDecode (JPEG) or FlateDecode (PNG/Raw)
-                                // Standard PDF image streams allow US to replace contents with JPEG
-                                const bytes = obj.getContents();
-                                const newBytes = await compressImageBytes(bytes, config.quality, config.scale);
-
-                                // Create new stream with compressed data
-                                // Use .stream() instead of .flateStream() to avoid double-compressing JPEG data
-                                const newStream = pdfDoc.context.stream(newBytes, {
-                                    Type: PDFName.of('XObject'),
-                                    Subtype: PDFName.of('Image'),
-                                    Width: obj.dict.get(PDFName.of('Width')),
-                                    Height: obj.dict.get(PDFName.of('Height')),
-                                    BitsPerComponent: obj.dict.get(PDFName.of('BitsPerComponent')),
-                                    ColorSpace: obj.dict.get(PDFName.of('ColorSpace')),
-                                    Filter: PDFName.of('DCTDecode'),
-                                });
-
-                                // Replace indirect object content
-                                pdfDoc.context.assign(ref, newStream);
-                            } catch (e) {
-                                console.warn("Skip image due to error:", e);
-                            }
-                            processedImages++;
-                            setProgress(Math.round((processedImages / totalImages) * 100));
-                        }
-                    }
-                }
-
-                const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
-                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-                setResult({ blob, size: blob.size, name: `compressed_client_${file.name}` });
-            } else {
-                const formData = new FormData();
-                formData.append('file', file);
-                const response = await fetch(`${API_BASE_URL}/compress/ghostscript?quality=${selectedLevel}`, { method: 'POST', body: formData });
-                if (!response.ok) throw new Error('雲端壓縮失敗');
-                const blob = await response.blob();
-                setResult({ blob, size: blob.size, name: `compressed_cloud_${file.name}` });
-            }
+            const formData = new FormData();
+            formData.append('file', file);
+            const response = await fetch(`${API_BASE_URL}/compress/ghostscript?quality=${selectedLevel}`, { method: 'POST', body: formData });
+            if (!response.ok) throw new Error('雲端壓縮失敗');
+            const blob = await response.blob();
+            setResult({ blob, size: blob.size, name: `compressed_cloud_${file.name}` });
         } catch (error) {
             alert(`壓縮失敗: ${error.message}`);
         } finally {
@@ -420,12 +332,7 @@ const CompressView = ({ isWhitelisted, isDarkMode, user, handleLogin }) => {
                 <div className="lg:col-span-6">
                     <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-none mb-8">Reduce <br /><span className={isDarkMode ? 'text-zinc-600' : 'text-zinc-300'}>Without Regret.</span></h1>
                     <p className={`text-lg md:text-xl mb-12 font-light ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>針對不同的使用場景，精準重構您的 PDF 體積。</p>
-                    <div className="flex flex-col items-center mb-10">
-                        <div className={`inline-flex p-1.5 rounded-2xl border ${isDarkMode ? 'bg-zinc-900/50 border-white/5' : 'bg-zinc-100 border-black/5'}`}>
-                            <button onClick={() => setMode('client')} className={`flex items-center px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mode === 'client' ? (isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white') : 'opacity-40 hover:opacity-100'}`}><Shield className="w-4 h-4 mr-2" />本地</button>
-                            <button onClick={() => setMode('cloud')} className={`flex items-center px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mode === 'cloud' ? (isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white') : 'opacity-40 hover:opacity-100'}`}><Cloud className="w-4 h-4 mr-2" />雲端</button>
-                        </div>
-                    </div>
+
                     <label
                         onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                         onDrop={(e) => { e.preventDefault(); e.stopPropagation(); const f = e.dataTransfer.files[0]; if (f?.type === 'application/pdf') setFile(f); }}
@@ -455,8 +362,8 @@ const CompressView = ({ isWhitelisted, isDarkMode, user, handleLogin }) => {
                                     </div>
                                 </div>
                                 <div className="flex space-x-3 justify-center">
-                                    <button onClick={() => downloadFile(result.blob, result.name)} className={`px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest ${isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white shadow-xl'}`}>即刻下載</button>
                                     <button onClick={() => { setFile(null); setResult(null); }} className={`p-5 rounded-2xl border ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-black/5 hover:bg-black/5'}`}><RefreshCw size={16} /></button>
+                                    <button onClick={() => downloadFile(result.blob, result.name)} className={`px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest ${isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white shadow-xl'}`}>即刻下載</button>
                                 </div>
                             </motion.div>
                         ) : file ? (
@@ -470,6 +377,7 @@ const CompressView = ({ isWhitelisted, isDarkMode, user, handleLogin }) => {
                             <>
                                 <div className="mb-6 p-5 rounded-full bg-indigo-500/10 text-indigo-500"><ArrowDownCircle size={40} /></div>
                                 <p className="text-xl font-bold">放置 PDF 於此</p>
+                                {!isWhitelisted && <p className="text-[9px] uppercase font-bold tracking-widest opacity-40 mt-2 text-indigo-500">PRO ONLY</p>}
                             </>
                         )}
                     </label>
@@ -489,15 +397,8 @@ const CompressView = ({ isWhitelisted, isDarkMode, user, handleLogin }) => {
                         ))}
                     </div>
                     <button disabled={!file || isProcessing} onClick={executeCompression} className={`relative overflow-hidden w-full py-8 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.4em] transition-all duration-700 ${file && !isProcessing ? (isDarkMode ? 'bg-white text-black' : 'bg-zinc-900 text-white shadow-2xl') : 'bg-zinc-800/20 text-zinc-600 cursor-not-allowed'}`}>
-                        {isProcessing && progress > 0 && (
-                            <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progress}%` }}
-                                className="absolute inset-0 bg-indigo-500/20 pointer-events-none"
-                            />
-                        )}
                         <span className="relative z-10 transition-all duration-500">
-                            {isProcessing ? (progress > 0 ? `Processing ${progress}%` : 'Initializing...') : 'Start Compression'}
+                            {isProcessing ? 'Processing Cloud Task...' : 'Start Cloud Compression'}
                         </span>
                     </button>
                 </div>
