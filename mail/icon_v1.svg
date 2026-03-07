@@ -1,0 +1,7 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Option 1: Minimalist Paper Plane (Full Background) -->
+  <rect width="256" height="256" fill="#111827"/>
+  <path d="M210 50L40 130L100 150L210 50Z" fill="#F3F4F6"/>
+  <path d="M210 50L100 150L120 210L210 50Z" fill="#E5E7EB"/>
+  <path d="M210 50L120 210L40 130L210 50Z" fill="white" fill-opacity="0.15"/>
+</svg>

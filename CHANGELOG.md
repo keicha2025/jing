@@ -784,3 +784,36 @@ All 10 sub-projects confirmed healthy — HTTP 200, correct titles, no wrong red
 **Affected files:** `mail/index.html`, `CHANGELOG.md`
 
 **中文摘要：修復了 `mail` 工具在部署後因路徑解析錯誤導導致的 `config.js` 載入失敗（出現 Unexpected token '<' 錯誤）。同時修正了 `index.html` 中無效的 CSS 屬性，確保介面樣式符合標準。最後執行全站完整部署以同步所有子專案。**
+
+## [2026-03-07] Finance: Favicon Update
+### Changed
+- **Favicon Synchronization**: Updated the `finance` sub-project's favicon from the default Vite icon to the project's customized `appicon.png`.
+- **Public Assets Update**: Replaced `/finance/public/favicon.png` with the high-resolution branding asset for consistent user experience.
+
+**Affected files:** `finance/index.html`, `finance/public/favicon.png`
+
+**中文摘要：更新 JING Finance 的網頁圖標，將其由預設的 Vite 圖示替換為專案專屬的高解析度 `appicon.png`，並確保發布目錄同步更新以提升品牌一致性。**
+
+## [2026-03-07] PDF Tool: Favicon Update
+### Changed
+- **Branding**: Replaced default Vite favicon with a custom-designed SVG icon in the `pdf-tool` sub-project.
+
+**Affected files:** `pdf-tool/index.html`, `pdf-tool/public/favicon.svg`
+
+**中文摘要：為 PDF 工具更新專屬的 SVG 網頁圖標，提升品牌一致性。**
+
+## [2026-03-07] Caselog: Favicon Update
+### Changed
+- **Branding**: Unified the `caselog` favicon and apple-touch-icon with the project's customized `appicon.png`.
+
+**Affected files:** `caselog/src/app/layout.tsx`, `caselog/public/favicon.png`, `caselog/public/app-icon.png`
+
+**中文摘要：統一「案時記 (caselog)」的網頁圖標，採用專案專屬的 `appicon.png` 並更新 PWA 與 Favicon 配置。**
+
+## [2026-03-07] Mail: Favicon Update
+### Added
+- **Visual Identity**: Implemented custom SVG favicon for the `mail` tool using an ultra-minimalist geometric design.
+
+**Affected files:** `mail/index.html`, `mail/favicon.svg`
+
+**中文摘要：為 `mail` 子專案建立專屬網頁圖標，採用自定義的 SVG 設計以維持品牌視覺一致性。**

@@ -1,0 +1,21 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Option 3: Minimalist Pulse/Beam (API Stream) -->
+  <rect width="256" height="256" fill="#111827"/>
+  <defs>
+    <linearGradient id="pulseGrad" x1="40" y1="128" x2="190" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366F1" stop-opacity="0"/>
+      <stop offset="0.7" stop-color="#818CF8" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="white"/>
+    </linearGradient>
+  </defs>
+  <!-- Data Beams -->
+  <rect x="40" y="112" width="150" height="8" rx="4" fill="url(#pulseGrad)"/>
+  <rect x="60" y="136" width="130" height="8" rx="4" fill="url(#pulseGrad)" fill-opacity="0.7"/>
+  <rect x="80" y="88" width="110" height="8" rx="4" fill="url(#pulseGrad)" fill-opacity="0.5"/>
+  <!-- Core Data Point -->
+  <circle cx="206" cy="128" r="16" fill="white" shadow="0 0 20px white"/>
+  <circle cx="206" cy="128" r="30" stroke="white" stroke-width="2" stroke-opacity="0.2">
+    <animate attributeName="r" from="20" to="45" dur="2s" repeatCount="indefinite" />
+    <animate attributeName="stroke-opacity" from="0.3" to="0" dur="2s" repeatCount="indefinite" />
+  </circle>
+</svg>

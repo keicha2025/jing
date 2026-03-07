@@ -35,7 +35,7 @@ export default function RootLayout({
     <html lang="zh-TW" className="h-full">
       <head>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-        <link rel="icon" href="/caselog/favicon.ico" />
+        <link rel="icon" href="/caselog/favicon.png" />
         <link rel="apple-touch-icon" href="/caselog/app-icon.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

@@ -257,3 +257,17 @@
 **本次更新將 Finance 系統正式轉換為 PWA 應用程式。**
 **實現了自動化的 Service Worker 管理與圖示配置，支援手機「新增至主畫面」功能，提供更趨近原生應用的全螢幕作業體驗。**
 
+
+## [1.8.1] - 2026-03-07 - Favicon Update & Cleanup
+
+### Changed
+- **Favicon**: Replaced the default `vite.svg` icon with the customized `appicon.png` in the root `index.html`.
+- **Public Assets**: Synchronized `public/favicon.png` with the project's primary branding asset `appicon.png`.
+
+### Affected Files
+- `index.html`
+- `public/favicon.png`
+
+---
+**本次更新將網頁圖標 (Favicon) 從預設的 Vite 圖示替換為專案專屬的 `appicon.png`。**
+**同步更新了 `public/` 目錄下的圖資，並修正 `index.html` 的引用路徑，確保瀏覽器標籤能正確顯示品牌 logo。**

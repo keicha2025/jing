@@ -1,0 +1,18 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Option 2: Modern Flattening Symbol -->
+  <defs>
+    <linearGradient id="glassGradient" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#818CF8" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#6366F1" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Layers -->
+  <rect x="40" y="70" width="176" height="116" rx="16" fill="url(#glassGradient)" stroke="white" stroke-opacity="0.3" stroke-width="2"/>
+  <rect x="40" y="85" width="176" height="116" rx="16" fill="url(#glassGradient)" stroke="white" stroke-opacity="0.2" stroke-width="2"/>
+  
+  <!-- Flattening Arrow -->
+  <path d="M128 40V120M128 120L108 100M128 120L148 100" stroke="#E5E7EB" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- "Flatten" base line -->
+  <rect x="80" y="200" width="96" height="10" rx="5" fill="#6366F1"/>
+</svg>

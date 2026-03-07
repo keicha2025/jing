@@ -40,3 +40,13 @@ All notable changes to this project will be documented in this file.
 - **Theming**: Standardized success states to use `indigo` and `zinc` tones for a cleaner, more professional look.
 
 **移除所有綠色勾勾與黃色元素。將處理完成圖示改為中性的文件圖標，並全面排除綠色與黃色調，確保介面呈現更一致且高級的 indigo/zinc 色系。**
+
+## [0.1.4] - 2026-03-07
+
+### Branding & Identity
+- **Custom SVG Favicon**: Replaced the default Vite icon with a custom-designed `favicon.svg`.
+- **Icon Design**: Implemented a minimalist document fold icon with a deep stone background (`#1C1917`) and indigo accents.
+
+**Affected files:** `index.html`, `public/favicon.svg`
+
+**更新專案網頁圖標，採用自定義設計的 SVG 格式圖標。設計風格為深石色底座搭配 Indigo 摺角文件，強化品牌辨識度並符合專案美學。**

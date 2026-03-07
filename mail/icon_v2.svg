@@ -1,0 +1,10 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Option 2: Obtuse Minimalist V (135 degrees) - Positioned Higher -->
+  <rect width="256" height="256" fill="#111827"/>
+  
+  <!-- Wide, shallow V-shape (approx 135 degrees) - Shifted Up -->
+  <path d="M45 80L128 115L211 80" stroke="#F3F4F6" stroke-width="24" stroke-linecap="round" stroke-linejoin="miter"/>
+  
+  <!-- Balanced Accent Dot - Shifted Up -->
+  <circle cx="128" cy="170" r="14" fill="#6366F1"/>
+</svg>

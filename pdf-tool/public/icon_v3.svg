@@ -1,0 +1,16 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Option 3: Abstract Geometric Stack -->
+  <defs>
+    <linearGradient id="brandGradient" x1="50" y1="50" x2="206" y2="206" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#818CF8"/>
+    </linearGradient>
+  </defs>
+  <!-- Geometric Stylized 'P' -->
+  <path d="M80 50H150C177.61 50 200 72.39 200 100V110C200 137.61 177.61 160 150 160H80V50Z" fill="url(#brandGradient)" fill-opacity="0.8"/>
+  <path d="M80 50V210" stroke="#E5E7EB" stroke-width="24" stroke-linecap="round"/>
+  
+  <!-- Dynamic Slices (Shadow effects) -->
+  <path d="M110 50L80 100V150L110 100V50Z" fill="black" fill-opacity="0.1"/>
+  <path d="M140 50L110 100V150L140 100V50Z" fill="black" fill-opacity="0.05"/>
+</svg>
