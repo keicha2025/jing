@@ -1,5 +1,16 @@
 # Changelog
 
+## [2026-03-08] Documentation & README Overhaul
+### Added
+- Created/Updated comprehensive `README.md` files for the root portal and all 10 sub-projects.
+- Standardized documentation structure: Title, Features, Tech Stack, and Usage Guide.
+- Replaced default framework boilerplates (Next.js, Vue/Vite) with actual project descriptions.
+- Documented deployment workflows and sub-directory routing constraints.
+- Added project-specific links to the root README for easier navigation within the repository.
+
+**中文摘要：完成了全站與 10 個子專案的 README 文檔撰寫工作。將原本的框架模板替換為實際的技術介紹與開發指南，並在根目錄建立導航中心，提升專案的專業感與維護性。**
+
+
 ## [2026-02-16]
 ### Added
 - Created a new Vite-based React project for the audio player in the `preview` directory.
