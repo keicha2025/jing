@@ -1,5 +1,30 @@
 # Changelog
 
+## [2026-03-08] Offline Web First & "Invisible Assistant"
+### Added
+- **"Invisible Assistant" Strategy (v18)**: Implemented a strict **Cache-First + Background Update (Stale-While-Revalidate)** strategy for all GET requests, including navigation. This ensures the app launches instantly from local storage, even without internet.
+- **Aggressive Prefetching**: Expanded pre-caching to include Firebase SDKs and Google Fonts in the install phase, ensuring total offline reliability for the "Offline Web First" experience.
+- **Improved Takeover**: Added `self.clients.claim()` and `self.skipWaiting()` to ensure the new "Invisible Assistant" takes control of all pages immediately after installation.
+
+**中文說明：實作「隱形助手」策略（SW v18），改為預設從本地硬碟讀取資源（秒開），並在背景自動更新，達成真正的離線 Web 優先體驗。**
+
+## [2026-03-08] PWA Identity Isolation & Multi-App Fix
+### Fixed
+- **PWA Identity Isolation**: Implemented unique machine-readable IDs (`com.jinglab.portal` and `com.jinglab.note`) to resolve installation conflicts between the root portal and sub-apps.
+- **Scope Refining**: Re-aligned Service Worker scopes and Manifest start URLs back to `/note` to match Firebase clean URLs while ensuring independent app behavior.
+- **Note App Enhancements**: Upgraded Note Service Worker to v17 with improved offline fallback and added `launch_handler` for better multi-window handling on Android.
+
+**中文說明：實作 PWA 身份隔離（嚴格 ID 模式），解決安裝衝突，並升級 Note SW v17 強化離線穩定性。**
+
+## [2026-03-08] Note App PWA Visibility & Offline Fix (Second Attempt)
+### Fixed
+- **Service Worker Scope Upgrade**: Identified a conflict between Firebase `trailingSlash: false` and default SW directory scoping. Added `Service-Worker-Allowed: /` header in `firebase.json` and explicitly set `scope: '/note'` during registration. This allows the SW at `/note/sw.js` to control the root extensionless URL `/note`, resolving both the "Offline" error and the "Browser Top Bar" issue.
+- **Improved Caching**: Service Worker (v16) now robustly handles both `/note` and `/note/` as equivalent entry points.
+- **Android & Offline Optimization**: Added "New Note" shortcut, Android Splash Screen configuration, and 3s Auth timeout fallback.
+
+**中文摘要：發現了 Firebase 自動移除斜線的路徑與 Service Worker 預設目錄限制的衝突。現已透過伺服器 Header 授權與程式碼 Scope 指定，讓 `/note` 網址能被正確納入快取範疇，徹底解決「離線無法開啟」與「頂部出現工具列」的問題。**
+
+
 ## [2026-03-08] Documentation & README Overhaul
 ### Added
 - Created/Updated comprehensive `README.md` files for the root portal and all 10 sub-projects.
@@ -394,8 +419,14 @@ Resolved a critical issue where the PDF Tool was displaying a blank white screen
 
 **中文說明：全面優化 Finance Dashboard UI/UX，包含自定義通知系統、動態幣別顯示及金額單位轉化（萬），並修復歷史趨勢圖表不顯示的問題。**
 
-### [v3.1.1] - 2026-03-03
-#### Final UI/UX Polish & Custom Component Integration
+- **PWA Identity Isolation**: Implemented unique machine-readable IDs (`com.jinglab.portal` and `com.jinglab.note`) to resolve installation conflicts between the root portal and sub-apps.
+- **Scope Refining**: Re-aligned Service Worker scopes and Manifest start URLs to match Firebase clean URLs while ensuring independent app behavior.
+- **Note App Enhancements**: Upgraded Note Service Worker to v17 with improved offline fallback and added `launch_handler` for better multi-window handling on Android.
+
+**中文說明：實作 PWA 身份隔離（嚴格 ID 模式），解決安裝衝突，並升級 Note SW v17 強化離線穩定性。**
+
+## [v1.0.12] - 2026-03-08
+### Added# Final UI/UX Polish & Custom Component Integration
 - **Custom Modals**: Replaced all native browser `confirm()` dialogs with high-quality, custom glassmorphism confirmation modals for a premium feel.
 - **Redundant Section Removal**: Removed the "Financial Goal Achievement Rate" block to declutter the user interface and focus on core metrics.
 - **Improved Contrast**: Updated Recharts Tooltip styles to a high-contrast white background with dark text, ensuring perfect readability in the dark theme.

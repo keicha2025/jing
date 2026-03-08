@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jing-lab-v14';
+const CACHE_NAME = 'jing-lab-v15';
 const ASSETS = [
     './',
     './index.html',
@@ -38,17 +38,17 @@ self.addEventListener('fetch', (event) => {
     // 不攔截子應用路徑，避免不同子專案互相吃到錯誤快取資源
     const pathname = new URL(url).pathname;
     const excludedPrefixes = [
-        '/preview/',
-        '/pdf-tool/',
-        '/v-player-preview/',
-        '/travel-planner/',
-        '/finance/',
-        '/caselog/',
-        '/note/',
-        '/nightwhisper/',
-        '/mail/',
+        '/preview',
+        '/pdf-tool',
+        '/v-player-preview',
+        '/travel-planner',
+        '/finance',
+        '/caselog',
+        '/note',
+        '/nightwhisper',
+        '/mail',
     ];
-    if (excludedPrefixes.some((prefix) => pathname.startsWith(prefix))) {
+    if (excludedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'))) {
         return;
     }
 

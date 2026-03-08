@@ -5,16 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>note</title>
+    <title>Personal Note</title>
 
     <!-- PWA / Mobile Meta -->
     <link rel="manifest" href="/note/manifest.json">
     <link rel="icon" type="image/png" href="/note/note_appicon.png">
     <link rel="apple-touch-icon" href="/note/note_appicon.png">
-    <meta name="theme-color" content="#FDFCFB" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#FDFCFB">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Note">
 
     <!-- Styles & Fonts -->
     <link rel="stylesheet" href="/note/style.css">
@@ -520,11 +521,12 @@
         };
 
         // --- 初始化 & Guard ---
+        let isViewVisible = false; // 防止多次重複觸發 showView
         document.addEventListener('DOMContentLoaded', () => {
-            // Register Service Worker
+            // Register Service Worker with deliberate scope to match Firebase clean URLs
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/note/sw.js')
-                    .then(reg => console.log('SW Registered', reg))
+                navigator.serviceWorker.register('/note/sw.js', { scope: '/note' })
+                    .then(reg => console.log('SW Registered with scope: /note', reg))
                     .catch(err => console.log('SW Failed', err));
             }
 
@@ -540,19 +542,29 @@
                 }
             });
 
+            // --- 強化離線啟動速度 ---
+            // 設定一個超時機制，如果 3 秒內沒有完成身分驗證（通常是離線導致 Auth 掛掉），則強行進入筆記介面顯示快取
+            const authTimeout = setTimeout(() => {
+                if (!isViewVisible && state.notes.length > 0) {
+                    console.log("Auth timeout - showing cached notes (offline mode)");
+                    showView('notesView');
+                }
+            }, 3000);
+
             // Listen for Auth changes (Modular)
             const interval = setInterval(() => {
                 if (window.onAuthStateChanged && window.firebaseAuth) {
                     clearInterval(interval);
                     updateLoader("身分驗證中", "正在確認您的登入狀態...");
                     window.onAuthStateChanged(window.firebaseAuth, (user) => {
+                        clearTimeout(authTimeout); // 成功觸發則取消超時
                         if (user) {
                             performGASLogin(user);
                         } else {
                             state.token = null;
                             localStorage.removeItem('device_token');
                             showView('loginView');
-                            hideLoader(); // 未登入則顯示登入頁，隱藏遮罩
+                            hideLoader();
                         }
                     });
                 }
@@ -576,13 +588,24 @@
         }
 
         function showView(viewId) {
+            isViewVisible = true;
             ['loginView', 'notesView'].forEach(id => {
-                document.getElementById(id).classList.toggle('hidden', id !== viewId);
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('hidden', id !== viewId);
             });
             if (viewId === 'notesView') {
                 document.getElementById('logoutBtn').classList.remove('hidden');
                 document.getElementById('addBtnNav').classList.remove('hidden');
                 fetchNotes();
+
+                // 處理 Android Shortcuts 或啟動參數
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('action') === 'new') {
+                    // 稍等渲染完成後開啟新增介面
+                    setTimeout(prepareNewNote, 300);
+                    // 清除網址參數避免重複觸發表單
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
             } else {
                 document.getElementById('logoutBtn').classList.add('hidden');
                 document.getElementById('addBtnNav').classList.add('hidden');

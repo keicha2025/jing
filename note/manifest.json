@@ -1,18 +1,56 @@
 {
-    "name": "Personal Note Manager",
-    "short_name": "note",
-    "id": "/note/",
-    "start_url": "/note/",
-    "scope": "/note/",
+    "name": "Personal Note",
+    "short_name": "Note",
+    "id": "com.jinglab.note",
+    "start_url": "/note",
+    "scope": "/note",
     "display": "standalone",
+    "launch_handler": {
+        "client_mode": [
+            "focus-existing",
+            "auto"
+        ]
+    },
+    "orientation": "portrait",
     "background_color": "#FDFCFB",
-    "theme_color": "#FDFCFB",
+    "theme_color": "#4A4A4A",
+    "categories": [
+        "productivity",
+        "utilities"
+    ],
+    "description": "極簡風格的雲端筆記工具，支援離線編輯與自動同步。",
     "icons": [
+        {
+            "src": "/note/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/note/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
         {
             "src": "/note/note_appicon.png",
             "sizes": "1024x1024",
             "type": "image/png",
             "purpose": "any maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "新增筆記",
+            "short_name": "新增",
+            "description": "快速建立一則新筆記",
+            "url": "/note?action=new",
+            "icons": [
+                {
+                    "src": "/note/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
         }
     ]
 }
