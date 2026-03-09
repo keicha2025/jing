@@ -11,10 +11,11 @@ export default defineConfig({
             manifest: {
                 name: 'Personal Video Player',
                 short_name: 'V-Player',
+                id: 'com.jinglab.vplayer',
                 description: 'A premium personal video player with local playback and PWA support.',
                 theme_color: '#4f46e5',
-                start_url: '/v-player-preview/',
-                scope: '/v-player-preview/',
+                start_url: '/v-player-preview',
+                scope: '/v-player-preview',
                 display: 'standalone',
                 background_color: '#171717',
                 icons: [

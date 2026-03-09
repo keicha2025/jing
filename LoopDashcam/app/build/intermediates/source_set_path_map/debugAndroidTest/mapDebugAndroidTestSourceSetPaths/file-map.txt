@@ -1,6 +1,0 @@
-com.jing.loopdashcam.test.app-core-1.5.0-0 /Users/jing/.gradle/caches/transforms-4/23618fd8a68e3c7ae0d321bd69cf111a/transformed/core-1.5.0/res
-com.jing.loopdashcam.test.app-annotation-experimental-1.3.0-1 /Users/jing/.gradle/caches/transforms-4/4aba02bb156857679dcccd4b20f33a4f/transformed/annotation-experimental-1.3.0/res
-com.jing.loopdashcam.test.app-androidTest-2 /Users/jing/Downloads/jing/LoopDashcam/app/build/generated/res/resValues/androidTest/debug
-com.jing.loopdashcam.test.app-mergeDebugAndroidTestResources-3 /Users/jing/Downloads/jing/LoopDashcam/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/merged.dir
-com.jing.loopdashcam.test.app-mergeDebugAndroidTestResources-4 /Users/jing/Downloads/jing/LoopDashcam/app/build/intermediates/incremental/debugAndroidTest/mergeDebugAndroidTestResources/stripped.dir
-com.jing.loopdashcam.test.app-debugAndroidTest-5 /Users/jing/Downloads/jing/LoopDashcam/app/build/intermediates/merged_res/debugAndroidTest/mergeDebugAndroidTestResources

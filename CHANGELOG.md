@@ -1,5 +1,36 @@
 # Changelog
 
+### 2026-03-10
+*   **PDF Tool: UI & Copy Unification & Responsive Polish**
+    - **UI Unification**: Fully aligned the "Compress" view with the "Flatten" view's premium design system.
+        - Synchronized grid layout to 7:5 ratio on large screens.
+        - Implemented `backdrop-blur-3xl` glassmorphism and rounded corners (`rounded-[2.5rem]`) for both dropzones.
+        - Standardized typography, button padding (`py-7`), and card styles (`rounded-3xl`, `p-6`).
+    - **Note App: "Instant Load" Optimization (Scheme A)**
+        - Implemented fast-path bootstrapping to show cached notes immediately using localized token and data.
+        - Shifted authentication and cloud sync to silent background processes.
+        - Improved offline resilience by rendering local snapshots before network response.
+    - **PWA Standardization (Scheme A)**: Implemented strict identity isolation and path normalization across all sub-apps.
+        - **Unique IDs**: Assigned machine-readable IDs (e.g., `com.jinglab.pdftool`) to all manifests.
+        - **Path Normalization**: Standardized `scope` and `start_url` to be non-trailing-slash (e.g., `/pdf-tool`) to match Firebase Hosting behavior.
+        - **Root Alignment**: Updated root `manifest.json` to `start_url: "/"` for cleaner installation.
+    - **Deployment**: Successfully deployed to Production via `full_deploy.sh`.
+    - **Affected Files**: `pdf-tool/src/App.jsx`, `note/index.html`, `manifest.json`, `dist_release/manifest.json`.
+    - **Potential Side Effects**: None.
+
+**中文摘要：完成 PDF Tool 的介面與文案全方位統一，並實施「PWA 方案 A」標準化。針對 Note 應用程式進行了「秒開」優化，透過本地 Token 與資料快取，使用者開啟網頁即可立即看到內容，而不需要等待身分驗證。**
+
+
+## [2026-03-09] PWA Isolated Identity & Manifest Consolidation
+### Fixed
+- **PWA Identity Isolation**: Finalized unique `id` attributes for all remaining sub-apps (`mail`, `preview`, `v-player-preview`, `finance`, `pdf-tool`) to ensure stable standalone installation and prevent cross-app manifest overwrites.
+- **Visual Continuity (Standalone)**: Added missing meta tags (`viewport-fit=cover`, `apple-mobile-web-app-capable`, `black-translucent`) across all 10 sub-projects to hide the browser top bar and enable true full-screen immersive experience on iOS/Android.
+- **Trailing Slash Conflict Fix**: Removed legacy JavaScript redirect scripts from `nightwhisper` and other apps that forced trailing slashes, ensuring compatibility with Firebase Hosting's `trailingSlash: false` policy.
+- **Mail App PWA Support**: Created a new `manifest.json` and integrated PWA support for the Minimalist Email Studio, bringing it into the unified workspace architecture.
+- **PDF Tool Visual Unification**: Unified the favicon and PWA app icons for `pdf-tool` using `icon_v1.svg` and updated the manifest to prioritize SVG icons for high-resolution displays.
+
+**中文摘要：完成了全站 PWA 身份隔離的最後一哩路。為所有子應用（Mail, Finance, PDF 等）補齊唯一 ID 與全螢幕 Meta 標籤，徹底解決手機安裝後出現網址列的問題。同步移除了會與 Firebase 衝突的自動補斜線腳本，並統一了 PDF Tool 的圖標設計。**
+
 ## [2026-03-08] Offline Web First & "Invisible Assistant"
 ### Added
 - **"Invisible Assistant" Strategy (v18)**: Implemented a strict **Cache-First + Background Update (Stale-While-Revalidate)** strategy for all GET requests, including navigation. This ensures the app launches instantly from local storage, even without internet.

@@ -3,8 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Note">
     <title>Personal Note</title>
 
     <!-- PWA / Mobile Meta -->
@@ -542,29 +545,37 @@
                 }
             });
 
-            // --- 強化離線啟動速度 ---
-            // 設定一個超時機制，如果 3 秒內沒有完成身分驗證（通常是離線導致 Auth 掛掉），則強行進入筆記介面顯示快取
-            const authTimeout = setTimeout(() => {
-                if (!isViewVisible && state.notes.length > 0) {
-                    console.log("Auth timeout - showing cached notes (offline mode)");
-                    showView('notesView');
-                }
-            }, 3000);
+            // --- 強化離線啟動速度 (方案 A：快照優先) ---
+            // 如果本地已有 Token 與 筆記快取，立即進入主介面展現「秒開」體驗
+            if (state.token && state.notes && state.notes.length > 0) {
+                console.log("Fast-path: Showing cached notes immediately.");
+                showView('notesView');
+                hideLoader();
+            }
 
             // Listen for Auth changes (Modular)
             const interval = setInterval(() => {
                 if (window.onAuthStateChanged && window.firebaseAuth) {
                     clearInterval(interval);
-                    updateLoader("身分驗證中", "正在確認您的登入狀態...");
+
+                    // 如果尚未進入主介面，才顯示驗證中文字
+                    if (!isViewVisible) {
+                        updateLoader("身分驗證中", "正在確認您的登入狀態...");
+                    }
+
                     window.onAuthStateChanged(window.firebaseAuth, (user) => {
-                        clearTimeout(authTimeout); // 成功觸發則取消超時
                         if (user) {
                             performGASLogin(user);
                         } else {
-                            state.token = null;
-                            localStorage.removeItem('device_token');
-                            showView('loginView');
-                            hideLoader();
+                            // 只有在真的沒登入且沒快取時，才強制導向登入
+                            if (!isViewVisible || !state.token) {
+                                state.token = null;
+                                localStorage.removeItem('device_token');
+                                showView('loginView');
+                                hideLoader();
+                            } else {
+                                console.log("Auth session expired but keeping view for offline parity.");
+                            }
                         }
                     });
                 }
@@ -632,6 +643,9 @@
             const btn = document.getElementById('googleLoginBtn');
             const statusEl = document.getElementById('loginStatus');
 
+            // 如果已經在主介面且有有效 Token，則背景驗證即可
+            const isBackgroundAuth = isViewVisible && state.token;
+
             const result = await apiCall('login', {
                 email: user.email,
                 uid: user.uid,
@@ -639,16 +653,31 @@
             });
 
             if (result.success) {
-                updateLoader("驗證成功", `歡迎回來, ${user.displayName}`);
                 state.token = result.token;
                 localStorage.setItem('device_token', state.token);
-                showView('notesView');
-                showToast("歡迎, " + user.displayName, "verified_user");
+
+                if (!isViewVisible) {
+                    showView('notesView');
+                    showToast("歡迎, " + user.displayName, "verified_user");
+                } else {
+                    console.log("Background auth updated.");
+                }
             } else {
-                updateLoader("存取被拒", result.message || "帳號不在允許清單中", true);
+                // 如果驗證失敗（例如權限被取消），才強制跳轉
+                if (!isBackgroundAuth) {
+                    updateLoader("存取被拒", result.message || "帳號不在允許清單中", true);
+                } else {
+                    showToast("驗證失效，請重新登入", "lock");
+                }
+
                 const { signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
                 signOut(window.firebaseAuth);
-                showToast(result.message || "帳號不在允許清單中", "lock");
+
+                localStorage.removeItem('device_token');
+                state.token = null;
+                showView('loginView');
+                hideLoader();
+
                 if (statusEl) statusEl.innerText = result.message || "存取被拒：請聯絡管理員";
                 setLoading(btn, false);
             }
@@ -679,7 +708,8 @@
 
         async function fetchNotes() {
             // 如果已有快取，先直接渲染
-            if (state.notes && state.notes.length > 0) {
+            const hasCache = state.notes && state.notes.length > 0;
+            if (hasCache) {
                 renderNotes();
             } else {
                 document.getElementById('loadingIndicator').classList.remove('hidden');
@@ -687,21 +717,15 @@
             }
 
             // 背景同步
-            updateLoader("同步資料中", "正在獲取您的雲端筆記...");
+            if (!hasCache) {
+                updateLoader("同步資料中", "正在獲取您的雲端筆記...");
+            }
+
             const res = await apiCall('get_notes');
             document.getElementById('loadingIndicator').classList.add('hidden');
 
             if (res.success) {
-                // ...existing logic
                 hideLoader();
-            } else if (res.error === "Unauthorized") {
-                updateLoader("同步失敗", "連線逾時或權限失效", true);
-                logout();
-            } else {
-                updateLoader("連線錯誤", res.error || "無法獲取資料", true);
-            }
-
-            if (res.success) {
                 // 檢查資料是否有變動 (簡單字串比對)
                 const newNotesJson = JSON.stringify(res.notes);
                 const oldNotesJson = JSON.stringify(state.notes);
@@ -713,7 +737,10 @@
                     if (oldNotesJson !== '[]') showToast("已同步最新內容", "cloud_done");
                 }
             } else if (res.error === "Unauthorized") {
-                logout();
+                if (!hasCache) logout();
+                else console.log("Background sync unauthorized. Keeping cache.");
+            } else {
+                if (!hasCache) updateLoader("連線錯誤", res.error || "無法獲取資料", true);
             }
         }
 

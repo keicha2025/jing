@@ -11,10 +11,11 @@ export default defineConfig({
             manifest: {
                 name: 'Personal Audio Player',
                 short_name: 'AudioPlayer',
+                id: 'com.jinglab.audioplayer',
                 description: 'A premium personal audio player with 3s skip and playback speed control.',
                 theme_color: '#4f46e5',
-                start_url: '/preview/',
-                scope: '/preview/',
+                start_url: '/preview',
+                scope: '/preview',
                 display: 'standalone',
                 background_color: '#171717',
                 icons: [

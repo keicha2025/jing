@@ -12,12 +12,13 @@ export default defineConfig({
             manifest: {
                 name: 'Jing Finance',
                 short_name: 'Finance',
+                id: 'com.jinglab.finance',
                 description: 'Personal Finance Management Tool',
                 theme_color: '#ffffff',
                 background_color: '#ffffff',
                 display: 'standalone',
-                scope: '/finance/',
-                start_url: '/finance/',
+                scope: '/finance',
+                start_url: '/finance',
                 icons: [
                     {
                         src: 'icons/pwa-192x192.png',

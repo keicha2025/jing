@@ -3,8 +3,8 @@
     "short_name": "案時記",
     "id": "com.jinglab.caselog",
     "description": "Premium Work Log & Finance Monitor",
-    "start_url": "/caselog/",
-    "scope": "/caselog/",
+    "start_url": "/caselog",
+    "scope": "/caselog",
     "display": "standalone",
     "display_override": [
         "standalone",

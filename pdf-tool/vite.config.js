@@ -12,11 +12,26 @@ export default defineConfig({
             manifest: {
                 name: 'FlatModern PDF',
                 short_name: 'FlatModern',
+                id: 'com.jinglab.pdftool',
                 description: 'Quality-first PDF Flattening Tool',
                 theme_color: '#0a0a0a',
                 background_color: '#0a0a0a',
                 display: 'standalone',
+                scope: '/pdf-tool',
+                start_url: '/pdf-tool',
                 icons: [
+                    {
+                        src: 'favicon.svg',
+                        sizes: 'any',
+                        type: 'image/svg+xml',
+                        purpose: 'any'
+                    },
+                    {
+                        src: 'favicon.svg',
+                        sizes: '512x512',
+                        type: 'image/svg+xml',
+                        purpose: 'maskable'
+                    },
                     {
                         src: 'pwa-192x192.png',
                         sizes: '192x192',
@@ -26,12 +41,6 @@ export default defineConfig({
                         src: 'pwa-512x512.png',
                         sizes: '512x512',
                         type: 'image/png'
-                    },
-                    {
-                        src: 'pwa-512x512.png',
-                        sizes: '512x512',
-                        type: 'image/png',
-                        purpose: 'any maskable'
                     }
                 ]
             }
