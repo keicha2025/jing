@@ -1,192 +1,51 @@
-# Changelog
+# Changelog - NightWhisper
 
-## [2.16.8] - 2026-03-06
-### Fixed
-- **Algorithm Consistency**: Fixed `binSize` mismatch between real-time and offline analysis in `analyzer.js`.
-- **Event Detection**: Simulated spectrum now correctly matches `fftSize` to ensure energy bands are correctly identified.
-- **Service Worker**: Fixed syntax error in `sw.js` (`event.waitUntil` return value handling).
-- **UX**: Added more detailed logging for re-analysis progress and spectral estimation.
+All notable changes to this project will be documented in this file.
 
-**中文說明：修復音訊分析演算法的頻譜尺寸不匹配問題，確保能正確偵測事件，並修正 SW 語法錯誤。**
+## [2024-05-24] 新增靜音過濾與超長音檔支援 (Silence Filtering & Heavy File Support)
+- **Feature: Silence Filtering Script**
+  - Added `scripts/filter_silence.py` Python tool based on `pydub`.
+  - Automatically extracts non-silent audio segments for faster AI processing.
+  - Supports custom dBFS thresholding for better precision.
+- **Fix: Extreme Audio Processing (9h+) Support**
+  - Implemented 8kHz ultra-low memory decoding in `App.jsx`.
+  - Added aggressive tensor garbage collection and yielding for 9-hour, 400MB M4A stability.
+  - Reduced memory peak during decoding by 90% (from 11GB down to ~1GB).
+- 中文總結：新增 Python 預處理工具，並修復了 9 小時超長音檔分析崩潰的問題，將解碼採樣率降至 8kHz 以維持系統穩定。
 
-## [2.16.7] - 2026-03-06
-### Fixed
-- **Cache-Busting**: Bumped version to v2.16.7 to force refresh of stale service worker and browser caches.
-- **Path Resolution**: Fixed absolute path referencing for all assets (`/nightwhisper/`) to ensure reliability on sub-project URLs.
-- **Algorithm API**: Final fix for `_simulateFFT` input parameter type mismatch (handling `Float32Array`).
-- **Deployment**: Verified sync of all JS/CSS files to `dist_release/`.
+### [2025-05-23] AI 分析時間線與互動增強 (AI Analysis Timeline & Interaction)
+- **智慧事件持久化**: 將 AI 辨識到的聲音事件（打呼、夢話等）儲存於 IndexedDB。
+- **分析報告時間線**: 在歷史報告中新增「智慧辨識時間線」，可依時間軸查看所有偵測到的事件及其信心度。
+- **點擊跳轉播放**: 實作時間線與波形圖聯動，點擊特定事件即可自動跳轉並播放該時段音訊。
+- **外部音檔智慧分析**: 新增匯入功能，支援上傳 MP3/WAV/M4A 檔案，並在本地端進行自動化聲音標記分析。
+- **數據關聯邏輯**: 確保 AI 事件與對應的錄音 Session ID 綁定，支援完整刪除。
+- **UI 優化**: 報告頁面新增滾動式時間線組件，並支援事件偏移時間顯示。
+- 中文總結：實作了 AI 事件持久化、點擊時間線跳轉，以及外部音檔匯入分析功能。
 
-**中文說明：強制升級版本號以解決瀏覽器快取舊程式碼的問題，並修復路徑解析。**
+### [2024-05-22] 歷史分析系統 (History & Analysis System)
+- **IndexedDB 整合**: 實作本地音訊切片儲存，支援長效錄音。
+- **音訊波形視覺化**: 整合 `wavesurfer.js` 實現歷史錄音的回覽波形。
+- **分析報告頁面**: 建立詳細的監測報告 UI，包含數據統計與檔案導出。
+- 中文總結：整合了 IndexedDB 與波形圖，提供完整的歷史報告功能。
 
-## [2.16.6] - 2026-03-06
-### Fixed
-- Unified versioning across all core files (index.html, app.js, sw.js) to resolve PWA update inconsistencies.
-- Optimized Service Worker cache strategy and updated asset list.
-- Improved precision of offline audio re-analysis by refining frequency estimation logic.
-- Cleaned up redundant DOM element initializations in `app.js`.
+### [2024-05-21] AI 分析引擎整合 (AI Analysis Engine Integration)
+- **TensorFlow.js 整合**: 引入 `@tensorflow/tfjs` 與 `@tensorflow-models/speech-commands`。
+- **即時聲音辨識**: 實作聲音分類邏輯，支援打呼與背景噪音辨識。
+- **AI 控制開關**: 新增 UI 開關以啟用/禁用本地 AI 分析。
+- 中文總結：導入 TensorFlow.js 實現本地端聲音辨識功能。
 
-*同步全域版本號至 v2.16.6，優化 PWA 離線快取與重新分析演算法，提升系統穩定性。*
-
-### [2.16.5] - 2025-05-31
-- **Critical Fix**: Path resolution for subfolder hosting.
-  - Added script to force trailing slash on `/nightwhisper` URL.
-  - Changed all script/link tags to use explicit `./` relative paths.
-  - Fixes the issue where scripts failed to load when accessed without a trailing slash.
-> 修復了子目錄部署下的路徑解析問題，透過強制補完 URL 斜線以及明確指定相對路徑 `./`，解決了因 Firebase 導向導致腳本無法正確載入的致命錯誤。
-
-### [2.16.4] - 2026-03-05
-- **Fix**: Foolproof unit-hiding for sliders.
-  - Used `innerText = ''` to clear unit labels when slider is at zero.
-  - Added global `window.NW_UI_LOADED` flag and extra logging.
-> 採用更強制的手段隱藏單位標籤（直接清空文字內容），並加入全域變數與更多日誌以追蹤腳本執行狀況。
-
-### [2.16.3] - 2026-03-05
-- **Critical Fix**: Restored corrupted `app.js` and optimized startup sequence.
-  - Moved UI and Slider initialization to the very top of the entry function.
-  - Wrapped async storage initialization in a try-catch to prevent blocking UI.
-  - Added detailed `[App]` stage logging for better remote debugging.
-> 重建了損壞的 `app.js` 並優化了啟動流程，確保 UI 與拉桿在任何非同步操作前完成初始化，避免程式碼掛掉導致組件不顯示。
-
-### [2.16.2] - 2026-03-05
-- **Fix**: Improved custom slider visibility and initialization logic.
-  - Added 100ms delay to slider initialization to ensure DOM readiness.
-  - Used `setProperty('display', 'none', 'important')` for unit labels at zero value.
-  - Increased track and thumb contrast in CSS.
-  - Added forced `innerHTML` injection if slider elements are missing.
-  - Set `overflow: visible` on slider containers to prevent clipping.
-> 強化了自定義拉桿的顯示與初始化邏輯，解決了拉桿不可見以及「分鐘」單位標籤未能正確隱藏的問題。
-
-### [2.16.1] - 2026-03-05
-- **Fix**: Attempted to fix custom slider unit visibility bug.
-  - Added defensive checks for slider track injection.
-  - Modified unit label visibility logic.
-> 嘗試修復自定義拉桿在數值為 0 時仍顯示「分鐘」單位的問題。
-
-## [2.15.0] - 2026-03-05
+## [2026-03-11] WebCodecs 串流音訊分析 (WebCodecs Streaming Analysis)
 
 ### Added
-- **Premium Custom Sliders**: Replaced native `<input type="range">` with completely custom-designed slider components for "Delay Startup" and "Ignore Start Time".
-  - 使用自定義組件取代原生拉桿，提升視覺質感並修復功能失效問題。
-- **Interactive UI Feedback**: Added smooth transitions, glow effects, and real-time value synchronization for the new sliders.
-  - 新增動態流暢的視覺回饋與數值即時同步功能。
-
-## [2.14.0] - 2026-03-04
-
-### Changed
-- **Scrollbar UI Optimization**: Implemented "Hide but scrollable" behavior across all major browsers (Chrome, Safari, Edge, Firefox). Added `scrollbar-gutter: stable` to prevent layout shift (jittering) when navigating.
-  - 全域隱藏原生捲軸並維持捲動功能，解決頁面內容在隱藏捲軸後產生的晃動問題。
-
----
-
-## [2.13.0] - 2026-03-02
+- **WebCodecs 串流音訊分析 (Streaming Audio Analysis)**: 
+  - 捨棄傳統 `decodeAudioData` (一次性載入)，改用 `AudioDecoder` 與 `mp4box.js` 實作低記憶體消耗的串流解碼。
+  - 支援高達 9 小時以上之長音檔，記憶體佔用保持在極低水平。
+  - 實作了 **Backpressure (背壓)** 機制與即時記憶體釋放 (`AudioData.close()`)，有效防止瀏覽器崩潰。
+- **Chunked AI Analysis**: `AIEngine` 現在支援處理串流 PCM 數據塊，並能維持分析精準度。
 
 ### Fixed
-- **Stream Decoding Death Loop**: Refactored the MP4 chunk streaming logic to gracefully check for EOF and flush the WebCodecs `AudioDecoder`. This resolves the issue where the parsing process stalled infinitely.
-  - 修正 mp4box 在大檔案結束後不會自動觸發完成事件，導致分析過程卡死的問題。
-- **Decoder Throttling**: Introduced a throttled buffer ingestion mechanism that checks `audioDecoder.decodeQueueSize`. This effectively prevents the buffer queue from exploding and causing mobile memory limits to be exceeded.
-  - 新增串流進度節流閥，避免解碼器陣列過度堆積導致 OOM。
-- **Progress Percentage Bug**: Fixed the visual glitch where the decoding percentage exceeded 100% (up to 5000%) by accurately mapping timestamps instead of frame counts.
-  - 修改進度條百分比的計算基準從「影格數」改為「音訊時長」，解決進度顯示會突破天際跑到好幾千％的問題。
+- 修正了在處理超大型 M4A 檔案時，因 V8 Heap 記憶體溢位導致的分頁崩潰問題。
+- 修正了 `mp4box.js` 在 ESM 環境下的導入路徑問題。
+- 恢復並優化了 UI 中的分析進度條顯示。
 
----
-
-## [2.12.0] - 2026-03-02
-
-### Added
-- **AudioDecoder Diagnostics**: Added console logging for troubleshooting WebCodecs behavior on mobile devices.
-  - 在行動裝置開發者控制台增加 WebCodecs 的診斷日誌輸出。
-- **ASC Construction Fallback**: Implemented manual `AudioSpecificConfig` construction for AAC-LC audio to ensure consistent decoding even with missing MP4 atoms.
-  - 為 AAC-LC 格式新增手動構造位元流標頭的機制，確保 metadata 缺失時解碼器仍可正常運作。
-
-### Changed
-- **Codec Stabilization**: Optimized codec string handling for `AudioDecoder.configure()`, specifically pinning `mp4a.40.2` for better hardware acceleration compatibility.
-  - 優化解碼器配置中的位元流參數，固定使用 `mp4a.40.2` 字串以提升硬體加速相容性。
-
----
-
-## [2.11.0] - 2026-03-02
-
-### Added
-- **WebCodecs & MP4Box Integration**: Implemented streaming chunked decoding for large audio uploads (300MB+) to prevent OOM crashes on mobile devices.
-  - 導入 WebCodecs 與 mp4box.js，實現大容量音檔（如 8 小時睡眠錄音）的串流解碼，解決行動裝置記憶體溢位導致分頁崩潰的問題。
-
-### Fixed
-- **Re-analysis Variable Scope**: Fixed a logic bug in `analyzer.js` where internal state was polluted during repeated analysis runs.
-  - 修正分析模組中全域變數未重設導致重複分析結果不精確的問題。
-
----
-
-## [2.10.0] - 2026-03-01
-
-### Added
-- **Instant Re-analysis**: Decoupled feature extraction from event detection. Re-analysis now instantly processes cached energy arrays from IndexedDB instead of decoding large audio files.
-- **Smoothing Filter**: Applied a 3-second moving average during re-analysis to filter out short noise bursts and improve event detection accuracy.
-
-### Changed
-- `analyzer.js`: Added `reanalyzeFromData` method to handle instant array reprocessing.
-- `app.js`: Updated `btnReanalyze` event listener to fetch existing `analysisData` and map to the new decoupling logic.
-- `storage.js`: Added `clearSessionData` to support clean re-analysis by removing old events and analysis logs.
-
----
-
-## [2.9.0] - 2026-02-27
-
-### Added
-- **Timeline Scrubbing**: Implemented smooth playhead dragging (scrubbing) on the analysis waveform. Users can now grab the white playhead line to quickly seek through the audio.
-- **Interactive Playhead**: Added a touch-friendly handle for the playhead to improve usability on mobile devices.
-
-### Fixed
-- **Re-analysis Data Accuracy**: Fixed a critical bug in the offline analysis engine where frequency energy was incorrectly mapped, causing empty waveform data.
-
----
-
-## [2.8.0] - 2026-02-26
-
-### Added
-- **Pinch-to-zoom Support**: Implemented multi-touch gestures for the sleep analysis waveform. Users can now zoom in to inspect audio events with high granularity.
-- **Timeline Panning**: Enabled smooth dragging and scrolling across the zoomed-in timeline for easier navigation through long recording sessions.
-- **Granular View & Precise Seeking**: Zooming in allows for highly precise playback seeking and detailed amplitude inspection.
-- **Double-tap to Reset**: Added a quick shortcut - double-tap the waveform to instantly reset to the full session view.
-
-### Changed
-- Refactored `NightWhisperWaveform` rendering logic to use a dynamic viewport system for improved performance during high-zoom levels.
-
----
-
-## [2.7.0] - 2026-02-26
-
-### Fixed
-- **Re-analysis Engine Stability**: Fixed a critical `INDEX_SIZE_ERR` during offline analysis caused by improper boundary checking at the end of the audio buffer.
-- **Missing Detection Events**: Improved re-analysis resolution from 1 second per step to 0.2 seconds.
-- **Timing Correctness**: Fixed a bug where the final detection event used `Date.now()`.
-
-### Changed
-- **Enhanced Spectrum Simulation**: Improved `_simulateFFT` with zero-crossing rate estimation.
-
----
-
-## [2.6.0] - 2026-02-25
-
-### Added
-
-### Added
-- **Instant Re-analysis**: Decoupled feature extraction from event detection. Re-analysis now instantly processes cached energy arrays from IndexedDB instead of decoding large audio files.
-- **Smoothing Filter**: Applied a 3-second moving average during re-analysis to filter out short noise bursts and improve event detection accuracy.
-
-### Changed
-- `analyzer.js`: Added `reanalyzeFromData` method to handle instant array reprocessing.
-- `app.js`: Updated `btnReanalyze` event listener to fetch existing `analysisData` and map to the new decoupling logic.
-- `storage.js`: Added `clearSessionEvents` to allow isolated clearing of event data without erasing cached analysis feature arrays.
-
----
-本更新實現了核心分析邏輯的完全解耦，讓使用者在調整敏感度後，能瞬間得到重新判讀的結果，徹底解決了長音檔重新分析導致的時間浪費與記憶體崩潰問題。同時加入了平滑化處理，進一步提升偵測精準度。
- 中文說明：將特徵提取與閾值判斷分離，大幅提升「再次分析」效能，並新增防呆過濾機制解決短促雜訊誤判的問題。
-
-## [2026-03-02T00:13:00Z]
-- Refactored audio upload logic to use WebCodecs (AudioDecoder) and mp4box.js chunk streaming for large files (300MB+).
-- Resolved OOM crashes during the audio upload process.
-- Fixed consecutive event count variable logic in analyzer to prevent interference during real-time re-analysis of audio.
-- Included mp4box.js library inside `index.html` headers.
-
-*改用 WebCodecs 與分塊讀取架構徹底避免大檔案上傳崩潰，同時消除重新分析時變數污染所造成的 bug。*
-
+**中文說明：實作了 WebCodecs 串流解碼技術，讓 9 小時的長音檔也能在不崩潰的情況下進行低記憶體分析。**

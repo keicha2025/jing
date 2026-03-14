@@ -21,10 +21,6 @@
                 "source": "/*/sw.js",
                 "headers": [
                     {
-                        "key": "Service-Worker-Allowed",
-                        "value": "/"
-                    },
-                    {
                         "key": "Cache-Control",
                         "value": "no-cache, no-store, must-revalidate"
                     }
@@ -63,6 +59,10 @@
                 "destination": "/mail/index.html"
             },
             {
+                "source": "/tesuuryo/**",
+                "destination": "/tesuuryo/index.html"
+            },
+            {
                 "source": "/nightwhisper/**",
                 "destination": "/nightwhisper/index.html"
             },
@@ -89,6 +89,13 @@
             {
                 "source": "/**",
                 "destination": "/index.html"
+            }
+        ],
+        "redirects": [
+            {
+                "source": "/tesuuryo.html",
+                "destination": "/tesuuryo/",
+                "type": 301
             }
         ]
     },

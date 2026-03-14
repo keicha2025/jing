@@ -1,4 +1,4 @@
-const CACHE_NAME = 'note-app-v18';
+const CACHE_NAME = 'note-app-v19';
 const ASSETS = [
     '/note',
     '/note/',
@@ -63,15 +63,21 @@ self.addEventListener('fetch', (event) => {
                 return networkResponse;
             }).catch(() => {
                 // 背景更新失敗 (離線) 保持沉默
+                return null;
             });
 
             // 如果是導航請求且沒有快取，且背景更新也失敗，回退到主頁面快取
             if (event.request.mode === 'navigate' && !cachedResponse) {
-                return fetchPromise.catch(() => caches.match('/note') || caches.match('/note/index.html'));
+                return fetchPromise.then(response => {
+                    return response || caches.match('/note') || caches.match('/note/index.html');
+                }).catch(() => caches.match('/note') || caches.match('/note/index.html'));
             }
 
             // 隱形助手核心：優先吐出硬碟內容，網路請求僅在背景默默進行
-            return cachedResponse || fetchPromise;
+            return cachedResponse || fetchPromise || fetch(event.request);
+        }).catch(() => {
+            // 最後防線：如果 caches.match 報錯
+            return fetch(event.request);
         })
     );
 });

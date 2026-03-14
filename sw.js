@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jing-lab-v15';
+const CACHE_NAME = 'jing-lab-v16';
 const ASSETS = [
     './',
     './index.html',
@@ -47,6 +47,7 @@ self.addEventListener('fetch', (event) => {
         '/note',
         '/nightwhisper',
         '/mail',
+        '/tesuuryo',
     ];
     if (excludedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'))) {
         return;

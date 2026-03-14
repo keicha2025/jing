@@ -558,9 +558,15 @@
         // --- PWA Service Worker ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker registered', reg))
-                    .catch(err => console.log('Service Worker serialization failed', err));
+                const excludedPrefixes = ['/preview', '/pdf-tool', '/v-player-preview', '/travel-planner', '/finance', '/caselog', '/note', '/nightwhisper', '/mail', '/tesuuryo'];
+                const pathname = window.location.pathname;
+                const isExcluded = excludedPrefixes.some(prefix => pathname === prefix || pathname.startsWith(prefix + '/'));
+
+                if (!isExcluded) {
+                    navigator.serviceWorker.register('./sw.js')
+                        .then(reg => console.log('Service Worker registered', reg))
+                        .catch(err => console.log('Service Worker registration failed', err));
+                }
             });
         }
     </script>

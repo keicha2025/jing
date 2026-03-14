@@ -1,5 +1,60 @@
 # Changelog
 
+### 2026-03-14
+*   **Pricing Tool: Subdirectory PWA Conversion**
+    - Relocated `tesuuryo.html` to `/tesuuryo/index.html` to establish an independent sub-app space.
+    - Implemented PWA functionality with a dedicated `manifest.json` and `sw.js` for offline support.
+    - Added high-resolution PWA icons and mobile-optimized meta tags.
+    - Configured root `sw.js` to exclude `/tesuuryo/` to prevent service worker conflicts.
+    - Updated `firebase.json` with a rewrite rule for the sub-app and a 301 redirect from `/tesuuryo.html` to `/tesuuryo/`.
+    - Integrated the new structure into `full_deploy.sh`.
+    - **Affected Files**: `tesuuryo/index.html`, `tesuuryo/manifest.json`, `tesuuryo/sw.js`, `sw.js`, `firebase.json`, `full_deploy.sh`, `tesuuryo.html` (deleted).
+
+*   **PWA Sub-system Repair & Immersive Optimization**
+    - **PWA Identity Isolation**: Finalized unique `id` attributes and explicit `scope`/`start_url` for all sub-apps (`note`, `tesuuryo`, `pdf-tool`, `finance`, `nightwhisper`) to prevent cross-installation conflicts.
+    - **Immersive Experience (iOS/Android)**: Added/Updated meta tags (`viewport-fit=cover`, `apple-mobile-web-app-capable`, `black-translucent`) across all sub-apps to enable true full-screen display as standalone PWAs.
+    - **Service Worker Hardening**: 
+        - Enhanced `note/sw.js` and `tesuuryo/sw.js` with improved fetch handlers to prevent redundant `ERR_FAILED` errors and optimize offline resilience.
+        - Removed conflicting `Service-Worker-Allowed: /` headers from sub-app scripts in `firebase.json` to respect directory scoping.
+    - **Bug Fixes**: Resolved the "White Screen" and "Root Portal Overwrite" issues by refining rewrite priorities and ensuring clean build isolation in `full_deploy.sh`.
+    - **Affected Files**: `note/sw.js`, `tesuuryo/sw.js`, `note/index.html`, `tesuuryo/index.html`, `nightwhisper/index.html`, `firebase.json`, `full_deploy.sh`.
+
+**中文摘要：完成了全站子系統的 PWA 身份隔離與 iOS 全螢幕沉浸式優化。修復了 `note` 應用程式的 `ERR_FAILED` 離線錯誤，並補齊各子系統（如 `nightwhisper`）缺失的 Meta 標籤。同步優化了 Firebase 路由優先級，徹底解決安裝衝突與首頁被意外覆蓋的問題。**
+
+
+### 2026-03-10
+*   **NightWhisper: Local AI Analysis Engine (TensorFlow.js)**
+    - Integrated TensorFlow.js and Speech Commands model for on-device real-time audio classification.
+    - Implemented `AIEngine` utility to manage model loading, life-cycle, and event-based sound detection.
+    - Built `useAIAnalysis` hook to decouple AI logic from UI components.
+    - Added real-time "Automatic Identification" (自動辨識) UI with dynamic event highlighting and status monitoring.
+    - Standardized model loading states to ensure UI responsive feedback during network fetch of AI weights.
+    - **Affected Files**: `src/utils/ai-engine.js`, `src/hooks/useAIAnalysis.js`, `src/App.jsx`, `package.json`.
+
+**中文摘要：整合 TensorFlow.js 實作本地 AI 分析引擎。支援在瀏覽器端進行即時音訊分類（打呼、夢話與環境音辨識），完全符合隱私保護原則。新增了「自動辨識」狀態組件與偵測事件的即時提示介面。**
+
+### 2026-03-10
+*   **NightWhisper: Audio Recording Core & History Analysis System**
+    - Implemented `MediaRecorder` integration with a 10-second auto-slicing mechanism for long-duration stability.
+    - Built IndexedDB persistent storage layer in `storage.js` for robust audio chunk management.
+    - Developed `useAudioRecorder` and `useHistory` custom hooks for clean state management of recording and local database interactions.
+    - Created **Dynamic Analysis Report View**: Users can now browse recording history, view session statistics (size, fragments), and export combined `.webm` files.
+    - Integrated multi-segment audio concatenation logic for seamless file downloading from local storage.
+    - **Affected Files**: `src/utils/storage.js`, `src/hooks/useAudioRecorder.js`, `src/hooks/useHistory.js`, `src/App.jsx`.
+
+**中文摘要：實作「夜語」錄音核心與歷史分析系統。採用 10 秒自動切片技術與 IndexedDB 進行本地持久化儲存，確保長時間錄音不崩潰。新增「分析報告」介面，支援查看錄製詳情、管理歷史紀錄並透過音訊合併技術匯出完整的 WebM 檔案。**
+
+### 2026-03-10
+*   **NightWhisper: React Migration & Architecture Initialization (Option A)**
+    - Initialized new Vite-based React project for the next-generation NightWhisper audio analysis engine.
+    - Configured project architecture to support Web Audio API and local AI inference (TensorFlow.js/ONNX).
+    - Integrated PWA support and defined service worker strategy for local-first audio slice persistence.
+    - Implemented **Premium Studio UI (v1)**: Featuring a deep dark theme, glassmorphism panels, and fluid navigation.
+    - Successfully configured `full_deploy.sh` for automated building and Firebase deployment.
+    - **Affected Files**: `nightwhisper/`, `full_deploy.sh`, `CHANGELOG.md`.
+
+**中文摘要：正式啟動「夜語 NightWhisper」的 React 轉型計畫（方案 A）。初始化 Vite + React 架構，並配置 PWA 與 Web Audio 基礎環境。實作了第一版「沉浸式錄音工作室」介面，採用高級深色調與玻璃擬態設計。同步更新自動化部署腳本並驗證編譯成功。**
+
 ### 2026-03-10
 *   **PDF Tool: UI & Copy Unification & Responsive Polish**
     - **UI Unification**: Fully aligned the "Compress" view with the "Flatten" view's premium design system.

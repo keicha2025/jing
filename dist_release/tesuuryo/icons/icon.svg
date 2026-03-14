@@ -1,0 +1,19 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1024" height="1024" rx="225" fill="#F5F5F4"/>
+  <!-- Display Area -->
+  <rect x="212" y="240" width="600" height="180" rx="40" fill="white" stroke="#E7E5E4" stroke-width="4"/>
+  <rect x="260" y="310" width="120" height="40" rx="4" fill="#E7E5E4"/>
+  
+  <!-- Buttons Grid -->
+  <rect x="212" y="480" width="180" height="180" rx="40" fill="white" stroke="#E7E5E4" stroke-width="4"/>
+  <rect x="422" y="480" width="180" height="180" rx="40" fill="white" stroke="#E7E5E4" stroke-width="4"/>
+  <rect x="632" y="480" width="180" height="180" rx="40" fill="#8E403A"/> <!-- Accent Action -->
+  
+  <rect x="212" y="690" width="180" height="180" rx="40" fill="white" stroke="#E7E5E4" stroke-width="4"/>
+  <rect x="422" y="690" width="180" height="180" rx="40" fill="white" stroke="#E7E5E4" stroke-width="4"/>
+  <rect x="632" y="690" width="180" height="180" rx="40" fill="white" stroke="#E7E5E4" stroke-width="4"/>
+  
+  <!-- Equal Sign on Accent Button -->
+  <rect x="677" y="555" width="90" height="10" rx="5" fill="white"/>
+  <rect x="677" y="585" width="90" height="10" rx="5" fill="white"/>
+</svg>

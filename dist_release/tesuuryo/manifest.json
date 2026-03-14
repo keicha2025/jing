@@ -1,0 +1,30 @@
+{
+    "name": "定價計算助手",
+    "short_name": "定價助手",
+    "start_url": "/tesuuryo/",
+    "scope": "/tesuuryo/",
+    "display": "standalone",
+    "background_color": "#f4f1ee",
+    "theme_color": "#f4f1ee",
+    "icons": [
+        {
+            "src": "icons/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ],
+    "id": "tesuuryo-pricing-calculator-v1"
+}

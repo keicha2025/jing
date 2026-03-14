@@ -8,6 +8,7 @@ rm -rf finance/dist
 rm -rf pdf-tool/dist
 rm -rf preview/dist
 rm -rf v-player-preview/dist
+rm -rf nightwhisper/dist
 rm -rf caselog/dist
 rm -rf travel-planner/frontend/dist
 
@@ -59,11 +60,19 @@ cd ..
 mkdir -p dist_release/finance
 cp -r finance/dist/finance/* dist_release/finance/
 
+echo "Building nightwhisper..."
+cd nightwhisper
+npm install
+npm run build
+cd ..
+mkdir -p dist_release/nightwhisper
+cp -r nightwhisper/dist/* dist_release/nightwhisper/
+
 echo "Copying static assets..."
-cp -r nightwhisper dist_release/
 cp -r note dist_release/
 cp -r mail dist_release/
-cp index.html nagoya.html okinawa.html okinawa-1.html tesuuryo.html jing-lab-appicon.png jing-lab-appicon.ico manifest.json sw.js dist_release/
+cp -r tesuuryo dist_release/
+cp index.html nagoya.html okinawa.html okinawa-1.html jing-lab-appicon.png jing-lab-appicon.ico manifest.json sw.js dist_release/
 
 echo "Deploying to Firebase..."
 npx -y firebase-tools deploy --only hosting --project gen-lang-client-0428297574
